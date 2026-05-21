@@ -1,0 +1,48 @@
+<svg width="920" height="760" viewBox="0 0 920 760" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-labelledby="title desc">
+  <title id="title">Personal work signal map</title>
+  <desc id="desc">A layered visual map connecting AI, health, simulation, and product engineering.</desc>
+  <rect width="920" height="760" rx="20" fill="#FDFCF8"/>
+  <path d="M92 608C198 520 240 446 312 392C403 324 517 347 626 278C710 225 750 146 827 98" stroke="#D7E0DA" stroke-width="2"/>
+  <path d="M84 182C190 244 248 330 350 338C473 348 526 224 652 236C724 243 775 291 838 348" stroke="#E2D6C7" stroke-width="2"/>
+  <path d="M112 492C220 478 283 552 392 526C493 502 498 408 604 382C684 363 742 397 824 430" stroke="#E2C6C3" stroke-width="2"/>
+  <g opacity=".28">
+    <circle cx="128" cy="128" r="64" fill="#137C7C"/>
+    <circle cx="748" cy="596" r="82" fill="#B04A42"/>
+    <circle cx="578" cy="136" r="48" fill="#B8832E"/>
+  </g>
+  <g stroke="#17211D" stroke-width="1.5">
+    <rect x="116" y="112" width="210" height="128" rx="14" fill="#FFFFFF"/>
+    <rect x="344" y="282" width="236" height="140" rx="14" fill="#FFFFFF"/>
+    <rect x="604" y="132" width="210" height="128" rx="14" fill="#FFFFFF"/>
+    <rect x="156" y="488" width="240" height="142" rx="14" fill="#FFFFFF"/>
+    <rect x="558" y="500" width="214" height="128" rx="14" fill="#FFFFFF"/>
+  </g>
+  <g font-family="Inter, Arial, sans-serif" fill="#17211D">
+    <text x="144" y="158" font-size="28" font-weight="800">LLM-OPT</text>
+    <text x="144" y="192" font-size="16" fill="#62706A">LP, Gurobi, RAG modeling</text>
+    <text x="372" y="334" font-size="30" font-weight="800">Agent Evaluation</text>
+    <text x="372" y="370" font-size="16" fill="#62706A">reasoning and behavior tests</text>
+    <text x="632" y="178" font-size="28" font-weight="800">Energy AI</text>
+    <text x="632" y="212" font-size="16" fill="#62706A">TTF forecasting systems</text>
+    <text x="184" y="540" font-size="28" font-weight="800">Data Systems</text>
+    <text x="184" y="574" font-size="16" fill="#62706A">10k+ row table retrieval</text>
+    <text x="586" y="548" font-size="28" font-weight="800">Research UI</text>
+    <text x="586" y="582" font-size="16" fill="#62706A">dashboards and artifacts</text>
+  </g>
+  <g>
+    <circle cx="330" cy="176" r="8" fill="#23684D"/>
+    <circle cx="584" cy="352" r="8" fill="#23684D"/>
+    <circle cx="602" cy="198" r="8" fill="#137C7C"/>
+    <circle cx="396" cy="558" r="8" fill="#B8832E"/>
+    <circle cx="556" cy="564" r="8" fill="#B04A42"/>
+  </g>
+  <path d="M330 176C394 194 438 244 462 282" stroke="#23684D" stroke-width="3" stroke-linecap="round"/>
+  <path d="M580 330C624 298 655 260 684 260" stroke="#137C7C" stroke-width="3" stroke-linecap="round"/>
+  <path d="M396 558C458 540 503 540 556 564" stroke="#B8832E" stroke-width="3" stroke-linecap="round"/>
+  <path d="M462 422C430 460 408 498 396 558" stroke="#B04A42" stroke-width="3" stroke-linecap="round"/>
+  <g opacity=".72" stroke="#17211D" stroke-width="1">
+    <path d="M706 666H842"/>
+    <path d="M706 686H814"/>
+    <path d="M706 706H862"/>
+  </g>
+</svg>
