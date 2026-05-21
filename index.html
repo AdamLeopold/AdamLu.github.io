@@ -1,171 +1,165 @@
 <!doctype html>
-<html lang="zh-CN">
+<html lang="en">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta
       name="description"
-      content="Lu Yuhang 的个人主页：LLM optimization, multi-agent reasoning, operations research, energy forecasting, and data-driven systems."
+      content="Lu Yuhang, PhD student at NTU CCDS-AI. Research on LLMs for optimization modeling, multi-agent reasoning, and operations research."
     />
-    <title>Lu Yuhang | LLM Optimization & AI Systems</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Noto+Sans+SC:wght@400;500;700;800&display=swap"
-      rel="stylesheet"
-    />
+    <title>Lu Yuhang</title>
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <div class="shell">
-      <header class="topbar" aria-label="主导航">
-        <a class="brand" href="#top" aria-label="回到顶部">
-          <span class="brand-mark">LY</span>
-          <span>Lu Yuhang</span>
-        </a>
-        <nav>
-          <a href="#research">研究</a>
-          <a href="#education">教育</a>
-          <a href="#awards">荣誉</a>
-          <a href="#contact">联系</a>
+    <div class="page">
+      <header class="site-header">
+        <a class="nameplate" href="#top">Lu Yuhang</a>
+        <nav aria-label="Primary navigation">
+          <a href="#lean">LEAN-LLM-OPT</a>
+          <a href="#work">Research</a>
+          <a href="#education">Education</a>
+          <a href="#contact">Contact</a>
         </nav>
       </header>
 
       <main id="top">
-        <section class="hero" aria-labelledby="hero-title">
-          <div class="hero-copy">
-            <p class="eyebrow">NUS Research Assistant · LLM optimization · multi-agent systems</p>
-            <h1 id="hero-title">用大模型、运筹优化和数据系统解决真实复杂决策问题。</h1>
-            <p class="hero-text">
-              我是 Lu Yuhang，目前在 National University of Singapore 从事研究助理工作，
-              研究方向包括 LLM 自动优化建模、多智能体推理评测、RAG 工具链、大规模表格数据建模与能源市场预测。
+        <section class="hero">
+          <div class="hero-text">
+            <p class="smallcaps">PhD Student · NTU CCDS-AI</p>
+            <h1>Lu Yuhang</h1>
+            <p class="lead">
+              I am a PhD student in CCDS-AI at Nanyang Technological University,
+              advised by Prof. Lin William Cong and Prof. An Bo.
             </p>
-            <div class="hero-actions">
-              <a class="button primary" href="#research">查看研究</a>
-              <a class="button secondary" href="assets/LuYuhang-CV-NTU.pdf" target="_blank" rel="noreferrer">下载 CV</a>
-              <a class="button secondary" href="mailto:lu012933@126.com">联系我</a>
+            <p>
+              My current work studies how large language models can formulate
+              optimization problems from natural language and user-provided data.
+              I am especially interested in model generation, retrieval,
+              solver-ready code, and evaluation for operations research tasks.
+            </p>
+            <div class="links">
+              <a href="mailto:lu012933@126.com">Email</a>
+              <a href="assets/LuYuhang-CV-NTU.pdf" target="_blank" rel="noreferrer">CV</a>
+              <a href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=5329027" target="_blank" rel="noreferrer">LEAN-LLM-OPT</a>
             </div>
           </div>
-          <figure class="hero-visual" aria-label="个人工作图谱">
-            <img src="assets/signal-map.svg" alt="AI、医疗、仿真和产品工程交织的工作图谱" />
+          <figure class="portrait">
+            <img src="assets/lu-yuhang-photo.jpg" alt="Lu Yuhang" />
           </figure>
         </section>
 
-        <section class="metrics" aria-label="工作重点">
-          <div>
-            <strong>95.1%</strong>
-            <span>NL4OPT benchmark accuracy</span>
+        <section class="lean" id="lean" aria-labelledby="lean-title">
+          <div class="section-title">
+            <p class="smallcaps">Main Project</p>
+            <h2 id="lean-title">LEAN-LLM-OPT</h2>
           </div>
-          <div>
-            <strong>10k+</strong>
-            <span>rows processed via RAG</span>
-          </div>
-          <div>
-            <strong>119</strong>
-            <span>multi-agent experiment runs</span>
+          <div class="lean-layout">
+            <div class="lean-copy">
+              <p class="paper-title">
+                A Lightweight Multi-Agent LLM Framework for Large-Scale Automated Optimization Modeling
+              </p>
+              <p>
+                LEAN-LLM-OPT is a multi-agent framework for turning optimization
+                problem descriptions and tabular data into mathematical models,
+                LP files, and executable Gurobi code.
+              </p>
+              <p>
+                The system first classifies the problem type, retrieves similar
+                examples and relevant user data, builds a workflow, and then
+                generates the final model and code. The framework is designed for
+                classical operations research settings such as network flow,
+                resource allocation, transportation, and knapsack-style problems.
+              </p>
+              <dl class="facts">
+                <div>
+                  <dt>Benchmark</dt>
+                  <dd>95.1% on NL4OPT</dd>
+                </div>
+                <div>
+                  <dt>Data</dt>
+                  <dd>10k+ row tables handled through retrieval</dd>
+                </div>
+                <div>
+                  <dt>Output</dt>
+                  <dd>LP model, Python code, and solver result</dd>
+                </div>
+              </dl>
+            </div>
+            <figure class="framework">
+              <img src="assets/lean-llm-opt-framework.png" alt="LEAN-LLM-OPT framework diagram" />
+            </figure>
           </div>
         </section>
 
-        <section class="section" id="research" aria-labelledby="research-title">
-          <div class="section-head">
-            <p class="eyebrow">Selected research</p>
-            <h2 id="research-title">主要研究与项目</h2>
+        <section class="section" id="work" aria-labelledby="work-title">
+          <div class="section-title">
+            <p class="smallcaps">Research</p>
+            <h2 id="work-title">Selected Work</h2>
           </div>
-          <div class="project-grid" id="project-grid"></div>
-        </section>
-
-        <section class="section split" id="method" aria-labelledby="method-title">
-          <div class="section-head">
-            <p class="eyebrow">Research style</p>
-            <h2 id="method-title">我如何把研究做成系统</h2>
-          </div>
-          <div class="method-panel">
-            <ol>
-              <li>
-                <span>01</span>
-                <div>
-                  <h3>先定义可检验问题</h3>
-                  <p>把自然语言任务转成清晰的优化模型、benchmark、指标和可复现实验设计。</p>
-                </div>
-              </li>
-              <li>
-                <span>02</span>
-                <div>
-                  <h3>再连接模型、工具和求解器</h3>
-                  <p>用 RAG、prompt engineering、agent orchestration、Gurobi 和可视化界面形成完整链路。</p>
-                </div>
-              </li>
-              <li>
-                <span>03</span>
-                <div>
-                  <h3>最后沉淀为可复现资产</h3>
-                  <p>输出 LP/Gurobi 代码、实验 trace、Excel 汇总、Streamlit dashboard 和论文级结果分析。</p>
-                </div>
-              </li>
-            </ol>
-          </div>
+          <div class="work-list" id="work-list"></div>
         </section>
 
         <section class="section" id="education" aria-labelledby="education-title">
-          <div class="section-head">
-            <p class="eyebrow">Education</p>
-            <h2 id="education-title">教育背景</h2>
+          <div class="section-title">
+            <p class="smallcaps">Background</p>
+            <h2 id="education-title">Education</h2>
           </div>
           <div class="timeline">
             <article>
-              <span>2024.12 - Now</span>
-              <h3>National University of Singapore</h3>
-              <p>Research Assistant, Industrial System Engineering & Management. Advisor: Professor Qin Hanzhang.</p>
+              <time>2026 - Present</time>
+              <h3>Nanyang Technological University</h3>
+              <p>PhD student, CCDS-AI. Advisors: Prof. Lin William Cong and Prof. An Bo.</p>
             </article>
             <article>
-              <span>2023.08 - 2024.12</span>
+              <time>2024 - 2025</time>
               <h3>National University of Singapore</h3>
-              <p>Master, Industrial System Engineering & Management. Coursework includes Applied Programming, Stochastic Models, Supply Chain, Data Analytics and Statistics.</p>
+              <p>Research Assistant, Industrial Systems Engineering and Management. Advisor: Prof. Qin Hanzhang.</p>
             </article>
             <article>
-              <span>2019.08 - 2023.06</span>
+              <time>2023 - 2024</time>
+              <h3>National University of Singapore</h3>
+              <p>Master's study in Industrial Systems Engineering and Management.</p>
+            </article>
+            <article>
+              <time>2019 - 2023</time>
               <h3>Xi'an Jiaotong University</h3>
-              <p>Bachelor, Science and Technology of Human Settlements. GPA 3.65/4.0, rank 2/22.</p>
+              <p>Bachelor's study in Science and Technology of Human Settlements. GPA 3.65/4.0, rank 2/22.</p>
             </article>
             <article>
-              <span>2021.08 - 2021.12</span>
+              <time>2021</time>
               <h3>University of California, Berkeley</h3>
-              <p>Exchange, Urban Planning and Environment Data Analysis. Courses include Geospatial Technologies, R Programming and Applied Time Series Analysis.</p>
+              <p>Exchange study in urban planning and environmental data analysis.</p>
             </article>
           </div>
         </section>
 
-        <section class="section" id="awards" aria-labelledby="awards-title">
-          <div class="section-head">
-            <p class="eyebrow">Awards & invention</p>
-            <h2 id="awards-title">竞赛、专利与组织经历</h2>
+        <section class="section" aria-labelledby="awards-title">
+          <div class="section-title">
+            <p class="smallcaps">Awards</p>
+            <h2 id="awards-title">Awards and Patent</h2>
           </div>
-          <div class="stack-grid">
+          <div class="award-grid">
             <article>
               <h3>National First Prize</h3>
-              <p>National University Student Social Practice and Science Contest on Energy Saving & Emission Reduction. Built large-scale experimental platform, processed data and led visual presentation.</p>
+              <p>National University Student Social Practice and Science Contest on Energy Saving and Emission Reduction.</p>
             </article>
             <article>
-              <h3>National Excellent × 3</h3>
-              <p>National Undergraduate Innovation and Entrepreneurship projects, covering chemistry education applet, intelligent desert management, and underwater energy harvesting systems.</p>
+              <h3>National Excellent Awards</h3>
+              <p>Three Undergraduate Innovation and Entrepreneurship projects, including chemistry education, desert management, and underwater energy harvesting.</p>
             </article>
             <article>
               <h3>Patent 202210547923.3</h3>
-              <p>Environmental energy invention for ocean current energy capture through piezoelectric and thermoelectric devices for deep-sea exploration scenarios.</p>
+              <p>Environmental energy device for deep-ocean energy harvesting using piezoelectric and thermoelectric components.</p>
             </article>
           </div>
         </section>
 
         <section class="contact" id="contact" aria-labelledby="contact-title">
-          <div>
-            <p class="eyebrow">Open to collaboration</p>
-            <h2 id="contact-title">欢迎与我交流 LLM optimization、agent evaluation、能源预测与工业系统智能化。</h2>
-          </div>
-          <div class="contact-links">
-            <a href="mailto:lu012933@126.com">Email</a>
-            <a href="assets/LuYuhang-CV-NTU.pdf" target="_blank" rel="noreferrer">CV</a>
-            <a href="https://github.com/" target="_blank" rel="noreferrer">GitHub</a>
-          </div>
+          <h2 id="contact-title">Contact</h2>
+          <p>
+            Email:
+            <a href="mailto:lu012933@126.com">lu012933@126.com</a>
+          </p>
         </section>
       </main>
     </div>

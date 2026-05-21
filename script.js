@@ -1,81 +1,42 @@
-const projects = [
+const work = [
   {
-    tag: "Working Paper · Jan 2026 - Present",
+    period: "2026 - Present",
     title: "Multi-Agent LLM Framework for Reasoning and Behavioral Benchmark Evaluation",
     description:
-      "独立设计 Python 多智能体 LLM 实验框架，比较 self-reflection、debate、reconciliation、role-specialized reasoning 和 chain-of-agents 在 GSM8K、CRT、Linda benchmarks 上的表现。",
-    tools: ["Python", "OpenAI/Ollama", "Streamlit", "Excel traces", "119 runs"],
-    link: "",
+      "A Python framework for comparing self-reflection, debate, reconciliation, role-specialized reasoning, and chain-of-agents on GSM8K, CRT, and Linda-style tasks. It includes model wrappers, prompt templates, answer parsers, trace export, and a Streamlit interface for running batches.",
+    tags: ["multi-agent LLM", "reasoning evaluation", "Streamlit", "119 runs"],
   },
   {
-    tag: "Working Paper · Aug 2023 - Present",
-    title: "LEAN-LLM-OPT: Lightweight Multi-Agent LLM Framework for Optimization Modeling",
+    period: "2024",
+    title: "European Natural Gas Forecasting",
     description:
-      "构建面向大规模优化问题的多智能体 LLM 自动建模框架，结合 FAISS RAG、few-shot prompting、CoT 推理和 Gurobi，输出标准 LP、可执行 Python 代码与最优解。",
-    tools: ["GPT-4.1", "FAISS", "LangChain", "Gurobi", "95.1% NL4OPT"],
-    link: "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=5329027",
+      "A forecasting project for TTF natural gas prices using market fundamentals, weather, exchange rates, alternative energy variables, and political news. The model comparison included LSTM, Random Forest, PatchTSMixer, and a domain-adapted Llama3-8B sentiment component.",
+    tags: ["time series", "energy markets", "PatchTSMixer", "Llama3-8B"],
   },
   {
-    tag: "Research Project · Feb 2024 - Jun 2024",
-    title: "Multivariable Deep Learning Model for European Natural Gas Forecasting",
+    period: "2020",
+    title: "iFlyTek Internship",
     description:
-      "融合经济指数、股市波动、天气、替代能源、供需基本面和地缘政治文本，使用 LSTM、Random Forest、PatchTSMixer 与 Llama3-8B 微调提升 TTF 价格预测能力。",
-    tools: ["LSTM", "PatchTSMixer", "Random Forest", "Llama3-8B", "HTML UI"],
-    link: "",
-  },
-  {
-    tag: "Industry · 2020",
-    title: "iFlyTek Assistant Account Manager Internship",
-    description:
-      "参与客户服务管理、组织结构与业务管理调研、人员数据库维护、会议纪要与内部流程支持，积累企业协作和产品运营经验。",
-    tools: ["Client service", "Operations", "Research", "Documentation"],
-    link: "",
+      "Assistant Account Manager intern. Worked on customer service support, organization research, meeting records, personnel data maintenance, and internal process documentation.",
+    tags: ["operations", "client service", "documentation"],
   },
 ];
 
-const projectGrid = document.querySelector("#project-grid");
+const container = document.querySelector("#work-list");
 
-projectGrid.innerHTML = projects
+container.innerHTML = work
   .map(
-    (project) => `
-      <article class="project-card">
-        <div class="project-card-inner">
-          <span class="project-tag">${project.tag}</span>
-          <h3>${project.title}</h3>
-          <p>${project.description}</p>
-          <ul>
-            ${project.tools.map((tool) => `<li>${tool}</li>`).join("")}
+    (item) => `
+      <article class="work-item">
+        <time>${item.period}</time>
+        <div>
+          <h3>${item.title}</h3>
+          <p>${item.description}</p>
+          <ul class="tag-list">
+            ${item.tags.map((tag) => `<li>${tag}</li>`).join("")}
           </ul>
-          ${
-            project.link
-              ? `<a class="project-link" href="${project.link}" target="_blank" rel="noreferrer">查看论文链接</a>`
-              : ""
-          }
         </div>
       </article>
     `,
   )
   .join("");
-
-const observer = new IntersectionObserver(
-  (entries) => {
-    entries.forEach((entry) => {
-      if (entry.isIntersecting) {
-        entry.target.animate(
-          [
-            { opacity: 0, transform: "translateY(18px)" },
-            { opacity: 1, transform: "translateY(0)" },
-          ],
-          { duration: 520, easing: "cubic-bezier(.2,.8,.2,1)", fill: "forwards" },
-        );
-        observer.unobserve(entry.target);
-      }
-    });
-  },
-  { threshold: 0.18 },
-);
-
-document.querySelectorAll(".project-card, .stack-grid article, .method-panel li").forEach((node) => {
-  node.style.opacity = "0";
-  observer.observe(node);
-});
