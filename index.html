@@ -59,14 +59,21 @@
   <body>
     <a class="skip-link" href="#main-content">Skip to content</a>
 
-    <div class="site-shell">
-      <aside class="profile-rail" aria-label="Profile and navigation">
+    <header class="site-header">
+      <div class="header-inner">
+        <a class="site-mark" href="#about" aria-label="Yuhang Lu, home">Yuhang Lu</a>
+        <nav id="site-nav" aria-label="Primary navigation"></nav>
         <div class="language-switch" role="group" aria-label="Language">
           <button type="button" data-language="en" aria-pressed="true">EN</button>
+          <span aria-hidden="true">/</span>
           <button type="button" data-language="zh" aria-pressed="false">中文</button>
         </div>
+      </div>
+    </header>
+
+    <div class="site-shell">
+      <aside class="profile-rail" aria-label="Profile">
         <div id="profile"></div>
-        <nav id="site-nav" aria-label="Primary navigation"></nav>
       </aside>
 
       <main id="main-content" tabindex="-1">
@@ -78,11 +85,6 @@
         <section class="page-section" id="news" aria-labelledby="news-title">
           <div class="section-heading" id="news-heading"></div>
           <div class="news-list" id="news-list"></div>
-        </section>
-
-        <section class="page-section featured-section" id="featured" aria-labelledby="featured-title">
-          <div class="section-heading" id="featured-heading"></div>
-          <div id="featured-project"></div>
         </section>
 
         <section class="page-section" id="research" aria-labelledby="research-title">
@@ -120,6 +122,16 @@
         </footer>
       </main>
     </div>
+
+    <dialog class="image-viewer" id="image-viewer" aria-labelledby="image-viewer-caption">
+      <div class="image-viewer-panel">
+        <button class="image-viewer-close" type="button" aria-label="Close image">
+          <span aria-hidden="true">&times;</span>
+        </button>
+        <img id="image-viewer-image" alt="" />
+        <p id="image-viewer-caption"></p>
+      </div>
+    </dialog>
 
     <noscript>
       <div class="noscript-fallback">

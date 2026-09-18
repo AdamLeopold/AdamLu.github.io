@@ -16,8 +16,6 @@ window.HOMEPAGE_CONTENT = {
 
   navigation: [
     { href: "#about", label: { en: "About", zh: "简介" } },
-    { href: "#news", label: { en: "News", zh: "动态" } },
-    { href: "#featured", label: { en: "LEAN-LLM-OPT", zh: "LEAN-LLM-OPT" } },
     { href: "#research", label: { en: "Research", zh: "研究" } },
     { href: "#papers", label: { en: "Working Papers", zh: "工作论文" } },
     { href: "#platforms", label: { en: "Platforms", zh: "研究平台" } },
@@ -27,15 +25,15 @@ window.HOMEPAGE_CONTENT = {
   headings: {
     news: {
       eyebrow: { en: "Updates", zh: "近期动态" },
-      title: { en: "News", zh: "News" },
+      title: { en: "News", zh: "近期动态" },
     },
     featured: {
-      eyebrow: { en: "Featured Research", zh: "重点工作" },
+      eyebrow: { en: "Primary project", zh: "重点项目" },
       title: { en: "AI for Optimization", zh: "AI for Optimization" },
     },
     research: {
-      eyebrow: { en: "Current Research", zh: "当前研究" },
-      title: { en: "Research Projects", zh: "研究项目" },
+      eyebrow: { en: "Current work", zh: "当前工作" },
+      title: { en: "Selected Research", zh: "主要研究" },
     },
     papers: {
       eyebrow: { en: "Papers in Progress", zh: "在研论文" },
@@ -90,10 +88,10 @@ window.HOMEPAGE_CONTENT = {
   },
 
   about: {
-    eyebrow: { en: "Research Profile", zh: "研究简介" },
+    eyebrow: { en: "About", zh: "简介" },
     title: {
-      en: "Economic systems, decision models, and the ways people and AI act within them.",
-      zh: "研究经济系统、决策模型，以及人与人工智能在其中如何行动。",
+      en: "About Me",
+      zh: "关于我",
     },
     paragraphs: [
       {
