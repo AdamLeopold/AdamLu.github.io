@@ -3,166 +3,141 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light" />
     <meta
       name="description"
-      content="Lu Yuhang, PhD student at NTU CCDS-AI. Research on LLMs for optimization modeling, multi-agent reasoning, and operations research."
+      content="Yuhang (Adam) Lu is a PhD student in Computer Science at NTU CCDS and a member of GIFTS. His research covers economic world models, healthcare economics, large language models, optimization, and agent-based simulation."
     />
-    <title>Lu Yuhang</title>
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Yuhang (Adam) Lu" />
+    <meta
+      property="og:description"
+      content="Research in economic world models, healthcare economics, large language models, optimization, and agent-based simulation."
+    />
+    <meta property="og:url" content="https://adamleopold.github.io/AdamLu.github.io/" />
+    <link rel="canonical" href="https://adamleopold.github.io/AdamLu.github.io/" />
+    <link
+      rel="icon"
+      type="image/svg+xml"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='8' fill='%23134f42'/%3E%3Cpath d='M14 15h8v27h15v7H14zm25 0h8v34h-8z' fill='white'/%3E%3C/svg%3E"
+    />
+    <title>Yuhang (Adam) Lu</title>
     <link rel="stylesheet" href="styles.css" />
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "Person",
+        "name": "Yuhang Lu",
+        "alternateName": ["Yuhang (Adam) Lu", "卢宇航"],
+        "url": "https://adamleopold.github.io/AdamLu.github.io/",
+        "image": "https://adamleopold.github.io/AdamLu.github.io/assets/lu-yuhang-photo.jpg",
+        "email": "mailto:lu012933@126.com",
+        "sameAs": ["https://github.com/AdamLeopold"],
+        "affiliation": [
+          {
+            "@type": "CollegeOrUniversity",
+            "name": "Nanyang Technological University"
+          },
+          {
+            "@type": "Organization",
+            "name": "Global Institute of Finance, Technology, and Society"
+          }
+        ],
+        "alumniOf": [
+          {
+            "@type": "CollegeOrUniversity",
+            "name": "National University of Singapore"
+          },
+          {
+            "@type": "CollegeOrUniversity",
+            "name": "Xi'an Jiaotong University"
+          }
+        ]
+      }
+    </script>
   </head>
   <body>
-    <div class="page">
-      <header class="site-header">
-        <a class="nameplate" href="#top">Lu Yuhang</a>
-        <nav aria-label="Primary navigation">
-          <a href="#lean">LEAN-LLM-OPT</a>
-          <a href="#work">Research</a>
-          <a href="#education">Education</a>
-          <a href="#contact">Contact</a>
-        </nav>
-      </header>
+    <a class="skip-link" href="#main-content">Skip to content</a>
 
-      <main id="top">
-        <section class="hero">
-          <div class="hero-text">
-            <p class="smallcaps">PhD Student · NTU CCDS-AI</p>
-            <h1>Lu Yuhang</h1>
-            <p class="lead">
-              I am a PhD student in CCDS-AI at Nanyang Technological University,
-              advised by Prof. Lin William Cong and Prof. An Bo.
-            </p>
-            <p>
-              My current work studies how large language models can formulate
-              optimization problems from natural language and user-provided data.
-              I am especially interested in model generation, retrieval,
-              solver-ready code, and evaluation for operations research tasks.
-            </p>
-            <div class="links">
-              <a href="mailto:lu012933@126.com">Email</a>
-              <a href="assets/LuYuhang-CV-NTU.pdf" target="_blank" rel="noreferrer">CV</a>
-              <a href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=5329027" target="_blank" rel="noreferrer">LEAN-LLM-OPT</a>
-            </div>
-          </div>
-          <figure class="portrait">
-            <img src="assets/lu-yuhang-photo.jpg" alt="Lu Yuhang" />
-          </figure>
+    <div class="site-shell">
+      <aside class="profile-rail" aria-label="Profile and navigation">
+        <div class="language-switch" role="group" aria-label="Language">
+          <button type="button" data-language="en" aria-pressed="true">EN</button>
+          <button type="button" data-language="zh" aria-pressed="false">中文</button>
+        </div>
+        <div id="profile"></div>
+        <nav id="site-nav" aria-label="Primary navigation"></nav>
+      </aside>
+
+      <main id="main-content" tabindex="-1">
+        <section class="intro-section" id="about" aria-labelledby="about-title">
+          <div id="about-content"></div>
+          <div id="recruitment"></div>
         </section>
 
-        <section class="lean" id="lean" aria-labelledby="lean-title">
-          <div class="section-title">
-            <p class="smallcaps">Main Project</p>
-            <h2 id="lean-title">LEAN-LLM-OPT</h2>
-          </div>
-          <div class="lean-layout">
-            <div class="lean-copy">
-              <p class="paper-title">
-                A Lightweight Multi-Agent LLM Framework for Large-Scale Automated Optimization Modeling
-              </p>
-              <p>
-                LEAN-LLM-OPT is a multi-agent framework for turning optimization
-                problem descriptions and tabular data into mathematical models,
-                LP files, and executable Gurobi code.
-              </p>
-              <p>
-                The system first classifies the problem type, retrieves similar
-                examples and relevant user data, builds a workflow, and then
-                generates the final model and code. The framework is designed for
-                classical operations research settings such as network flow,
-                resource allocation, transportation, and knapsack-style problems.
-              </p>
-              <dl class="facts">
-                <div>
-                  <dt>Benchmark</dt>
-                  <dd>95.1% on NL4OPT</dd>
-                </div>
-                <div>
-                  <dt>Data</dt>
-                  <dd>10k+ row tables handled through retrieval</dd>
-                </div>
-                <div>
-                  <dt>Output</dt>
-                  <dd>LP model, Python code, and solver result</dd>
-                </div>
-              </dl>
-            </div>
-            <figure class="framework">
-              <img src="assets/lean-llm-opt-framework.png" alt="LEAN-LLM-OPT framework diagram" />
-            </figure>
-          </div>
+        <section class="page-section" id="news" aria-labelledby="news-title">
+          <div class="section-heading" id="news-heading"></div>
+          <div class="news-list" id="news-list"></div>
         </section>
 
-        <section class="section" id="work" aria-labelledby="work-title">
-          <div class="section-title">
-            <p class="smallcaps">Research</p>
-            <h2 id="work-title">Selected Work</h2>
-          </div>
-          <div class="work-list" id="work-list"></div>
+        <section class="page-section featured-section" id="featured" aria-labelledby="featured-title">
+          <div class="section-heading" id="featured-heading"></div>
+          <div id="featured-project"></div>
         </section>
 
-        <section class="section" id="education" aria-labelledby="education-title">
-          <div class="section-title">
-            <p class="smallcaps">Background</p>
-            <h2 id="education-title">Education</h2>
-          </div>
-          <div class="timeline">
-            <article>
-              <time>2026 - Present</time>
-              <h3>Nanyang Technological University</h3>
-              <p>PhD student, CCDS-AI. Advisors: Prof. Lin William Cong and Prof. An Bo.</p>
-            </article>
-            <article>
-              <time>2024 - 2025</time>
-              <h3>National University of Singapore</h3>
-              <p>Research Assistant, Industrial Systems Engineering and Management. Advisor: Prof. Qin Hanzhang.</p>
-            </article>
-            <article>
-              <time>2023 - 2024</time>
-              <h3>National University of Singapore</h3>
-              <p>Master's study in Industrial Systems Engineering and Management.</p>
-            </article>
-            <article>
-              <time>2019 - 2023</time>
-              <h3>Xi'an Jiaotong University</h3>
-              <p>Bachelor's study in Science and Technology of Human Settlements. GPA 3.65/4.0, rank 2/22.</p>
-            </article>
-            <article>
-              <time>2021</time>
-              <h3>University of California, Berkeley</h3>
-              <p>Exchange study in urban planning and environmental data analysis.</p>
-            </article>
-          </div>
+        <section class="page-section" id="research" aria-labelledby="research-title">
+          <div class="section-heading" id="research-heading"></div>
+          <div class="research-list" id="research-list"></div>
         </section>
 
-        <section class="section" aria-labelledby="awards-title">
-          <div class="section-title">
-            <p class="smallcaps">Awards</p>
-            <h2 id="awards-title">Awards and Patent</h2>
-          </div>
-          <div class="award-grid">
-            <article>
-              <h3>National First Prize</h3>
-              <p>National University Student Social Practice and Science Contest on Energy Saving and Emission Reduction.</p>
-            </article>
-            <article>
-              <h3>National Excellent Awards</h3>
-              <p>Three Undergraduate Innovation and Entrepreneurship projects, including chemistry education, desert management, and underwater energy harvesting.</p>
-            </article>
-            <article>
-              <h3>Patent 202210547923.3</h3>
-              <p>Environmental energy device for deep-ocean energy harvesting using piezoelectric and thermoelectric components.</p>
-            </article>
-          </div>
+        <section class="page-section" id="papers" aria-labelledby="papers-title">
+          <div class="section-heading" id="papers-heading"></div>
+          <div class="paper-list" id="paper-list"></div>
         </section>
 
-        <section class="contact" id="contact" aria-labelledby="contact-title">
-          <h2 id="contact-title">Contact</h2>
-          <p>
-            Email:
-            <a href="mailto:lu012933@126.com">lu012933@126.com</a>
-          </p>
+        <section class="page-section" id="platforms" aria-labelledby="platforms-title">
+          <div class="section-heading" id="platforms-heading"></div>
+          <div class="platform-list" id="platform-list"></div>
         </section>
+
+        <section class="page-section" id="earlier" aria-labelledby="earlier-title">
+          <div class="section-heading" id="earlier-heading"></div>
+          <div class="compact-list" id="earlier-list"></div>
+        </section>
+
+        <section class="page-section" id="background" aria-labelledby="background-title">
+          <div class="section-heading" id="background-heading"></div>
+          <div class="timeline" id="background-list"></div>
+        </section>
+
+        <section class="page-section" id="awards" aria-labelledby="awards-title">
+          <div class="section-heading" id="awards-heading"></div>
+          <div class="award-list" id="award-list"></div>
+        </section>
+
+        <footer class="site-footer" id="contact">
+          <div id="contact-content"></div>
+        </footer>
       </main>
     </div>
+
+    <noscript>
+      <div class="noscript-fallback">
+        <h1>Yuhang (Adam) Lu</h1>
+        <p>
+          PhD student in Computer Science at NTU CCDS and member of the Global Institute of Finance,
+          Technology, and Society. Research interests include economic world models, healthcare
+          economics, large language models, optimization, and agent-based simulation.
+        </p>
+        <p>
+          <a href="mailto:lu012933@126.com">Email</a>
+          <a href="https://github.com/AdamLeopold">GitHub</a>
+          <a href="assets/LuYuhang-CV-NTU.pdf">CV</a>
+        </p>
+      </div>
+    </noscript>
+
+    <script src="content.js"></script>
     <script src="script.js"></script>
   </body>
 </html>
