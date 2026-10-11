@@ -9,8 +9,8 @@ window.HOMEPAGE_CONTENT = {
       zh: "卢宇航，南洋理工大学计算机与数据科学学院计算机科学博士生，研究经济世界模型、医疗经济学中的人工智能、大语言模型、智能优化与智能体仿真。",
     },
     lastUpdated: {
-      en: "Last substantive update: September 2026",
-      zh: "最近一次实质更新：2026 年 9 月",
+      en: "Last substantive update: October 2026",
+      zh: "最近一次实质更新：2026 年 10 月",
     },
   },
 
@@ -248,18 +248,25 @@ window.HOMEPAGE_CONTENT = {
     {
       id: "hcc-intent",
       category: { en: "AI and Healthcare Economics", zh: "人工智能与医疗经济学" },
-      title: "HCC-INTENT",
+      title: "HCC-INTENT / BIOAGENT",
+      fullTitle: {
+        en: "LiverCancer: Longitudinal Hepatocellular Carcinoma Research",
+        zh: "LiverCancer：肝细胞癌纵向研究",
+      },
       period: { en: "2026 - present", zh: "2026 年至今" },
-      status: { en: "Research in progress", zh: "研究进行中" },
+      status: {
+        en: "Research prototype; clinical and external validation in progress",
+        zh: "研究原型；临床与外部验证进行中",
+      },
       role: { en: "Project lead", zh: "项目负责人" },
       paragraphs: [
         {
-          en: "HCC-INTENT is a longitudinal decision-research pipeline for reconstructing clinical state, treatment intent, observed action, and follow-up transitions from hepatocellular carcinoma records. The goal is to study the full decision process rather than predict a single endpoint in isolation.",
-          zh: "HCC-INTENT 是一个纵向决策研究流程，用于从肝细胞癌记录中重建临床状态、治疗意图、实际行动和随访变化。研究重点是理解完整决策过程，而不是孤立地预测某一个终点。",
+          en: "The LiverCancer project organizes longitudinal clinical records to reconstruct clinical state, treatment intent, planned actions, observed actions, and subsequent state transitions in hepatocellular carcinoma. HCC-INTENT studies this sequence using clinical evidence and longitudinal models.",
+          zh: "LiverCancer 项目整理肝细胞癌纵向临床记录，重建病情、治疗意图、计划行动、实际行动及后续状态变化。HCC-INTENT 结合临床证据与纵向模型研究这一连续过程。",
         },
         {
-          en: "Candidate datasets and a working study design are available. Clinical labeling, governance review, and external validation are ongoing; this is a research pipeline, not a deployed clinical decision system.",
-          zh: "目前已有候选数据集和可执行的研究设计。临床标注、治理审查和外部验证仍在进行；现阶段是研究流程，不是已经部署的临床决策系统。",
+          en: "BIOAGENT provides the research workbench, with HCC-INTENT as its hepatocellular carcinoma research branch. Clinical labeling, governance review, and external validation remain in progress.",
+          zh: "BIOAGENT 提供研究工作台，HCC-INTENT 是其中的肝细胞癌研究分支。临床标注、治理审查和外部验证仍在进行。",
         },
       ],
       image: {
@@ -272,6 +279,26 @@ window.HOMEPAGE_CONTENT = {
           zh: "当前的 HCC-INTENT 概念框架；临床与实验验证仍在推进中。",
         },
       },
+    },
+    {
+      id: "panorama-gifts-medical-ai",
+      category: { en: "AI and Healthcare Economics", zh: "人工智能与医疗经济学" },
+      title: "Panorama × GIFTS",
+      fullTitle: {
+        en: "Multimodal Medical Imaging and Longitudinal Clinical Care",
+        zh: "全景医学影像合作：多模态影像与连续诊疗研究",
+      },
+      status: { en: "Joint research planning", zh: "联合研究筹备" },
+      paragraphs: [
+        {
+          en: "The planned collaboration between Panorama Medical Imaging and GIFTS studies multimodal medical imaging and longitudinal clinical care, connecting imaging, clinical evidence, planned and observed actions, subsequent outcomes, and costs along a common timeline.",
+          zh: "全景医学影像与 GIFTS 的联合研究拟围绕多模态医学影像与连续诊疗展开，将影像、临床证据、计划与实际行动、后续结局和费用连接到同一时间线上。",
+        },
+        {
+          en: "Research directions include physician agents, patient-state simulation, information acquisition, and healthcare resource allocation. The program will examine how these methods support evidence organization, state updates, and trade-offs among clinical quality, expert time, computing resources, and costs.",
+          zh: "研究方向包括医生智能体、患者状态仿真、信息获取和医疗资源配置，拟研究这些方法如何支持证据整理、状态更新，以及临床质量、专家时间、算力与成本之间的权衡。",
+        },
+      ],
     },
   ],
 
