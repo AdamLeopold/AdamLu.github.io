@@ -111,7 +111,7 @@ window.HOMEPAGE_CONTENT = {
     focusLabel: { en: "Research areas", zh: "研究方向" },
     focus: [
       { en: "Economic World Models", zh: "经济世界模型" },
-      { en: "AI and Healthcare Economics", zh: "人工智能与医疗经济学" },
+      { en: "AI for Healthcare Economics", zh: "面向医疗经济学的人工智能" },
       { en: "Large Language Models", zh: "大语言模型" },
       { en: "AI for Optimization", zh: "智能优化" },
       { en: "FinTech and Agent-Based Simulation", zh: "金融科技与智能体仿真" },
@@ -247,7 +247,7 @@ window.HOMEPAGE_CONTENT = {
     },
     {
       id: "hcc-intent",
-      category: { en: "AI and Healthcare Economics", zh: "人工智能与医疗经济学" },
+      category: { en: "AI for Healthcare Economics", zh: "面向医疗经济学的人工智能" },
       title: "HCC-INTENT / BIOAGENT",
       fullTitle: {
         en: "LiverCancer: Longitudinal Hepatocellular Carcinoma Research",
@@ -282,7 +282,7 @@ window.HOMEPAGE_CONTENT = {
     },
     {
       id: "panorama-gifts-medical-ai",
-      category: { en: "AI and Healthcare Economics", zh: "人工智能与医疗经济学" },
+      category: { en: "AI for Healthcare Economics", zh: "面向医疗经济学的人工智能" },
       title: "Panorama × GIFTS",
       fullTitle: {
         en: "Multimodal Medical Imaging and Longitudinal Clinical Care",
