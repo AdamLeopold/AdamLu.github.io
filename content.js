@@ -346,7 +346,7 @@ window.HOMEPAGE_CONTENT = {
       peopleLabel: { en: "Working with", zh: "合作研究" },
       people: [
         { name: "Prof. Lin William Cong", url: "https://www.linwilliamcong.com/" },
-        { name: "Wu Zhu" },
+        { name: "Wu Zhu", url: "https://www.sem.tsinghua.edu.cn/en/info/1216/7050.htm" },
       ],
     },
     {
