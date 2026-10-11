@@ -299,6 +299,19 @@ window.HOMEPAGE_CONTENT = {
           zh: "研究方向包括医生智能体、患者状态仿真、信息获取和医疗资源配置，拟研究这些方法如何支持证据整理、状态更新，以及临床质量、专家时间、算力与成本之间的权衡。",
         },
       ],
+      image: {
+        src: "assets/panorama-gifts-framework.png",
+        width: 2160,
+        height: 1176,
+        alt: {
+          en: "Planned Panorama × GIFTS framework linking longitudinal imaging evidence, physician agents, patient-state simulation, and healthcare resource allocation",
+          zh: "全景 × GIFTS 拟议研究框架：连接纵向影像证据、医生智能体、患者状态仿真与医疗资源配置",
+        },
+        caption: {
+          en: "Planned Panorama × GIFTS research framework. Diagram labels are in Chinese; joint research planning is in progress.",
+          zh: "全景 × GIFTS 拟议研究框架；联合研究仍在筹备中。",
+        },
+      },
     },
   ],
 
