@@ -130,6 +130,14 @@ window.HOMEPAGE_CONTENT = {
 
   updates: [
     {
+      date: "2026-10",
+      title: { en: "Economic World Model Challenge", zh: "经济世界模型挑战赛" },
+      text: {
+        en: "The competition website is public. I serve as Challenge Coordinator; track schedules and participation details are listed on the site.",
+        zh: "比赛网站已公开。我担任比赛协调人；各赛道日程与参与方式见比赛网站。",
+      },
+    },
+    {
       date: "2026",
       title: { en: "NTU and GIFTS", zh: "NTU 与 GIFTS" },
       text: {
@@ -364,13 +372,14 @@ window.HOMEPAGE_CONTENT = {
 
   platforms: [
     {
-      title: "SimuWorld",
-      status: { en: "Platform and white paper in development", zh: "平台与白皮书开发中" },
-      role: { en: "Co-lead", zh: "共同负责人" },
+      title: "Economic World Model Challenge (SimuWorld)",
+      status: { en: "Competition website public; tracks in preparation", zh: "比赛网站已公开；赛道筹备中" },
+      role: { en: "Co-lead; Challenge Coordinator", zh: "共同负责人；比赛协调人" },
       description: {
-        en: "A proposed evaluation platform where agents are submitted to sandboxed simulations, scored on defined tasks, and compared through run histories and leaderboards. The platform has not been publicly launched.",
-        zh: "一个面向智能体评测的平台方案：将智能体提交到隔离的仿真环境中，按照明确任务评分，并通过运行记录和排行榜进行比较。平台尚未公开上线。",
+        en: "A competition built around economic world models and multi-agent simulation, hosted by GIFTS and Nanyang Business School at NTU. Tracks cover DeFi strategy, protocol risk, and city planning. The public website introduces the tracks and organising committee; it does not establish completed evaluations or a fully launched submission platform.",
+        zh: "围绕经济世界模型与多智能体仿真的比赛，由南洋理工大学 GIFTS 与南洋理工商学院主办。赛道涵盖 DeFi 策略、协议风险与城市规划。公开网站介绍赛道与组委会；这不代表评测已经完成或提交平台已全面上线。",
       },
+      link: { url: "https://adamleopold.github.io/ewm-challenge/", label: { en: "Competition website", zh: "比赛网站" } },
     },
     {
       title: "HoloBit",
@@ -389,6 +398,16 @@ window.HOMEPAGE_CONTENT = {
         en: "A market design for agents to buy and sell tools, compute, and services, with SC for settlement and VCU for compute measurement. It is a research and design artifact: no token has been issued and no live market is claimed.",
         zh: "一个面向智能体工具、算力和服务交易的市场设计，使用 SC 进行结算、VCU 衡量算力。该工作目前是研究与方案设计成果，尚未发行代币，也不是运行中的交易市场。",
       },
+    },
+    {
+      title: "TTF News",
+      status: { en: "Public research prototype", zh: "公开研究原型" },
+      role: { en: "Current project", zh: "当前项目" },
+      description: {
+        en: "A bilingual gas-news analysis workbench with public source code and a website snapshot. It separates source facts, supply-demand mechanisms, and settlement scenarios. Predictive performance has not been validated, and the initial seven-day continuous-operation check did not pass. New analyses require a running backend.",
+        zh: "一个双语天然气新闻分析工作台，已公开源码与网站快照，区分来源事实、供需机制和结算情景。预测效果尚未验证，首轮七天连续运行验收未通过；生成新分析需要后端服务在线。",
+      },
+      link: { url: "https://github.com/AdamLeopold/news-agent-standalone", label: { en: "Source code and prototype", zh: "源码与原型" } },
     },
   ],
 

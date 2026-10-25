@@ -274,7 +274,7 @@ function renderPlatforms() {
       (platform, index) => `
         <article class="platform-entry" data-reveal style="--reveal-delay: ${Math.min(index * 40, 120)}ms">
           <div>
-            <h3>${escapeHTML(platform.title)}</h3>
+            <h3>${platform.link ? `<a href="${escapeHTML(platform.link.url)}" target="_blank" rel="noopener noreferrer" aria-label="${escapeHTML(platform.title)}: ${escapeHTML(localize(platform.link.label))}">${escapeHTML(platform.title)} ↗</a>` : escapeHTML(platform.title)}</h3>
             ${renderStatus(platform.status, platform.role)}
           </div>
           <p>${escapeHTML(localize(platform.description))}</p>
