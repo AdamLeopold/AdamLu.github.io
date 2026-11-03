@@ -357,6 +357,8 @@ const CYCLE_STEPS = [
       transformations: [{node: 'solution', kind: 'result', label: text('模型 · 程序 · 求解结果', 'Formulation · program · solver result')}],
     }),
 ];
+export const TEACHING_TIME_SCALE = 1.65;
+for (const step of CYCLE_STEPS) step.durationMs = Math.round(step.durationMs * TEACHING_TIME_SCALE);
 export const TEACHING_CYCLE = {
   id: 'tp-demo-cycle', exampleId: JOURNEY_EXAMPLE.id, route: 'tailored',
   durationMs: CYCLE_STEPS.reduce((sum, step) => sum + step.durationMs, 0),
@@ -391,6 +393,47 @@ export function sampleTeachingCycle(elapsedMs = 0) {
     activeEdges: step.activeEdges, transformations: step.transformations, context: step.context,
     input: step.input, output: step.output,
   };
+}
+
+/** Two phase-shifted walkthroughs of the same recorded teaching input. */
+export const TEACHING_STREAMS = Object.freeze([
+  Object.freeze({
+    streamId: 'primary', taskIndex: 1, phaseOffset: 0, offsetMs: 0,
+    exampleId: JOURNEY_EXAMPLE.id, label: text('教学流 1', 'Teaching stream 1'),
+    marks: Object.freeze({query: 'Q1', data: 'D1', reference: 'R1'}),
+    ids: Object.freeze({query: QUERY_ID, data: DATA_ID, reference: REFERENCE_ID}),
+  }),
+  Object.freeze({
+    streamId: 'secondary', taskIndex: 2, phaseOffset: .45,
+    offsetMs: TEACHING_CYCLE.durationMs * .45,
+    exampleId: JOURNEY_EXAMPLE.id, label: text('教学流 2', 'Teaching stream 2'),
+    marks: Object.freeze({query: 'Q2', data: 'D2', reference: 'R2'}),
+    ids: Object.freeze({query: `${QUERY_ID}-secondary`, data: `${DATA_ID}-secondary`, reference: `${REFERENCE_ID}-secondary`}),
+  }),
+]);
+
+function labelTeachingInstance(value, stream) {
+  if (typeof value === 'string') {
+    const id = Object.entries(TEACHING_STREAMS[0].ids).find(([, original]) => original === value);
+    if (id) return stream.ids[id[0]];
+    return value.replace(/\bQ1\b/g, stream.marks.query).replace(/\bD1\b/g, stream.marks.data)
+      .replace(/\bR1?\b/g, stream.marks.reference);
+  }
+  if (Array.isArray(value)) return value.map(item => labelTeachingInstance(item, stream));
+  if (value && typeof value === 'object') return Object.fromEntries(
+    Object.entries(value).map(([key, item]) => [key, labelTeachingInstance(item, stream)]),
+  );
+  return value;
+}
+
+export function sampleTeachingFlows(elapsedMs = 0) {
+  const supplied = Number(elapsedMs), elapsed = Number.isFinite(supplied) ? Math.max(0, supplied) : 0;
+  return TEACHING_STREAMS.map(stream => {
+    const sampled = sampleTeachingCycle(elapsed + stream.offsetMs);
+    const frame = stream.taskIndex === 1 ? sampled : labelTeachingInstance(sampled, stream);
+    return {...frame, streamId: stream.streamId, taskIndex: stream.taskIndex,
+      exampleId: stream.exampleId, globalElapsedMs: elapsed, offsetMs: stream.offsetMs};
+  });
 }
 
 export function activeEdges(route = 'tailored') {
