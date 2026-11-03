@@ -2,11 +2,11 @@
   "format": "lean-llm-opt-static-v1",
   "deployment": "static",
   "demo": "local-only",
-  "builtAt": "2026-11-03T03:06:07.455Z",
-  "runtimeFileCount": 17,
-  "fileCount": 19,
-  "payloadBytes": 1651740,
-  "totalBytes": 1654596,
+  "builtAt": "2026-11-03T04:32:21.672Z",
+  "runtimeFileCount": 18,
+  "fileCount": 20,
+  "payloadBytes": 1669195,
+  "totalBytes": 1672200,
   "hashAlgorithm": "sha256",
   "files": {
     ".nojekyll": {
@@ -14,20 +14,24 @@
       "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     },
     "assets/app.js": {
-      "bytes": 47404,
-      "sha256": "60b9fc8931f422b20ea435ca0aa920eabf8446be6a79c25e694153e41362ddc3"
+      "bytes": 51432,
+      "sha256": "87dc32f2dadfa128dc424bf9269d234675a7cc2e8b3a4a44bb2d18d865685a4d"
     },
     "assets/favicon.svg": {
       "bytes": 250,
       "sha256": "14c83a5ebc0d55dfcac765b16dd621cef32fbf51ae5260e5362d6706ca44889e"
     },
     "assets/framework-3d.css": {
-      "bytes": 10182,
-      "sha256": "1e128db46644a5540b0dddb8d728f9245a2e141fc0deb18d1618df673298930d"
+      "bytes": 10575,
+      "sha256": "006733c921dfb17138205722d9902b3d11cd7f6368e1c1c6b9d4e12e6cca3994"
     },
     "assets/framework-3d.js": {
-      "bytes": 70532,
-      "sha256": "8ce38efe7e67d02a98c8d869f2c30276ae8975d649a6d6003086b37458678862"
+      "bytes": 60069,
+      "sha256": "49441e247d931e0c431fad7b40fe3c5a1334cf7c8b3a4edc008820f52cfdf729"
+    },
+    "assets/framework-objects.js": {
+      "bytes": 23505,
+      "sha256": "165bd2cf260e9d565d5604e06d105c77fe28f6c0cf10afbc29e82a62d1a4686a"
     },
     "assets/framework-topology.js": {
       "bytes": 41907,
@@ -78,8 +82,8 @@
       "sha256": "d15d2c1db282122b170697a44c1a87961d3266f8d803948d470218c22c652275"
     },
     "index.html": {
-      "bytes": 22479,
-      "sha256": "49d29fadd0f9e444c82922bdb9384656847786ea05c9ee8acba3ab9cbe077804"
+      "bytes": 22471,
+      "sha256": "67434627958608e412fa2e1538d521726297dad7c89e0a56368b053b9a35aa30"
     }
   }
 }
