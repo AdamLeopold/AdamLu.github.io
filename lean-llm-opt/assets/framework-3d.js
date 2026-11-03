@@ -1,8 +1,10 @@
 import * as THREE from './vendor/three/three.module.js';
-import {buildFrameworkObject,svgFrameworkObject,OBJECT_PROFILES} from './framework-objects.js?v=spatial-20261103-1';
-import {computeFlowRoute,sampleFlowRoute} from './framework-routes.js?v=spatial-20261103-1';
-import * as topology from './framework-topology.js?v=spatial-20261103-1';
-export {TOPOLOGY,STAGES,TEACHING_CYCLE,sampleTeachingCycle,sampleTeachingFlows} from './framework-topology.js?v=spatial-20261103-1';
+import {buildFrameworkObject,svgFrameworkObject,OBJECT_PROFILES} from './framework-objects.js?v=depth-20261103-1';
+import {computeFlowRoute,sampleFlowRoute} from './framework-routes.js?v=depth-20261103-1';
+import {toDepthPoint,toDepthDirection,computeDepthCameraPose} from './framework-depth.js?v=depth-20261103-1';
+export {toDepthPoint,toDepthDirection} from './framework-depth.js?v=depth-20261103-1';
+import * as topology from './framework-topology.js?v=depth-20261103-1';
+export {TOPOLOGY,STAGES,TEACHING_CYCLE,sampleTeachingCycle,sampleTeachingFlows} from './framework-topology.js?v=depth-20261103-1';
 const {TOPOLOGY,STAGES,NODE_BY_ID,activeEdges,resolveRunEvent,TEACHING_CYCLE,sampleTeachingCycle,sampleTeachingFlows}=topology;
 export const STATIONS=TOPOLOGY.groups||[];
 const clamp=(n,a=0,b=1)=>Math.max(a,Math.min(b,n));
@@ -20,6 +22,7 @@ const SHOT_FOCUS=[null,['query','csv'],['classification'],['workflow'],['model',
 export const OBJECT_SCALE=.64;
 export const flowStrokeWidth=active=>active?3.8:2.8;
 export const scaledFootprint=(fp,scale=OBJECT_SCALE)=>Object.fromEntries(Object.entries(fp).map(([k,v])=>[k,['width','height','depth','minX','maxX','minY','maxY','minZ','maxZ'].includes(k)?v*scale:v]));
+export function depthRoutingFootprint(fp){const minZ=fp.minZ??-.35,maxZ=fp.maxZ??.65,minX=fp.minX??-fp.width/2,maxX=fp.maxX??fp.width/2;return{width:(maxZ-minZ)/1.2,height:maxX-minX,minX:minZ/1.2,maxX:maxZ/1.2,minY:-maxX,maxY:-minX};}
 class FlowCurve extends THREE.Curve{
  constructor(route){super();this.route=route;}
  getPoint(t,target=new THREE.Vector3()){return target.fromArray(sampleFlowRoute(this.route,t).point);}
@@ -41,13 +44,7 @@ export function computeFraming({positions,footprints=new Map(),stage=0,selected=
  return{center,span,aspect:ratio,worldBounds,focusIds:ids,visibleNodeIds,mode:full?'overview':selected?'module':'step'};
 }
 
-export function computeCameraPose({center,span,aspect=1,stage=0,selected=null,hero=false,zoom=1}){
- const overview=hero||stage===0&&!selected,mobile=aspect<1;
- const angles=overview?[mobile?-.10:.10,mobile?.07:.13]:[[-.2,.17],[-.24,.18],[-.32,.12],[.28,-.17],[-.26,.19],[.30,-.13],[.18,.16]][stage]||[-.2,.15];
- const yaw=angles[0]*(mobile?.68:1)+(overview?0:(1-zoom)*.15),pitch=angles[1]*(mobile?.75:1),fov=42;
- const radius=span/(2*Math.tan(fov*Math.PI/360))*1.08,target=[center.x,center.y,.22];
- return{position:[target[0]+Math.sin(yaw)*Math.cos(pitch)*radius,target[1]+Math.sin(pitch)*radius,target[2]+Math.cos(yaw)*Math.cos(pitch)*radius],target,span,fov,yaw,pitch};
-}
+export function computeCameraPose(options){return computeDepthCameraPose(options);}
 export function sampleCameraFlight(from,to,progress,{reduced=false}={}){
  if(reduced)return{...to,position:[...to.position],target:[...to.target]};
  const t=clamp(progress),u=t*t*(3-2*t),wave=Math.sin(Math.PI*u),dx=to.position[0]-from.position[0],dy=to.position[1]-from.position[1],length=Math.hypot(dx,dy)||1;
@@ -184,16 +181,22 @@ export function createFramework({heroHost,detailHost,onStageChange=()=>{},onNode
   for(const edge of TOPOLOGY.edges){const material=new THREE.MeshBasicMaterial({color:PALETTES.dark.edge,transparent:true,opacity:.65,depthWrite:false,side:THREE.DoubleSide});const line=new THREE.Mesh(new THREE.BufferGeometry(),material);line.renderOrder=1;
    const arrows=Array.from({length:2},()=>{const arrow=new THREE.Mesh(new THREE.ConeGeometry(.065,.18,6),new THREE.MeshBasicMaterial({color:PALETTES.dark.edge,transparent:true,depthWrite:false}));arrow.renderOrder=2;graph.add(arrow);return arrow;});graph.add(line);links.set(edge.id,{edge,line,arrows,material,layouts:new Map()});}
  }
- function positionsFor(view){const mobile=view.host.clientWidth<760;return new Map(baseNodes().map(n=>[n.id,positionOf(n,mobile)]));}
+ function positionsFor(view){return new Map(baseNodes().map(n=>[n.id,positionOf(n,false)]));}
+ const worldPoint=p=>new THREE.Vector3(...toDepthPoint(p));
+ const worldDirection=p=>new THREE.Vector3(...toDepthDirection(p)).normalize();
  const routeCache=new Map();
  function curveFor(edge,positions){
   const mobile=Math.abs(positions.get('query').y-positions.get('solution').y)>1,key=`${mobile?'m':'d'}|${edge.id}`;
-  if(!routeCache.has(key))routeCache.set(key,new FlowCurve(computeFlowRoute(edge,positions,footprintsFor(),{mobile,z:.32})));
+  if(!routeCache.has(key))routeCache.set(key,new FlowCurve(computeFlowRoute(edge,positions,routingFootprintsFor(),{mobile,z:.32})));
   return routeCache.get(key);
  }
- function ribbonGeometry(curve,width,dashWorld=0){
+ const worldRouteCache=new Map();
+ function worldCurveFor(edge,positions){
+  const source=curveFor(edge,positions);if(!worldRouteCache.has(source)){const points=source.route.points.map(toDepthPoint),distances=[0];for(let i=1;i<points.length;i++)distances.push(distances.at(-1)+Math.hypot(...points[i].map((v,k)=>v-points[i-1][k])));worldRouteCache.set(source,new FlowCurve({...source.route,points,distances,length:distances.at(-1)}));}return worldRouteCache.get(source);
+ }
+ function ribbonGeometry(curve,width,dashWorld=0,viewDirection=new THREE.Vector3(0,-.6,-.8)){
   const points=curve.route.points,vertices=[],indices=[];
-  for(let i=0;i<points.length;i++){const a=points[Math.max(0,i-1)],b=points[Math.min(points.length-1,i+1)],dx=b[0]-a[0],dy=b[1]-a[1],length=Math.hypot(dx,dy)||1,nx=-dy/length*width/2,ny=dx/length*width/2,p=points[i];vertices.push(p[0]+nx,p[1]+ny,p[2],p[0]-nx,p[1]-ny,p[2]);if(i<points.length-1&&(!dashWorld||Math.floor((curve.route.distances[i]+curve.route.distances[i+1])/2/dashWorld)%2===0)){const n=i*2;indices.push(n,n+1,n+2,n+1,n+3,n+2);}}
+  for(let i=0;i<points.length;i++){const a=points[Math.max(0,i-1)],b=points[Math.min(points.length-1,i+1)],normal=new THREE.Vector3(b[0]-a[0],b[1]-a[1],b[2]-a[2]).cross(viewDirection).normalize().multiplyScalar(width/2),p=new THREE.Vector3(...points[i]);vertices.push(...p.clone().add(normal).toArray(),...p.clone().sub(normal).toArray());if(i<points.length-1&&(!dashWorld||Math.floor((curve.route.distances[i]+curve.route.distances[i+1])/2/dashWorld)%2===0)){const n=i*2;indices.push(n,n+1,n+2,n+1,n+3,n+2);}}
   const geometry=new THREE.BufferGeometry();geometry.setAttribute('position',new THREE.Float32BufferAttribute(vertices,3));geometry.setIndex(indices);geometry.computeBoundingSphere();return geometry;
  }
  function arrowFractions(view,curve){
@@ -262,23 +265,23 @@ export function createFramework({heroHost,detailHost,onStageChange=()=>{},onNode
   if(state.liveMode)for(const packet of packetsFor(view)){const travel=travelOf(packet,view,now);if(travel?.request)entries.push({kind:packet.kind,path:travel.path,point:travel.request,direction:travel.direction,label:packet.kind==='data'?{zh:'读取请求',en:'Data request'}:{zh:'检索请求',en:'Retrieval request'}});}
   return entries;
  }
- function footprintsFor(){return new Map(baseNodes().map(node=>{const profile=OBJECT_PROFILES[node.id]||OBJECT_PROFILES[iconOf(node)]||{width:2.9,height:2.8};return[node.id,meshes.get(node.id)?.footprint||scaledFootprint(profile)];}));}
- function framingFor(view){return computeFraming({positions:view.positions||positionsFor(view),footprints:footprintsFor(),stage:state.stage,selected:state.selected,hero:view.hero,runNode:state.liveMode?state.run?.nodeId:null,aspect:view.rect.width/view.rect.height,zoom:state.zoom,pan:view.pan,routePoints:routes().flatMap(e=>curveFor(e,view.positions).route.points)});}
+ function footprintsFor(){return new Map(baseNodes().map(node=>{const profile=OBJECT_PROFILES[node.id]||OBJECT_PROFILES[iconOf(node)]||{width:2.9,height:2.8};return[node.id,meshes.get(node.id)?.footprint||scaledFootprint({...profile,depth:profile.depth??1.4,minZ:profile.minZ??-.18,maxZ:profile.maxZ??1.22})];}));}
+ function routingFootprintsFor(){return new Map([...footprintsFor()].map(([id,fp])=>[id,depthRoutingFootprint(fp)]));}
+ function framingFor(view){return computeFraming({positions:view.positions||positionsFor(view),footprints:routingFootprintsFor(),stage:state.stage,selected:state.selected,hero:view.hero,runNode:state.liveMode?state.run?.nodeId:null,aspect:view.rect.width/view.rect.height,zoom:state.zoom,pan:view.pan,routePoints:routes().flatMap(e=>curveFor(e,view.positions).route.points)});}
  function cameraFrame(view,desired){
-  const span=view.span,center={x:view.target.x,y:view.target.y},aspect=desired.aspect;
+  const span=view.span,center={...desired.center},aspect=desired.aspect;
   const worldBounds={left:center.x-span*aspect/2,right:center.x+span*aspect/2,top:center.y+span/2,bottom:center.y-span/2};
   const fps=footprintsFor(),visibleNodeIds=baseNodes().filter(node=>{const p=view.positions.get(node.id),fp=fps.get(node.id);return p.x+fp.width/2>worldBounds.left&&p.x-fp.width/2<worldBounds.right&&p.y+fp.height/2>worldBounds.bottom&&p.y-fp.height/2<worldBounds.top;}).map(n=>n.id);
   const projectedNodeBounds=Object.fromEntries([...fps].map(([id,fp])=>{
-   if(fallback)return[id,{worldWidth:fp.width,worldHeight:fp.height,width:fp.width*view.rect.height/span,height:fp.height*view.rect.height/span}];
-   const p=view.positions.get(id),points=[];for(const x of[fp.minX??-fp.width/2,fp.maxX??fp.width/2])for(const y of[fp.minY??-fp.height/2,fp.maxY??fp.height/2])for(const z of[fp.minZ??0,fp.maxZ??fp.depth??.8])points.push(new THREE.Vector3(p.x+x,p.y+y,p.z+z).project(view.camera));
+   const p=worldPoint(view.positions.get(id)),points=[];for(const x of[fp.minX??-fp.width/2,fp.maxX??fp.width/2])for(const y of[fp.minY??-fp.height/2,fp.maxY??fp.height/2])for(const z of[fp.minZ??0,fp.maxZ??fp.depth??.8])points.push(new THREE.Vector3(p.x+x,p.y+y,p.z+z).project(view.camera));
    const left=Math.min(...points.map(p=>(p.x+1)*view.rect.width/2)),right=Math.max(...points.map(p=>(p.x+1)*view.rect.width/2)),top=Math.min(...points.map(p=>(1-p.y)*view.rect.height/2)),bottom=Math.max(...points.map(p=>(1-p.y)*view.rect.height/2));
    return[id,{worldWidth:fp.width,worldHeight:fp.height,left,right,top,bottom,x:(left+right)/2,y:(top+bottom)/2,width:right-left,height:bottom-top}];
   }));
-  const visible=fallback?visibleNodeIds:baseNodes().filter(n=>{const b=projectedNodeBounds[n.id];return b.right>0&&b.left<view.rect.width&&b.bottom>0&&b.top<view.rect.height;}).map(n=>n.id);
-  return{...desired,center,span,worldBounds,visibleNodeIds:visible,objectScale:OBJECT_SCALE,projectedNodeBounds,camera:!fallback?{position:view.camera.position.toArray(),target:view.target.toArray(),fov:view.camera.fov,flightProgress:view.flight?clamp(view.flight.elapsed/view.flight.duration):1}:null};
+  const visible=baseNodes().filter(n=>{const b=projectedNodeBounds[n.id];return b.right>0&&b.left<view.rect.width&&b.bottom>0&&b.top<view.rect.height;}).map(n=>n.id);
+  return{...desired,center,span,worldBounds,visibleNodeIds:visible,objectScale:OBJECT_SCALE,nodeFootprints:Object.fromEntries(fps),projectedNodeBounds,camera:{position:view.camera.position.toArray(),target:view.target.toArray(),fov:view.camera.fov,flightProgress:view.flight?clamp(view.flight.elapsed/view.flight.duration):1}};
  }
  function fit(view,dt){
-  view.positions=positionsFor(view);const desired=framingFor(view),destination=computeCameraPose({...desired,stage:state.stage,selected:state.selected,hero:view.hero,zoom:state.zoom});
+  view.positions=positionsFor(view);const desired=framingFor(view),destination=computeCameraPose({...desired,stage:state.stage,selected:state.selected,hero:view.hero,zoom:state.zoom,positions:view.positions,footprints:footprintsFor(),routePoints:routes().flatMap(e=>curveFor(e,view.positions).route.points)});
   const signature=JSON.stringify([destination.position,destination.target,destination.span,desired.aspect]);
   if(!view.initialized||state.reduced){view.flightPose=destination;view.flight=null;view.flightSignature=signature;}
   else if(state.free){const previous=view.flightPose||destination,ease=1-Math.exp(-24*dt);view.flight=null;view.flightSignature=signature;view.flightPose={...destination,position:previous.position.map((v,i)=>lerp(v,destination.position[i],ease)),target:previous.target.map((v,i)=>lerp(v,destination.target[i],ease)),span:lerp(previous.span,destination.span,ease)};}
@@ -289,7 +292,7 @@ export function createFramework({heroHost,detailHost,onStageChange=()=>{},onNode
   view.framing=cameraFrame(view,desired);view.focusIds=new Set(desired.focusIds);view.visibleNodeIds=new Set(view.framing.visibleNodeIds);view.initialized=true;
  }
  function visiblePoint(view,point,margin=0){
-  if(!fallback&&view.initialized){const q=point.clone().project(view.camera),m=margin/Math.max(1,view.span)*2;return q.z>=-1&&q.z<=1&&q.x>=-1+m&&q.x<=1-m&&q.y>=-1+m&&q.y<=1-m;}
+  if(view.initialized){const q=worldPoint(point).project(view.camera),m=margin/Math.max(1,view.span)*2;return q.z>=-1&&q.z<=1&&q.x>=-1+m&&q.x<=1-m&&q.y>=-1+m&&q.y<=1-m;}
   const b=view.framing?.worldBounds;return !b||point.x>=b.left+margin&&point.x<=b.right-margin&&point.y>=b.bottom+margin&&point.y<=b.top-margin;
  }
  function guideProgress(node,view,now){
@@ -302,7 +305,7 @@ export function createFramework({heroHost,detailHost,onStageChange=()=>{},onNode
  function pose(view,dt,now){
   fit(view,dt);const focus=stageFocus(view),active=activeLinkIds(view),palette=PALETTES[state.theme],mobile=view.rect.width<760;
   for(const item of meshes.values()){
-   const {node,group,material,faceInk,ink,selection,progress,ledMaterial,shell,parts}=item;group.visible=view.visibleNodeIds.has(node.id);group.position.copy(view.positions.get(node.id));const contextOpacity=view.framing.mode==='overview'||focus.has(node.id)?1:.52;group.traverse(o=>{for(const m of(Array.isArray(o.material)?o.material:[o.material])){if(!m||m.visible===false)continue;if(!m.transparent){m.transparent=true;m.needsUpdate=true;}m.userData.baseOpacity??=m.opacity;m.opacity=m.userData.baseOpacity*contextOpacity;}});const selected=node.id===state.selected,run=node.id===state.run?.nodeId,guide=guideProgress(node,view,now),processing=guide!==null;
+   const {node,group,material,faceInk,ink,selection,progress,ledMaterial,shell,parts}=item;group.visible=view.visibleNodeIds.has(node.id);group.position.copy(worldPoint(view.positions.get(node.id)));const contextOpacity=view.framing.mode==='overview'||focus.has(node.id)?1:.52;group.traverse(o=>{for(const m of(Array.isArray(o.material)?o.material:[o.material])){if(!m||m.visible===false)continue;if(!m.transparent){m.transparent=true;m.needsUpdate=true;}m.userData.baseOpacity??=m.opacity;m.opacity=m.userData.baseOpacity*contextOpacity;}});const selected=node.id===state.selected,run=node.id===state.run?.nodeId,guide=guideProgress(node,view,now),processing=guide!==null;
    const color=run&&state.run.status==='failed'?0xd56c7d:palette[nodeColor(node)];material.color.setHex(color);material.emissive.setHex(color);material.emissiveIntensity=processing?.18:.025;material.opacity=contextOpacity;shell.color.setHex(state.theme==='dark'?0x7da2bf:0xe9f2fa);faceInk.color.setHex(0x25455e);ink.color.setHex(palette.ink);
    selection.material.color.setHex(palette[nodeColor(node)]);selection.material.opacity=selected?1:!view.hero&&focus.has(node.id)?.7:0;
    progress.material.color.setHex(palette[nodeColor(node)]);progress.material.opacity=processing?.95:0;progress.scale.x=Math.max(.04,guide??0);progress.position.x=-(1-progress.scale.x)*.59;
@@ -312,28 +315,28 @@ export function createFramework({heroHost,detailHost,onStageChange=()=>{},onNode
   const drawn=new Set(renderedRoutes(view).map(e=>e.id));
   for(const entry of links.values()){
    const edge=entry.edge,show=drawn.has(edge.id);entry.line.visible=show;entry.arrows.forEach(a=>a.visible=false);if(!show)continue;
-   const curve=curveFor(edge,view.positions),isActive=active.has(edge.id),color=palette[edgeColor(edge)],width=flowStrokeWidth(isActive)*view.span/view.rect.height,key=`${mobile?'m':'d'}|${width.toFixed(5)}`;
-   const slot=`${view.hero?'hero':'detail'}|${mobile?'m':'d'}`;let layout=entry.layouts.get(slot);if(!layout||layout.key!==key){layout?.geometry.dispose();layout={key,geometry:ribbonGeometry(curve,width,edge.kind==='request'?view.span/view.rect.height*9:0)};entry.layouts.set(slot,layout);}if(!entry.line.geometry.attributes.position)entry.line.geometry.dispose();entry.line.geometry=layout.geometry;
+   const curve=worldCurveFor(edge,view.positions),isActive=active.has(edge.id),color=palette[edgeColor(edge)],width=flowStrokeWidth(isActive)*view.span/view.rect.height,direction=view.camera.getWorldDirection(new THREE.Vector3()),key=`${mobile?'m':'d'}|${width.toFixed(5)}|${direction.toArray().map(v=>v.toFixed(3)).join(',')}`;
+   const slot=`${view.hero?'hero':'detail'}|${mobile?'m':'d'}`;let layout=entry.layouts.get(slot);if(!layout||layout.key!==key){layout?.geometry.dispose();layout={key,geometry:ribbonGeometry(curve,width,edge.kind==='request'?view.span/view.rect.height*9:0,direction)};entry.layouts.set(slot,layout);}if(!entry.line.geometry.attributes.position)entry.line.geometry.dispose();entry.line.geometry=layout.geometry;
    entry.material.color.setHex(color);entry.material.opacity=isActive?1:edge.kind==='flow'?.92:.78;
-   arrowFractions(view,curve).forEach((t,i)=>{const arrow=entry.arrows[i];arrow.visible=true;arrow.position.copy(curve.getPoint(t));arrow.material.color.setHex(color);arrow.material.opacity=isActive?1:.9;arrow.scale.setScalar(view.span/view.rect.height*3.5/.065);arrow.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),curve.getTangent(t));});
+   arrowFractions(view,curveFor(edge,view.positions)).forEach((t,i)=>{const arrow=entry.arrows[i];arrow.visible=true;arrow.position.copy(worldPoint(curveFor(edge,view.positions).getPoint(t)));arrow.material.color.setHex(color);arrow.material.opacity=isActive?1:.9;arrow.scale.setScalar(view.span/view.rect.height*3.5/.065);arrow.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),worldDirection(curveFor(edge,view.positions).getTangent(t)));});
   }
   const packets=packetsFor(view);for(const item of moving.values()){
    const packet=packets.find(p=>p.kind===item.kind&&(state.liveMode?item.streamId==='primary':p.streamId===item.streamId));item.group.visible=Boolean(packet);if(!packet)continue;
-   const travel=travelOf(packet,view,now);if(!travel)continue;item.group.visible=visiblePoint(view,travel.point);item.group.position.copy(travel.point);item.group.scale.setScalar(view.hero?.82:1);item.group.rotation.set(.15,.2,(state.liveMode?state.liveElapsed:state.flowElapsed)/6000);item.accent.color.setHex(palette[item.kind==='reference'?'reference':item.kind==='data'?'data':'query']);
+   const travel=travelOf(packet,view,now);if(!travel)continue;item.group.visible=visiblePoint(view,travel.point);item.group.position.copy(worldPoint(travel.point));item.group.scale.setScalar(view.hero?.82:1);item.group.rotation.set(.15,.2,(state.liveMode?state.liveElapsed:state.flowElapsed)/6000);item.accent.color.setHex(palette[item.kind==='reference'?'reference':item.kind==='data'?'data':'query']);
   }
-  for(const item of signals.values()){const request=requestTravels(view,now).find(r=>r.kind===item.kind&&(state.liveMode?item.streamId==='primary':r.streamId===item.streamId));item.group.visible=Boolean(request)&&visiblePoint(view,request.point);if(request){item.group.position.copy(request.point);item.group.rotation.z=Math.atan2(request.direction.y,request.direction.x);item.material.color.setHex(palette[item.kind]);}}
+  for(const item of signals.values()){const request=requestTravels(view,now).find(r=>r.kind===item.kind&&(state.liveMode?item.streamId==='primary':r.streamId===item.streamId));item.group.visible=Boolean(request)&&visiblePoint(view,request.point);if(request){item.group.position.copy(worldPoint(request.point));item.group.quaternion.setFromUnitVectors(new THREE.Vector3(1,0,0),worldDirection(request.direction));item.material.color.setHex(palette[item.kind]);}}
   graph.updateMatrixWorld(true);layoutLabels(view,focus);layoutPackets(view,now);
  }
  function labelFor(view,node){
   let label=view.labels.get(node.id);if(label)return label;label=document.createElement('button');label.type='button';label.className=`fw-label fw-label--${node.kind}`;label.dataset.node=node.id;label.tabIndex=view.hero?-1:0;
   label.addEventListener('pointerenter',()=>{state.hover=node.id;requestFrame();});label.addEventListener('pointerleave',()=>{state.hover=null;requestFrame();});label.addEventListener('click',()=>selectNode(node.id));view.labelRoot.append(label);view.labels.set(node.id,label);return label;
  }
- function project(view,p){const q=p.clone().project(view.camera);return{x:view.rect.left+(q.x+1)*view.rect.width/2,y:view.rect.top+(1-q.y)*view.rect.height/2,z:q.z};}
+ function project(view,p){const q=worldPoint(p).project(view.camera);return{x:view.rect.left+(q.x+1)*view.rect.width/2,y:view.rect.top+(1-q.y)*view.rect.height/2,z:q.z};}
  function inlineText(node){const tools=node.inlineTools||[];return tools.map(v=>typeof v==='string'?v:tr(v.title||v.label||v,state.lang)).filter(Boolean).join(' · ');}
  function layoutLabels(view,focus){
   const candidates=[],live=new Set(),rect=view.rect;
   for(const node of labelNodes(view)){
-   const label=labelFor(view,node),mobile=rect.width<760,main=['query','classification','workflow','model','codegen','solver','solution'].includes(node.id),p=view.positions.get(node.id).clone(),fp=footprintsFor().get(node.id);if(!mobile||!main||view.framing.mode!=='overview')p.y+=(fp.minY??-fp.height/2)-.35;const point=project(view,p);if(mobile&&main&&view.framing.mode==='overview')point.x-=100;const name=tr(node.title,state.lang),tools=inlineText(node);
+   const label=labelFor(view,node),mobile=rect.width<760,main=['query','classification','workflow','model','codegen','solver','solution'].includes(node.id),p=view.positions.get(node.id),box=view.framing.projectedNodeBounds[node.id],index=['query','classification','workflow','model','codegen','solver','solution'].indexOf(node.id),side=main?(index%2?-1:1):(p.y>=0?-1:1),point={x:rect.left+(side<0?box.left:box.right)+side*(mobile?68:83),y:rect.top+box.y};const name=tr(node.title,state.lang),tools=inlineText(node);
    const content=`<span>${escapeHTML(name)}</span>${tools?`<small>${escapeHTML(tools)}</small>`:''}`;if(label.innerHTML!==content)label.innerHTML=content;
    label.title=tr(node.description,state.lang);label.setAttribute('aria-label',`${name} — ${tr(node.description,state.lang)}`);label.setAttribute('aria-pressed',String(node.id===state.selected));label.classList.toggle('fw-label--selected',node.id===state.selected);label.classList.toggle('fw-label--dim',!view.hero&&!focus.has(node.id));label.classList.toggle('fw-label--run',node.id===state.run?.nodeId);label.dataset.runStatus=node.id===state.run?.nodeId?state.run.status:'';
    label.hidden=false;const maxWidth=Math.max(70,Math.min(rect.width<760?(main?135:156):190,rect.width-20));label.style.maxWidth=`${maxWidth}px`;
@@ -381,7 +384,7 @@ export function createFramework({heroHost,detailHost,onStageChange=()=>{},onNode
  function pick(view,event){if(fallback||!view.rect||event.target.closest?.('.fw-label'))return null;pose(view,0,performance.now());const r=view.rect;pointer.set((event.clientX-r.left)/r.width*2-1,-(event.clientY-r.top)/r.height*2+1);raycaster.setFromCamera(pointer,view.camera);return raycaster.intersectObjects(hitTargets.filter(hit=>view.visibleNodeIds.has(hit.userData.nodeId)),false)[0]?.object.userData.nodeId||null;}
  for(const view of views){let drag=null;
   const down=e=>{if(view.hero||!state.free)return;drag={x:e.clientX,y:e.clientY,moved:0};view.host.setPointerCapture?.(e.pointerId);};
-  const move=e=>{if(drag){const dx=e.clientX-drag.x,dy=e.clientY-drag.y;drag.moved+=Math.abs(dx)+Math.abs(dy);view.pan.x=clamp(view.pan.x-dx/view.rect.height*view.span,-4,4);view.pan.y=clamp(view.pan.y+dy/view.rect.height*view.span,-4,4);drag.x=e.clientX;drag.y=e.clientY;requestFrame();return;}const hit=pick(view,e);if(hit!==state.hover){state.hover=hit;view.host.classList.toggle('fw-host--hover',Boolean(hit));requestFrame();}};
+  const move=e=>{if(drag){const dx=e.clientX-drag.x,dy=e.clientY-drag.y;drag.moved+=Math.abs(dx)+Math.abs(dy);view.pan.y=clamp(view.pan.y+dx/view.rect.height*view.span,-5,5);view.pan.x=clamp(view.pan.x-dy/view.rect.height*view.span/1.2,-5,5);drag.x=e.clientX;drag.y=e.clientY;requestFrame();return;}const hit=pick(view,e);if(hit!==state.hover){state.hover=hit;view.host.classList.toggle('fw-host--hover',Boolean(hit));requestFrame();}};
   const up=e=>{const moved=drag?.moved||0;drag=null;if(moved>5)return;const id=pick(view,e);if(id)selectNode(id);};const leave=()=>{drag=null;state.hover=null;view.host.classList.remove('fw-host--hover');requestFrame();};
   for(const[name,fn]of[['pointerdown',down],['pointermove',move],['pointerup',up],['pointerleave',leave],['pointercancel',leave]]){view.host.addEventListener(name,fn);cleanup.push(()=>view.host.removeEventListener(name,fn));}
  }
@@ -392,30 +395,31 @@ export function createFramework({heroHost,detailHost,onStageChange=()=>{},onNode
   const phase=animationFraction(view,now),signature=JSON.stringify([view.host.clientWidth,view.host.clientHeight,state.lang,state.theme,state.route,view.hero?0:state.stage,state.flowFrame.stepId,state.liveMode,state.selected,state.run?.nodeId,state.run?.status,view.hero?1:state.zoom,state.flowPlaying,view.pan.x,view.pan.y,Math.round(phase*90),...flowFrames().map(f=>[f.stepId,Math.round(f.localProgress*90)])]);
   if(view.fallbackSignature===signature)return;view.fallbackSignature=signature;view.positions=positionsFor(view);
   const mobile=view.host.clientWidth<760,width=Math.max(260,view.rect.width),height=Math.max(320,view.rect.height),positions=view.positions;
-  const desired=framingFor(view);view.target.set(desired.center.x,desired.center.y,0);view.span=desired.span;view.framing=cameraFrame(view,desired);view.focusIds=new Set(desired.focusIds);view.visibleNodeIds=new Set(desired.visibleNodeIds);view.initialized=true;
-  const scale=height/desired.span,cx=desired.center.x,cy=desired.center.y;
-  const map=p=>({x:width/2+(p.x-cx)*scale,y:height/2-(p.y-cy)*scale});const point=id=>map(positions.get(id));
+  const desired=framingFor(view),rig=computeCameraPose({...desired,stage:state.stage,selected:state.selected,hero:view.hero,zoom:state.zoom,positions:view.positions,footprints:footprintsFor(),routePoints:routes().flatMap(e=>curveFor(e,view.positions).route.points)});
+  view.target.fromArray(rig.target);view.span=rig.span;view.camera.aspect=desired.aspect;view.camera.fov=rig.fov;view.camera.position.fromArray(rig.position);view.camera.lookAt(...rig.target);view.camera.updateProjectionMatrix();view.camera.updateMatrixWorld();view.initialized=true;
+  view.framing=cameraFrame(view,desired);view.focusIds=new Set(desired.focusIds);view.visibleNodeIds=new Set(view.framing.visibleNodeIds);
+  const map=p=>{const q=worldPoint(p).project(view.camera);return{x:(q.x+1)*width/2,y:(1-q.y)*height/2,z:q.z};};const point=id=>map(positions.get(id));
   const viewWidth=width,viewHeight=height,panX=0,panY=0;
   const focus=stageFocus(view),active=activeLinkIds(view),suffix=view.hero?'h':'d';
   const svgBounds={left:0,top:0,right:width,bottom:height};
   const visibleNodes=baseNodes().filter(n=>view.visibleNodeIds.has(n.id));
-  const edgeMarkup=renderedRoutes(view).map(edge=>{const curve=curveFor(edge,positions),kind=edgeColor(edge),selected=active.has(edge.id),points=curve.route.points.map(p=>map(new THREE.Vector3(...p))),path=points.map((p,i)=>`${i?'L':'M'}${p.x.toFixed(2)} ${p.y.toFixed(2)}`).join(' ');
-   const arrows=arrowFractions(view,curve).map(t=>{const p=map(curve.getPoint(t)),d=curve.getTangent(t),angle=Math.atan2(-d.y,d.x)*180/Math.PI;return `<path class="fw-route-arrow" data-arrow-edge="${escapeHTML(edge.id)}" data-arrow-t="${t.toFixed(4)}" data-kind="${kind}" transform="translate(${p.x.toFixed(2)} ${p.y.toFixed(2)}) rotate(${angle.toFixed(2)})" d="M-4-3L4 0L-4 3Z"/>`;}).join('');
+  const edgeMarkup=renderedRoutes(view).map(edge=>{const curve=curveFor(edge,positions),kind=edgeColor(edge),selected=active.has(edge.id),points=curve.route.points.map(p=>map(new THREE.Vector3(...p))).filter(p=>p.z>=-1&&p.z<=1&&Number.isFinite(p.x)&&Number.isFinite(p.y)),path=points.map((p,i)=>`${i?'L':'M'}${p.x.toFixed(2)} ${p.y.toFixed(2)}`).join(' ');
+   const arrows=arrowFractions(view,curve).map(t=>{const p=map(curve.getPoint(t)),d=curve.getTangent(t),next=map(curve.getPoint(Math.min(1,t+.003))),angle=Math.atan2(next.y-p.y,next.x-p.x)*180/Math.PI;return `<path class="fw-route-arrow" data-arrow-edge="${escapeHTML(edge.id)}" data-arrow-t="${t.toFixed(4)}" data-kind="${kind}" transform="translate(${p.x.toFixed(2)} ${p.y.toFixed(2)}) rotate(${angle.toFixed(2)})" d="M-4-3L4 0L-4 3Z"/>`;}).join('');
    return `<path class="fw-fallback-edge${selected?' fw-fallback-edge--active':''}" data-edge="${escapeHTML(edge.id)}" data-kind="${kind}" data-lane="${escapeHTML(curve.route.lane)}" data-route-points="${escapeHTML(JSON.stringify(points.map(p=>[Number(p.x.toFixed(3)),Number(p.y.toFixed(3))])))}"${edge.kind==='request'?' stroke-dasharray="7 5"':''} stroke-width="${flowStrokeWidth(selected)}" vector-effect="non-scaling-stroke" d="${path}"/>${arrows}`;
   }).join('');
-  const iconFactor=scale/38*OBJECT_SCALE,fontSize=mobile?14:13,labels=layoutFallbackLabels(labelNodes(view).map(node=>{const p=point(node.id),main=['query','classification','workflow','model','codegen','solver','solution'].includes(node.id);return{id:node.id,text:tr(node.title,state.lang),kind:node.kind,level:0,x:p.x,y:p.y,nodeWidth:82*iconFactor,nodeHeight:88*iconFactor,maxWidth:mobile&&main?125:180,preferredX:mobile&&main&&desired.mode==='overview'?p.x-166:undefined,preferredY:mobile&&main&&desired.mode==='overview'?p.y-23:p.y+44*iconFactor+8};}),width,height,fontSize,svgBounds);
+  const fontSize=mobile?14:13,labels=layoutFallbackLabels(labelNodes(view).map(node=>{const p=point(node.id),bounds=view.framing.projectedNodeBounds[node.id],main=['query','classification','workflow','model','codegen','solver','solution'].includes(node.id),index=['query','classification','workflow','model','codegen','solver','solution'].indexOf(node.id),side=main?(index%2?-1:1):(positions.get(node.id).y>=0?-1:1);return{id:node.id,text:tr(node.title,state.lang),kind:node.kind,level:0,x:p.x,y:p.y,nodeWidth:bounds.width,nodeHeight:bounds.height,maxWidth:mobile?130:175,preferredX:side<0?bounds.left-(mobile?145:190):bounds.right+14,preferredY:bounds.y-12};}),width,height,fontSize,svgBounds);
   const nodes=visibleNodes.map(node=>{
    const portAttrs=['query','data','reference'].map(kind=>{const port=map(portAt(node.id,kind,positions));return `data-${kind}-port-x="${port.x.toFixed(3)}" data-${kind}-port-y="${port.y.toFixed(3)}"`;}).join(' ');
-   const p=point(node.id),label=labels.get(node.id),selected=node.id===state.selected,working=node.id===state.run?.nodeId,tools=inlineText(node),kind=nodeColor(node),iconScale=iconFactor*(node.kind==='agent'?1.06:node.id==='csvqa'?.68:node.id==='solution'?.76:node.id==='csv'?.84:.92);
+   const p=point(node.id),canonical=positions.get(node.id),world=worldPoint(canonical),bounds=view.framing.projectedNodeBounds[node.id],label=labels.get(node.id),selected=node.id===state.selected,working=node.id===state.run?.nodeId,tools=inlineText(node),kind=nodeColor(node),iconScale=Math.min(bounds.width/82,bounds.height/88);
    const guideValue=guideProgress(node,view,now),guide=guideValue!==null;
-   const caption=label?`<rect class="fw-fallback-caption" x="${label.x}" y="${label.y}" width="${label.width}" height="${label.height}" rx="4"/><text class="fw-fallback-name" text-anchor="middle" style="font-size:${fontSize}px">${label.lines.map((line,i)=>`<tspan x="${label.x+label.width/2}" y="${label.y+fontSize+4+i*(fontSize+3)}">${escapeHTML(line)}</tspan>`).join('')}</text>${tools?`<text class="fw-fallback-tool" x="${p.x}" y="${label.y+label.height+12}" text-anchor="middle">${escapeHTML(tools)}</text>`:''}`:'';
-   return `<g class="fw-fallback-node${selected?' fw-fallback-node--selected':''}${working?' fw-fallback-node--run':''}${guide?' fw-fallback-node--guide':''}" data-node="${node.id}" ${portAttrs} data-x="${p.x.toFixed(3)}" data-y="${p.y.toFixed(3)}" data-icon="${iconOf(node)}" data-object-width="${(footprintsFor().get(node.id).width*scale).toFixed(3)}" data-object-height="${(footprintsFor().get(node.id).height*scale).toFixed(3)}" data-station-owner="${STATIONS.find(station=>station.nodes.includes(node.id))?.id||node.id}" data-kind="${kind}" data-focused="${view.hero||focus.has(node.id)}" data-context="${desired.mode!=='overview'&&!focus.has(node.id)}" data-run-status="${working?state.run.status:''}" role="button" tabindex="${view.hero?-1:0}" aria-pressed="${selected}" aria-label="${escapeHTML(tr(node.title,state.lang))}"><title>${escapeHTML(tr(node.description,state.lang))}</title><g transform="translate(${p.x.toFixed(3)} ${p.y.toFixed(3)}) scale(${iconScale})"><g class="fw-fallback-depth" transform="translate(3 4)">${svgIcon(iconOf(node))}</g>${svgIcon(iconOf(node))}<path class="fw-fallback-selection" d="M-22 36H${guide?-22+44*Math.max(.08,guideValue):22}"/></g>${caption}</g>`;
+   const caption=label?`<rect class="fw-fallback-caption" x="${label.x}" y="${label.y}" width="${label.width}" height="${label.height}" rx="4"/><text class="fw-fallback-name" text-anchor="middle" style="font-size:${fontSize}px">${label.lines.map((line,i)=>`<tspan x="${label.x+label.width/2}" y="${label.y+fontSize+4+i*(fontSize+3)}">${escapeHTML(line)}</tspan>`).join('')}</text>${tools?`<text class="fw-fallback-tool" x="${label.x+label.width/2}" y="${label.y+label.height+12}" text-anchor="middle">${escapeHTML(tools)}</text>`:''}`:'';
+   return `<g class="fw-fallback-node${selected?' fw-fallback-node--selected':''}${working?' fw-fallback-node--run':''}${guide?' fw-fallback-node--guide':''}" data-node="${node.id}" ${portAttrs} data-x="${p.x.toFixed(3)}" data-y="${p.y.toFixed(3)}" data-canonical-x="${canonical.x}" data-canonical-y="${canonical.y}" data-canonical-z="${canonical.z}" data-world-x="${world.x}" data-world-y="${world.y}" data-world-z="${world.z}" data-icon="${iconOf(node)}" data-object-width="${bounds.width.toFixed(3)}" data-object-height="${bounds.height.toFixed(3)}" data-station-owner="${STATIONS.find(station=>station.nodes.includes(node.id))?.id||node.id}" data-kind="${kind}" data-focused="${view.hero||focus.has(node.id)}" data-context="${desired.mode!=='overview'&&!focus.has(node.id)}" data-run-status="${working?state.run.status:''}" role="button" tabindex="${view.hero?-1:0}" aria-pressed="${selected}" aria-label="${escapeHTML(tr(node.title,state.lang))}"><title>${escapeHTML(tr(node.description,state.lang))}</title><g transform="translate(${p.x.toFixed(3)} ${p.y.toFixed(3)}) scale(${iconScale})"><g class="fw-fallback-depth" transform="translate(3 4)">${svgIcon(iconOf(node))}</g>${svgIcon(iconOf(node))}<path class="fw-fallback-selection" d="M-22 36H${guide?-22+44*Math.max(.08,guideValue):22}"/></g>${caption}</g>`;
   }).join('');
   const edgeTextItems=renderedRoutes(view).filter(e=>e.kind==='flow'||active.has(e.id)).map(edge=>{const curve=curveFor(edge,positions),ts=arrowFractions(view,curve),t=ts.length?ts.reduce((a,b)=>a+b,0)/ts.length:.5,p=curve.getPoint(t);if(!visiblePoint(view,p,.15))return null;const pos=map(p),label=edgeCaption(edge);return{id:edge.id,edge,label,x:pos.x,y:pos.y-16,width:Math.min(150,[...label].reduce((a,c)=>a+(/[\u3400-\u9fff]/.test(c)?10:5.5),12)),height:24};}).filter(Boolean);
-  const edgeTextBoxes=placeDOMLabels(edgeTextItems,svgBounds,4,[...labels.values()].map(p=>({x:p.x+p.width/2,y:p.y+p.height/2,width:p.width,height:p.height})).concat(visibleNodes.map(n=>({...point(n.id),width:footprintsFor().get(n.id).width*scale,height:footprintsFor().get(n.id).height*scale}))));
+  const edgeTextBoxes=placeDOMLabels(edgeTextItems,svgBounds,4,[...labels.values()].map(p=>({x:p.x+p.width/2,y:p.y+p.height/2,width:p.width,height:p.height})).concat(visibleNodes.map(n=>({...point(n.id),width:view.framing.projectedNodeBounds[n.id].width,height:view.framing.projectedNodeBounds[n.id].height}))));
   const edgeTextMarkup=edgeTextItems.map(item=>{const b=edgeTextBoxes.get(item.id);if(!b)return'';return `<g class="fw-route-caption" data-route-caption="${escapeHTML(item.id)}" data-kind="${edgeColor(item.edge)}" transform="translate(${(b.x-b.width/2).toFixed(2)} ${(b.y-b.height/2).toFixed(2)})"><rect width="${b.width}" height="${b.height}" rx="4"/><text x="${b.width/2}" y="16" text-anchor="middle">${escapeHTML(item.label)}</text></g>`;}).join('');
   const packetItems=[],packetReserved=[...labels.values()].map(p=>({x:p.x+p.width/2,y:p.y+p.height/2,width:p.width,height:p.height})).concat([...edgeTextBoxes.values()]);
-  for(const n of visibleNodes){const p=point(n.id);packetReserved.push({...p,width:82*iconFactor,height:88*iconFactor});}
+  for(const n of visibleNodes){const p=point(n.id);const b=view.framing.projectedNodeBounds[n.id];packetReserved.push({...p,width:b.width,height:b.height});}
   for(const packet of packetsFor(view)){const travel=travelOf(packet,view,now);if(!travel||!visiblePoint(view,travel.point,.05))continue;const p=map(travel.point);packetItems.push({id:packet.id,packet,travel,source:p,x:p.x+22,y:p.y-29,width:state.run?92:52,height:28});}
   for(const [i,request]of requestTravels(view,now).entries()){if(!visiblePoint(view,request.point,.05))continue;const p=map(request.point);packetItems.push({id:`request-${request.kind}-${i}`,packet:request,request:true,source:p,x:p.x,y:p.y-17,width:state.lang==='en'?112:76,height:25});}
   const packetBoxes=placeDOMLabels(packetItems,svgBounds,5,packetReserved);

@@ -47,3 +47,6 @@
 
 /* Architecture floats directly in the page, without a stage frame. */
 .graph-hero-model,.graph-stage-wrap{background:transparent;border:0;box-shadow:none}.flow-streams{display:flex;flex-wrap:wrap;gap:7px 22px;margin-top:9px}.flow-streams>span{display:flex;align-items:center;gap:9px;min-width:0;font-size:10px;line-height:1.6;color:var(--muted)}.flow-streams b{font:600 9px var(--mono);color:var(--accent);white-space:nowrap}.flow-streams>span[data-stream="secondary"] b{color:var(--secondary)}.flow-streams[hidden]{display:none}.hero-flow-caption{background:transparent;border:0;box-shadow:none}.flow-live-status{min-height:123px}@media(max-width:760px){.flow-streams{gap:6px 16px}.flow-streams>span{font-size:11px}.flow-live-status{min-height:162px}}
+
+/* Keep the flow caption above the depth corridor, clear of the foreground output. */
+.hero-flow-caption{top:46px;bottom:auto}@media(max-width:760px){.hero-flow-caption{top:42px;bottom:auto}}
