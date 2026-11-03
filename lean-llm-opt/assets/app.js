@@ -1,5 +1,5 @@
-import {createFramework} from './framework-3d.js?v=thin-lines-20261103-1';
-import {STAGES,NODE_BY_ID,JOURNEY_EXAMPLE,routeFromRunValue} from './framework-topology.js?v=thin-lines-20261103-1';
+import {createFramework} from './framework-3d.js?v=scroll-sync-20261103-1';
+import {STAGES,NODE_BY_ID,JOURNEY_EXAMPLE,routeFromRunValue} from './framework-topology.js?v=scroll-sync-20261103-1';
 const root = document.documentElement;
 const isStaticDeployment = root.dataset.deployment === 'static';
 const $ = (selector, scope = document) => scope.querySelector(selector);
@@ -8,7 +8,7 @@ const state = {
   lang: root.dataset.lang === 'en' ? 'en' : 'zh',
   theme: root.dataset.theme || 'dark',
   reduced: root.dataset.motion === 'reduced',
-  stage: 0, node: null, free: false, follow: false, flowPlaying: true, route: 'tailored', replay: 0, study: 'large', view: 'overall', dataTable: 'demand', playing: false,
+  stage: 0, node: null, manualStage: false, free: false, follow: false, flowPlaying: true, route: 'tailored', replay: 0, study: 'large', view: 'overall', dataTable: 'demand', playing: false,
 };
 const t = (zh, en) => state.lang === 'zh' ? zh : en;
 const local = (value) => typeof value === 'object' ? value[state.lang] : value;
@@ -138,21 +138,32 @@ function renderStageDetail() {
   const focusedIO=selectedNodeIO(node);
   const action=state.follow?`${liveTitle} · ${statusLabels[liveTrace.status]||t('等待阶段事件','Waiting for a stage event')}`:focusedIO?.action||local(stage.action||context.action||stage.description);
   const artifact=state.follow?(replying?t('在 Demo 页查看本次回复。','View the response on the demo page.'):liveTrace.objective!=null?`${t('求解器报告目标值','Reported objective')}: ${number(liveTrace.objective,2)}`:t('模型、程序与结果在 Demo 页查看。','View the formulation, program, and result on the demo page.')):focusedIO?.output||local(stage.output||context.artifact);
-  $('#arch-detail').innerHTML=`<p class="stage-kicker">${state.follow?t('实时任务','LIVE RUN'):t('步骤说明','STEP DETAILS')} / 0${state.stage}</p><h3>${esc(state.follow?liveTitle:local(node?.title||stage.title))}</h3><p class="role-summary">${esc(state.follow?liveDescription:local(node?.description||stage.description))}</p><dl class="flow-context"><div class="flow-context-item flow-query"><dt>${t('输入','INPUT')}</dt><dd>${esc(state.follow?query:focusedIO?.input||local(stage.input)||query)}</dd></div><div class="flow-context-item flow-processing"><dt>${t('处理','PROCESS')}</dt><dd>${esc(action)}</dd></div><div class="flow-context-item flow-artifact"><dt>${t('输出','OUTPUT')}</dt><dd>${esc(artifact)}</dd></div></dl>${state.follow?'':exampleEvidence(node)}<details class="task-input-details"><summary>${state.follow?t('本次任务输入','Task input'):t('本例查询与数据','Example query and data')}<span aria-hidden="true">＋</span></summary><div><p class="task-context-label">${state.follow?'QUERY':'QUERY · Q1'}</p><p>${esc(query)}</p><p class="task-context-label">${state.follow?'DATA':'DATA · D1'}</p><p>${esc(data)}</p>${!state.follow?`<ul class="task-file-list">${JOURNEY_EXAMPLE.data.files.map(file=>`<li>${esc(file)}</li>`).join('')}</ul>`:''}</div></details><p class="graph-help">${state.follow?t('在独立 Demo 页运行任务，这里同步显示阶段。','Run a task on the demo page to follow its stages here.'):t('Q1/D1 与 Q2/D2 错峰演示同一运输建模流程；滚动聚焦步骤，点击组件进入局部。','Q1/D1 and Q2/D2 trace two staggered instances of the transportation workflow. Scroll to focus a step; select a component for a closer view.')}</p>`;
+  $('#arch-detail').innerHTML=`<p class="stage-kicker">${state.follow?t('实时任务','LIVE RUN'):t('步骤说明','STEP DETAILS')} / 0${state.stage}</p><h3>${esc(state.follow?liveTitle:local(node?.title||stage.title))}</h3><p class="role-summary">${esc(state.follow?liveDescription:local(node?.description||stage.description))}</p><dl class="flow-context"><div class="flow-context-item flow-query"><dt>${t('输入','INPUT')}</dt><dd>${esc(state.follow?query:focusedIO?.input||local(stage.input)||query)}</dd></div><div class="flow-context-item flow-processing"><dt>${t('处理','PROCESS')}</dt><dd>${esc(action)}</dd></div><div class="flow-context-item flow-artifact"><dt>${t('输出','OUTPUT')}</dt><dd>${esc(artifact)}</dd></div></dl>${state.follow?'':exampleEvidence(node)}<details class="task-input-details"><summary>${state.follow?t('本次任务输入','Task input'):t('本例查询与数据','Example query and data')}<span aria-hidden="true">＋</span></summary><div><p class="task-context-label">${state.follow?'QUERY':'QUERY · Q1'}</p><p>${esc(query)}</p><p class="task-context-label">${state.follow?'DATA':'DATA · D1'}</p><p>${esc(data)}</p>${!state.follow?`<ul class="task-file-list">${JOURNEY_EXAMPLE.data.files.map(file=>`<li>${esc(file)}</li>`).join('')}</ul>`:''}</div></details><p class="graph-help">${state.follow?t('在独立 Demo 页运行任务，这里同步显示阶段。','Run a task on the demo page to follow its stages here.'):(canGuideScroll()?t('滚动页面缩放与移动视角；点击模块查看细节，再滚动继续导览。流程动画可单独暂停。','Scroll the page to zoom and move the view. Select a module for details; scroll again to continue. Pause the flow animation separately.'):t('选择步骤或模块查看输入、处理与输出。','Select a step or module to view its input, action, and output.'))}</p>`;
   $$('#arch-controls button').forEach((el,i)=>el.setAttribute('aria-pressed',String(i===state.stage)));
   $('#graph-free').setAttribute('aria-pressed',String(state.free));
   $('#graph-route').textContent=state.follow?(state.route==='agnostic'?t('通用工作流','Type-agnostic workflow'):t('类型定制工作流','Type-tailored workflow')):t('TP · 类型定制工作流','TP · Type-tailored workflow');
-  $('#graph-mode').textContent=state.follow?t('实时任务','LIVE RUN'):state.free?t('自由查看 · 拖动平移','EXPLORE · DRAG TO PAN'):state.node?t('局部特写已锁定','CLOSE-UP LOCKED'):state.stage===0?t('完整框架','FULL FRAMEWORK'):t('步骤特写 · 动画独立播放','STEP CLOSE-UP · ANIMATION PLAYS INDEPENDENTLY');
+  $('#graph-mode').textContent=state.follow?t('实时任务','LIVE RUN'):state.free?t('自由查看 · 拖动平移','EXPLORE · DRAG TO PAN'):state.node?(canGuideScroll()?t('模块特写 · 滚动继续导览','MODULE VIEW · SCROLL TO RESUME'):t('模块特写','MODULE VIEW')):state.manualStage?(canGuideScroll()?t('步骤视图 · 滚动继续导览','STEP VIEW · SCROLL TO RESUME'):t('步骤视图','STEP VIEW')):canGuideScroll()?t('滚动导览','SCROLL GUIDE'):state.stage===0?t('完整框架','FULL FRAMEWORK'):t('步骤导览','STEP GUIDE');
   renderFlowStatus();
 }
 
-function canPin(){return innerWidth>1000&&innerHeight>=900&&!state.reduced;}
+function canGuideScroll(){return !state.reduced;}
+function canPin(){return innerWidth>1000&&innerHeight>=680&&!state.reduced;}
+function architectureScrollProgress(track,box,visualBox=box){
+  if(canPin())return clamp(-box.top/Math.max(1,track.offsetHeight-innerHeight));
+  return clamp((innerHeight-visualBox.top)/Math.max(1,innerHeight+visualBox.height));
+}
 function leaveLiveFollow(){state.follow=false;state.route='tailored';$('#follow-run').setAttribute('aria-pressed','false');modelView?.setLiveMode(false);modelView?.setRunState(null);modelView?.setRoute('tailored');}
 function selectStage(index,scroll=false){
+  const scrollDriven=scroll&&canPin(),selectedNode=state.node;
+  pageScrollIntentUntil=0;
+  state.manualStage=!canPin();
   state.stage=index;state.node=null;state.free=false;leaveLiveFollow();
-  modelView?.setFree(false);modelView?.setStage(index);renderStageDetail();
+  if(scrollDriven&&selectedNode)modelView?.back();
+  modelView?.setFree(false);
+  if(!scrollDriven)modelView?.setStage(index);
+  renderStageDetail();
   $('#follow-run').setAttribute('aria-pressed','false');
-  if(scroll&&canPin()){const track=$('#arch-track'),top=track.getBoundingClientRect().top+scrollY;window.scrollTo({top:top+(track.offsetHeight-innerHeight)*index/6,behavior:state.reduced?'instant':'smooth'});}
+  if(scrollDriven){const track=$('#arch-track'),top=track.getBoundingClientRect().top+scrollY;window.scrollTo({top:top+(track.offsetHeight-innerHeight)*index/6,behavior:'smooth'});}
   requestFrame();
 }
 $('#arch-controls').addEventListener('click',event=>{const button=event.target.closest('[data-stage]');if(button)selectStage(Number(button.dataset.stage),true);});
@@ -162,7 +173,7 @@ $('#graph-zoom-in').addEventListener('click',()=>modelView?.zoomBy(1.15));
 $('#graph-play').addEventListener('click',()=>{state.flowPlaying=!state.flowPlaying;modelView?.setFlowPlaying(state.flowPlaying);renderFlowStatus();});
 $('#graph-replay').addEventListener('click',()=>{state.flowPlaying=true;modelView?.restartFlow();modelView?.setFlowPlaying(true);renderFlowStatus();});
 $('#graph-reset').addEventListener('click',()=>{modelView?.resetCamera();selectStage(0,true);});
-$('#graph-free').addEventListener('click',()=>{state.free=state.follow?true:!state.free;leaveLiveFollow();modelView?.setFree(state.free);renderStageDetail();});
+$('#graph-free').addEventListener('click',()=>{pageScrollIntentUntil=0;state.free=state.follow?true:!state.free;leaveLiveFollow();modelView?.setFree(state.free);renderStageDetail();});
 function syncDemoLinks(){
   if(isStaticDeployment)return;
   const url=new URL('demo/',location.href);url.searchParams.set('lang',state.lang);url.searchParams.set('theme',state.theme);
@@ -192,6 +203,7 @@ window.addEventListener('pagehide',()=>{demoChannel?.close();demoChannel=null;})
 window.addEventListener('pageshow',event=>{if(event.persisted)connectDemoChannel();});
 $('#follow-run').addEventListener('click',()=>{
   if(isStaticDeployment)return;
+  pageScrollIntentUntil=0;
   state.follow=!state.follow;state.free=false;state.node=null;if(state.follow&&!lastRunEvent)state.stage=0;modelView?.setFree(false);
   modelView?.setLiveMode(state.follow);
   $('#follow-run').setAttribute('aria-pressed',String(state.follow));
@@ -367,22 +379,52 @@ $('#copy-citation').addEventListener('click',async()=>{
 });
 
 // Scroll state remains separate from the shared 3D renderer's visibility-driven loop.
+let architectureScrollY=null,pageScrollIntentUntil=0;
+function notePageScrollIntent(){pageScrollIntentUntil=performance.now()+900;}
+function notePageScrollKey(event){
+  if(!['PageDown','PageUp','Home','End','ArrowDown','ArrowUp',' '].includes(event.key))return;
+  if(event.target?.closest?.('input,textarea,select,[contenteditable="true"],[role="textbox"]'))return;
+  notePageScrollIntent();
+}
+function noteScrollbarIntent(event){
+  if(event.button!==undefined&&event.button!==0)return;
+  if(document.documentElement.scrollHeight>innerHeight&&event.clientX>=Math.min(document.documentElement.clientWidth,innerWidth-16))notePageScrollIntent();
+}
+function resumeScrollGuide(pageMoved){
+  if(!pageMoved||pageScrollIntentUntil<=performance.now()||!canGuideScroll()||state.follow)return;
+  pageScrollIntentUntil=0;
+  state.manualStage=false;
+  if(state.node){state.node=null;modelView?.back();}
+  if(state.free){state.free=false;modelView?.setFree(false);renderStageDetail();}
+}
 function requestFrame(){if(!frameId&&!document.hidden)frameId=requestAnimationFrame(frame);}
 function frame(){
   frameId=0;const max=document.documentElement.scrollHeight-innerHeight;
   $('#reading-progress').style.transform=`scaleX(${max>0?clamp(scrollY/max):0})`;
   const track=$('#arch-track'),box=track.getBoundingClientRect();
-  if(canPin()&&!state.free&&!state.follow&&!state.node&&box.top<0&&box.bottom>innerHeight){const progress=clamp(-box.top/(track.offsetHeight-innerHeight));const stage=Math.round(progress*6);if(stage!==state.stage){state.stage=stage;state.node=null;renderStageDetail();}modelView?.setProgress(progress);}
+  const pageMoved=architectureScrollY===null||architectureScrollY!==scrollY;architectureScrollY=scrollY;
+  resumeScrollGuide(pageMoved);
+  if(canGuideScroll()&&!state.free&&!state.follow&&!state.node&&!state.manualStage&&(canPin()||pageMoved)){
+    const visualBox=canPin()?box:$('#framework-stage').getBoundingClientRect();
+    const progress=architectureScrollProgress(track,box,visualBox),stage=Math.round(progress*6);
+    if(stage!==state.stage){state.stage=stage;state.node=null;renderStageDetail();}
+    // Forward every fractional scroll position, including unchanged steps and
+    // clamped endpoints after a fast scroll across the architecture section.
+    modelView?.setProgress(progress);
+  }
   let active='';for(const link of $$('.nav-links a')){if(!link.hash)continue;const section=$(link.hash);if(section?.getBoundingClientRect().top<innerHeight*.48)active=link.hash;}
   $$('.nav-links a').forEach(link=>link.classList.toggle('active',Boolean(link.hash)&&link.hash===active));
 }
 window.addEventListener('scroll',requestFrame,{passive:true});window.addEventListener('resize',requestFrame,{passive:true});
+window.addEventListener('wheel',notePageScrollIntent,{passive:true});window.addEventListener('touchmove',notePageScrollIntent,{passive:true});
+window.addEventListener('keydown',notePageScrollKey);
+window.addEventListener('pointerdown',noteScrollbarIntent,{passive:true});
  document.addEventListener('visibilitychange',()=>{root.dataset.inactive=String(document.hidden);if(document.hidden){cancelAnimationFrame(frameId);frameId=0;stopReplay();}else requestFrame();});
 matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change',event=>{if(event.matches){state.reduced=true;root.dataset.motion='reduced';stopReplay();translateStatic();renderArchitecture();modelView?.setReduced(true);requestFrame();}});
 const revealObserver=new IntersectionObserver(entries=>entries.forEach(entry=>{if(entry.isIntersecting){entry.target.classList.remove('waiting');revealObserver.unobserve(entry.target);}}),{threshold:.08});
 $$('.reveal').forEach(el=>{if(el.getBoundingClientRect().top>innerHeight&&!state.reduced)el.classList.add('waiting');revealObserver.observe(el);});
 translateStatic();renderArchitecture();
-modelView=createFramework({heroHost:$('#hero-framework'),detailHost:$('#framework-stage'),renderer:new URLSearchParams(location.search).get('renderer')==='svg'?'svg':'auto',onFlowChange(frame){renderFlowStatus(frame);},onStageChange(index,meta){state.stage=index;state.node=null;if(meta?.runState?.nodeId)liveTrace.nodeId=meta.runState.nodeId;if(meta?.route){state.route=meta.route;$$('[data-route]').forEach(el=>el.setAttribute('aria-pressed',String(el.dataset.route===state.route)));}renderStageDetail();},onNodeSelect(id){state.node=id;if(id){state.free=false;leaveLiveFollow();modelView?.setFree(false);const box=$('#architecture').getBoundingClientRect();if(box.top>innerHeight*.5||box.bottom<innerHeight*.5)$('#architecture').scrollIntoView({behavior:state.reduced?'instant':'smooth'});}renderStageDetail();}});
+modelView=createFramework({heroHost:$('#hero-framework'),detailHost:$('#framework-stage'),renderer:new URLSearchParams(location.search).get('renderer')==='svg'?'svg':'auto',onFlowChange(frame){renderFlowStatus(frame);},onStageChange(index,meta){state.stage=index;state.node=null;if(meta?.runState?.nodeId)liveTrace.nodeId=meta.runState.nodeId;if(meta?.route){state.route=meta.route;$$('[data-route]').forEach(el=>el.setAttribute('aria-pressed',String(el.dataset.route===state.route)));}renderStageDetail();},onNodeSelect(id){state.node=id;if(id){pageScrollIntentUntil=0;state.free=false;leaveLiveFollow();modelView?.setFree(false);const box=$('#architecture').getBoundingClientRect();if(box.top>innerHeight*.5||box.bottom<innerHeight*.5)$('#architecture').scrollIntoView({behavior:state.reduced?'instant':'smooth'});}renderStageDetail();}});
 modelView.setLanguage(state.lang);modelView.setTheme(state.theme);modelView.setReduced(state.reduced);syncDemoLinks();requestFrame();
 try {
   [research,caseData]=await Promise.all(['data/research.json','data/case.json'].map(async path=>{const response=await fetch(new URL(`../${path}`,import.meta.url));if(!response.ok)throw new Error(`${path}: ${response.status}`);return response.json();}));

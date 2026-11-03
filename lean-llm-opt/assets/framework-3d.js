@@ -1,10 +1,10 @@
 import * as THREE from './vendor/three/three.module.js';
-import {buildFrameworkObject,svgFrameworkObject,OBJECT_PROFILES} from './framework-objects.js?v=thin-lines-20261103-1';
-import {computeFlowRoute,sampleFlowRoute} from './framework-routes.js?v=thin-lines-20261103-1';
-import {toDepthPoint,toDepthDirection,computeDepthCameraPose} from './framework-depth.js?v=thin-lines-20261103-1';
-export {toDepthPoint,toDepthDirection} from './framework-depth.js?v=thin-lines-20261103-1';
-import * as topology from './framework-topology.js?v=thin-lines-20261103-1';
-export {TOPOLOGY,STAGES,TEACHING_CYCLE,sampleTeachingCycle,sampleTeachingFlows} from './framework-topology.js?v=thin-lines-20261103-1';
+import {buildFrameworkObject,svgFrameworkObject,OBJECT_PROFILES} from './framework-objects.js?v=scroll-sync-20261103-1';
+import {computeFlowRoute,sampleFlowRoute} from './framework-routes.js?v=scroll-sync-20261103-1';
+import {toDepthPoint,toDepthDirection,computeDepthCameraPose} from './framework-depth.js?v=scroll-sync-20261103-1';
+export {toDepthPoint,toDepthDirection} from './framework-depth.js?v=scroll-sync-20261103-1';
+import * as topology from './framework-topology.js?v=scroll-sync-20261103-1';
+export {TOPOLOGY,STAGES,TEACHING_CYCLE,sampleTeachingCycle,sampleTeachingFlows} from './framework-topology.js?v=scroll-sync-20261103-1';
 const {TOPOLOGY,STAGES,NODE_BY_ID,activeEdges,resolveRunEvent,TEACHING_CYCLE,sampleTeachingCycle,sampleTeachingFlows}=topology;
 export const STATIONS=TOPOLOGY.groups||[];
 const clamp=(n,a=0,b=1)=>Math.max(a,Math.min(b,n));
@@ -46,6 +46,15 @@ export function computeFraming({positions,footprints=new Map(),stage=0,selected=
 }
 
 export function computeCameraPose(options){return computeDepthCameraPose(options);}
+const scrollCurveCache=new WeakMap();
+export function sampleScrollCamera(poses,progress){
+ if(!poses?.length)throw new TypeError('Scroll camera poses are required');
+ const value=clamp(Number(progress)||0),scaled=value*Math.max(0,poses.length-1),segment=Math.min(Math.max(0,poses.length-2),Math.floor(scaled)),local=value===1?1:scaled-segment;
+ let curves=scrollCurveCache.get(poses);if(!curves){curves=Object.fromEntries(['position','target'].map(key=>[key,poses.length===1?null:new THREE.CatmullRomCurve3(poses.map(p=>new THREE.Vector3(...p[key])),false,'centripetal')]));scrollCurveCache.set(poses,curves);}
+ const position=curves.position?curves.position.getPoint(value).toArray():[...poses[0].position],target=curves.target?curves.target.getPoint(value).toArray():[...poses[0].target],base=poses[Math.min(poses.length-1,Math.round(scaled))],fov=base.fov||42,direction=position.map((v,i)=>v-target[i]),distance=Math.hypot(...direction);
+ return{...base,position,target,span:2*distance*Math.tan(fov*Math.PI/360),yaw:Math.atan2(direction[0],direction[2]),pitch:Math.asin(clamp(direction[1]/Math.max(.001,distance),-1,1)),scrollProgress:value,segment,segmentProgress:local,mode:'scroll'};
+}
+
 export function sampleCameraFlight(from,to,progress,{reduced=false}={}){
  if(reduced)return{...to,position:[...to.position],target:[...to.target]};
  const t=clamp(progress),u=t*t*(3-2*t),wave=Math.sin(Math.PI*u),dx=to.position[0]-from.position[0],dy=to.position[1]-from.position[1],length=Math.hypot(dx,dy)||1;
@@ -117,7 +126,7 @@ export function layoutFallbackLabels(items,width,height,fontSize=13,bounds={left
 /** A shared orthographic scene. The graph stays on one plane; only the camera moves. */
 export function createFramework({heroHost,detailHost,onStageChange=()=>{},onNodeSelect=()=>{},onFlowChange=()=>{},renderer:rendererMode='auto'}={}){
  if(!heroHost||!detailHost)throw new Error('Framework view hosts are required');
- const state={lang:'zh',theme:'dark',reduced:false,free:false,route:'tailored',stage:0,progress:0,selected:null,hover:null,run:null,runEvent:null,zoom:1,localProgress:null,started:performance.now(),flowElapsed:0,flowPlaying:true,flowFrame:sampleTeachingCycle(0),liveMode:false,liveElapsed:0,visible:true,runId:null,visited:new Set(),lastDataAt:'csv'};
+ const state={lang:'zh',theme:'dark',reduced:false,free:false,route:'tailored',stage:0,progress:0,scrollLinked:false,selected:null,hover:null,run:null,runEvent:null,zoom:1,localProgress:null,started:performance.now(),flowElapsed:0,flowPlaying:true,flowFrame:sampleTeachingCycle(0),liveMode:false,liveElapsed:0,visible:true,runId:null,visited:new Set(),lastDataAt:'csv'};
  let disposed=false,fallback=rendererMode==='svg',raf=0,last=0,quality=1.5,slowFrames=0,flowSignature='';
  const cleanup=[],meshes=new Map(),links=new Map(),hitTargets=[];
  const system=document.createElement('div');system.className='fw-system';system.setAttribute('aria-hidden','true');
@@ -268,7 +277,16 @@ export function createFramework({heroHost,detailHost,onStageChange=()=>{},onNode
  }
  function footprintsFor(){return new Map(baseNodes().map(node=>{const profile=OBJECT_PROFILES[node.id]||OBJECT_PROFILES[iconOf(node)]||{width:2.9,height:2.8};return[node.id,meshes.get(node.id)?.footprint||scaledFootprint({...profile,depth:profile.depth??1.4,minZ:profile.minZ??-.18,maxZ:profile.maxZ??1.22})];}));}
  function routingFootprintsFor(){return new Map([...footprintsFor()].map(([id,fp])=>[id,depthRoutingFootprint(fp)]));}
- function framingFor(view){return computeFraming({positions:view.positions||positionsFor(view),footprints:routingFootprintsFor(),stage:state.stage,selected:state.selected,hero:view.hero,runNode:state.liveMode?state.run?.nodeId:null,aspect:view.rect.width/view.rect.height,zoom:state.zoom,pan:view.pan,routePoints:routes().flatMap(e=>curveFor(e,view.positions).route.points)});}
+ function framingFor(view,overrides={}){return computeFraming({positions:view.positions||positionsFor(view),footprints:routingFootprintsFor(),stage:state.stage,selected:state.selected,hero:view.hero,runNode:state.liveMode?state.run?.nodeId:null,aspect:view.rect.width/view.rect.height,zoom:state.zoom,pan:view.pan,routePoints:routes().flatMap(e=>curveFor(e,view.positions).route.points),...overrides});}
+ function cameraDestination(view,desired){
+  const footprints=footprintsFor(),routePoints=routes().flatMap(e=>curveFor(e,view.positions).route.points),options={positions:view.positions,footprints,routePoints,zoom:state.zoom,selected:state.selected,hero:view.hero,stage:state.stage};
+  if(!view.hero&&state.scrollLinked&&!state.selected&&!state.free&&!state.liveMode&&!state.reduced){
+   const key=`${view.rect.width}|${view.rect.height}|${state.zoom}|${state.route}`;
+   if(view.scrollPoseKey!==key){view.scrollPoseKey=key;view.scrollPoses=STAGES.map((_,stage)=>{const framing=framingFor(view,{stage,selected:null,runNode:null,pan:{x:0,y:0}});return computeCameraPose({...framing,...options,stage,selected:null,hero:false});});}
+   return sampleScrollCamera(view.scrollPoses,state.progress);
+  }
+  return computeCameraPose({...desired,...options});
+ }
  function cameraFrame(view,desired){
   const span=view.span,center={...desired.center},aspect=desired.aspect;
   const worldBounds={left:center.x-span*aspect/2,right:center.x+span*aspect/2,top:center.y+span/2,bottom:center.y-span/2};
@@ -279,12 +297,12 @@ export function createFramework({heroHost,detailHost,onStageChange=()=>{},onNode
    return[id,{worldWidth:fp.width,worldHeight:fp.height,left,right,top,bottom,x:(left+right)/2,y:(top+bottom)/2,width:right-left,height:bottom-top}];
   }));
   const visible=baseNodes().filter(n=>{const b=projectedNodeBounds[n.id];return b.right>0&&b.left<view.rect.width&&b.bottom>0&&b.top<view.rect.height;}).map(n=>n.id);
-  return{...desired,center,span,worldBounds,visibleNodeIds:visible,objectScale:OBJECT_SCALE,nodeFootprints:Object.fromEntries(fps),projectedNodeBounds,camera:{position:view.camera.position.toArray(),target:view.target.toArray(),fov:view.camera.fov,flightProgress:view.flight?clamp(view.flight.elapsed/view.flight.duration):1}};
+  return{...desired,center,span,worldBounds,visibleNodeIds:visible,objectScale:OBJECT_SCALE,nodeFootprints:Object.fromEntries(fps),projectedNodeBounds,camera:{position:view.camera.position.toArray(),target:view.target.toArray(),fov:view.camera.fov,mode:!view.hero&&state.scrollLinked&&!state.selected&&!state.free&&!state.liveMode&&!state.reduced?'scroll':'manual',scrollProgress:state.progress,flightProgress:view.flight?clamp(view.flight.elapsed/view.flight.duration):1}};
  }
  function fit(view,dt){
-  view.positions=positionsFor(view);const desired=framingFor(view),destination=computeCameraPose({...desired,stage:state.stage,selected:state.selected,hero:view.hero,zoom:state.zoom,positions:view.positions,footprints:footprintsFor(),routePoints:routes().flatMap(e=>curveFor(e,view.positions).route.points)});
+  view.positions=positionsFor(view);const desired=framingFor(view),destination=cameraDestination(view,desired);
   const signature=JSON.stringify([destination.position,destination.target,destination.span,desired.aspect]);
-  if(!view.initialized||state.reduced){view.flightPose=destination;view.flight=null;view.flightSignature=signature;}
+  if(!view.initialized||state.reduced||destination.mode==='scroll'){view.flightPose=destination;view.flight=null;view.flightSignature=signature;}
   else if(state.free){const previous=view.flightPose||destination,ease=1-Math.exp(-24*dt);view.flight=null;view.flightSignature=signature;view.flightPose={...destination,position:previous.position.map((v,i)=>lerp(v,destination.position[i],ease)),target:previous.target.map((v,i)=>lerp(v,destination.target[i],ease)),span:lerp(previous.span,destination.span,ease)};}
   else if(signature!==view.flightSignature){view.flight={from:view.flightPose||destination,to:destination,elapsed:0,duration:1.35};view.flightSignature=signature;}
   if(view.flight){view.flight.elapsed+=dt;const progress=clamp(view.flight.elapsed/view.flight.duration);view.flightPose=sampleCameraFlight(view.flight.from,view.flight.to,progress);if(progress===1)view.flight=null;}
@@ -393,10 +411,10 @@ export function createFramework({heroHost,detailHost,onStageChange=()=>{},onNode
  function renderFallback(view,now=performance.now()){
   view.labelRoot.hidden=true;view.rect=rectFor(view.host);view.visible=view.rect.bottom>0&&view.rect.top<innerHeight&&view.rect.right>0&&view.rect.left<innerWidth;
   let holder=view.fallback;if(!holder){holder=document.createElement('div');holder.className='fw-fallback';view.host.append(holder);view.fallback=holder;holder.addEventListener('click',e=>{const id=e.target.closest('[data-node]')?.dataset.node;if(id)selectNode(id);});holder.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){const id=e.target.closest('[data-node]')?.dataset.node;if(id){e.preventDefault();selectNode(id);}}});}
-  const phase=animationFraction(view,now),signature=JSON.stringify([view.host.clientWidth,view.host.clientHeight,state.lang,state.theme,state.route,view.hero?0:state.stage,state.flowFrame.stepId,state.liveMode,state.selected,state.run?.nodeId,state.run?.status,view.hero?1:state.zoom,state.flowPlaying,view.pan.x,view.pan.y,Math.round(phase*90),...flowFrames().map(f=>[f.stepId,Math.round(f.localProgress*90)])]);
+  const phase=animationFraction(view,now),signature=JSON.stringify([view.host.clientWidth,view.host.clientHeight,state.lang,state.theme,state.route,view.hero?0:state.stage,state.flowFrame.stepId,state.liveMode,state.selected,state.run?.nodeId,state.run?.status,view.hero?1:state.zoom,state.flowPlaying,view.pan.x,view.pan.y,state.scrollLinked?state.progress:null,Math.round(phase*90),...flowFrames().map(f=>[f.stepId,Math.round(f.localProgress*90)])]);
   if(view.fallbackSignature===signature)return;view.fallbackSignature=signature;view.positions=positionsFor(view);
   const mobile=view.host.clientWidth<760,width=Math.max(260,view.rect.width),height=Math.max(320,view.rect.height),positions=view.positions;
-  const desired=framingFor(view),rig=computeCameraPose({...desired,stage:state.stage,selected:state.selected,hero:view.hero,zoom:state.zoom,positions:view.positions,footprints:footprintsFor(),routePoints:routes().flatMap(e=>curveFor(e,view.positions).route.points)});
+  const desired=framingFor(view),rig=cameraDestination(view,desired);
   view.target.fromArray(rig.target);view.span=rig.span;view.camera.aspect=desired.aspect;view.camera.fov=rig.fov;view.camera.position.fromArray(rig.position);view.camera.lookAt(...rig.target);view.camera.updateProjectionMatrix();view.camera.updateMatrixWorld();view.initialized=true;
   view.framing=cameraFrame(view,desired);view.focusIds=new Set(desired.focusIds);view.visibleNodeIds=new Set(view.framing.visibleNodeIds);
   const map=p=>{const q=worldPoint(p).project(view.camera);return{x:(q.x+1)*width/2,y:(1-q.y)*height/2,z:q.z};};const point=id=>map(positions.get(id));
@@ -436,10 +454,10 @@ export function createFramework({heroHost,detailHost,onStageChange=()=>{},onNode
  const resizeObserver=new ResizeObserver(requestFrame);views.forEach(v=>resizeObserver.observe(v.host));const intersection=new IntersectionObserver(requestFrame,{rootMargin:'100px'});views.forEach(v=>intersection.observe(v.host));
  const fontsChanged=()=>{if(disposed)return;views.forEach(v=>v.labelMetrics.clear());requestFrame();};if(document.fonts){document.fonts.ready?.then(fontsChanged);document.fonts.addEventListener?.('loadingdone',fontsChanged);cleanup.push(()=>document.fonts.removeEventListener?.('loadingdone',fontsChanged));}
  const scroll=()=>requestFrame(),visibility=()=>{if(document.hidden){cancelAnimationFrame(raf);raf=0;last=0;}else requestFrame();};addEventListener('scroll',scroll,{passive:true});addEventListener('resize',requestFrame);document.addEventListener('visibilitychange',visibility);cleanup.push(()=>removeEventListener('scroll',scroll),()=>removeEventListener('resize',requestFrame),()=>document.removeEventListener('visibilitychange',visibility));
- function changeStage(index,notify=false){index=Math.round(clamp(Number(index)||0,0,STAGES.length-1));const changed=index!==state.stage;state.stage=index;state.progress=index/Math.max(1,STAGES.length-1);state.selected=null;if(changed){views.forEach(v=>v.pan.set(0,0));}if(changed&&notify)onStageChange(index);requestFrame();}
+ function changeStage(index,notify=false){index=Math.round(clamp(Number(index)||0,0,STAGES.length-1));const changed=index!==state.stage;state.scrollLinked=false;state.stage=index;state.progress=index/Math.max(1,STAGES.length-1);state.selected=null;if(changed){views.forEach(v=>v.pan.set(0,0));}if(changed&&notify)onStageChange(index);requestFrame();}
  function selectNode(id){const node=NODE_BY_ID.get(id);if(!node||!BASE_IDS.has(id)||node.level!==0)return;changeStage(node.stage);state.selected=id;onStageChange(state.stage);onNodeSelect(id,node);requestFrame();}
  const api={
-  setProgress(progress){if(state.selected)return;const value=clamp(Number(progress)||0);state.progress=value;const index=Math.round(value*(STAGES.length-1));if(index!==state.stage)changeStage(index,true);requestFrame();},
+  setProgress(progress){if(state.selected||state.free||state.liveMode||state.reduced)return;const value=clamp(Number(progress)||0),index=Math.round(value*(STAGES.length-1));state.scrollLinked=true;state.progress=value;if(index!==state.stage){state.stage=index;onStageChange(index);}requestFrame();},
   setStage(index){changeStage(index);},selectNode,
   back(){if(state.selected){state.selected=null;onNodeSelect(null,null);requestFrame();}else changeStage(0,true);},
   setRoute(route){if(!['tailored','agnostic'].includes(route))return;state.route=route;requestFrame();},
@@ -449,12 +467,12 @@ export function createFramework({heroHost,detailHost,onStageChange=()=>{},onNode
   getCameraState(name='detail'){const view=views[name==='hero'?0:1];view.rect=rectFor(view.host);view.positions=positionsFor(view);const frame=view.framing||framingFor(view);return JSON.parse(JSON.stringify(frame));},
   restartFlow(){state.flowElapsed=0;state.flowFrame=sampleTeachingCycle(0);state.flowPlaying=true;last=0;notifyFlow(true);requestFrame();},
   seekFlow(progress){state.flowElapsed=clamp(Number(progress)||0)*Math.max(0,TEACHING_CYCLE.durationMs-.001);state.flowFrame=sampleTeachingCycle(state.flowElapsed);last=0;notifyFlow(true);requestFrame();},
-  setLiveMode(value){value=Boolean(value);if(value===state.liveMode)return;state.liveMode=value;if(!state.liveMode){state.run=null;state.runEvent=null;state.liveElapsed=0;state.visited.clear();state.runId=null;state.lastDataAt='csv';}last=0;notifyFlow(true);requestFrame();},
+  setLiveMode(value){value=Boolean(value);if(value===state.liveMode)return;state.liveMode=value;if(state.liveMode)state.scrollLinked=false;if(!state.liveMode){state.run=null;state.runEvent=null;state.liveElapsed=0;state.visited.clear();state.runId=null;state.lastDataAt='csv';}last=0;notifyFlow(true);requestFrame();},
   setLanguage(lang){state.lang=lang==='en'?'en':'zh';notifyFlow(true);requestFrame();},setTheme(theme){state.theme=theme==='light'?'light':'dark';requestFrame();},
   setReduced(value){value=Boolean(value);if(value===state.reduced)return;state.reduced=value;last=0;views.forEach(v=>v.initialized=false);notifyFlow(true);requestFrame();},
-  setFree(value){state.free=Boolean(value);detailHost.classList.toggle('fw-host--free',state.free);requestFrame();},
+  setFree(value){state.free=Boolean(value);if(state.free)state.scrollLinked=false;detailHost.classList.toggle('fw-host--free',state.free);requestFrame();},
   zoomBy(factor){factor=Number(factor);if(Number.isFinite(factor)&&factor>0){state.zoom=clamp(state.zoom*factor,.7,1.6);requestFrame();}return state.zoom;},
-  resetCamera(){state.zoom=1;state.free=false;state.selected=null;state.stage=0;state.progress=0;onNodeSelect(null,null);onStageChange(0);for(const v of views){v.pan.set(0,0);v.initialized=false;}detailHost.classList.remove('fw-host--free');requestFrame();},
+  resetCamera(){state.zoom=1;state.scrollLinked=false;state.free=false;state.selected=null;state.stage=0;state.progress=0;onNodeSelect(null,null);onStageChange(0);for(const v of views){v.pan.set(0,0);v.initialized=false;}detailHost.classList.remove('fw-host--free');requestFrame();},
   dispose(){disposed=true;cancelAnimationFrame(raf);resizeObserver.disconnect();intersection.disconnect();cleanup.forEach(fn=>fn());for(const entry of links.values())for(const layout of entry.layouts.values())layout.geometry.dispose();scene?.traverse(o=>{o.geometry?.dispose();for(const m of(Array.isArray(o.material)?o.material:[o.material]))m?.dispose();});for(const map of textureCache.values())map.dispose();renderer?.dispose();system.remove();labelLayer.remove();views.forEach(v=>{v.fallback?.remove();v.host.classList.remove('fw-host','fw-host--hover','fw-host--free');});}
  };
  requestFrame();return api;
