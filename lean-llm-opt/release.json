@@ -2,11 +2,11 @@
   "format": "lean-llm-opt-static-v1",
   "deployment": "static",
   "demo": "local-only",
-  "builtAt": "2026-11-03T04:32:21.672Z",
+  "builtAt": "2026-11-03T04:35:37.672Z",
   "runtimeFileCount": 18,
   "fileCount": 20,
-  "payloadBytes": 1669195,
-  "totalBytes": 1672200,
+  "payloadBytes": 1669209,
+  "totalBytes": 1672214,
   "hashAlgorithm": "sha256",
   "files": {
     ".nojekyll": {
@@ -22,8 +22,8 @@
       "sha256": "14c83a5ebc0d55dfcac765b16dd621cef32fbf51ae5260e5362d6706ca44889e"
     },
     "assets/framework-3d.css": {
-      "bytes": 10575,
-      "sha256": "006733c921dfb17138205722d9902b3d11cd7f6368e1c1c6b9d4e12e6cca3994"
+      "bytes": 10589,
+      "sha256": "bd180e74b67d514137d6a26cdb408629f550120efd259aa2b9a7de837f26fe07"
     },
     "assets/framework-3d.js": {
       "bytes": 60069,
