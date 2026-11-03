@@ -1,5 +1,5 @@
-import {createFramework} from './framework-3d.js?v=scroll-sync-20261103-1';
-import {STAGES,NODE_BY_ID,JOURNEY_EXAMPLE,routeFromRunValue} from './framework-topology.js?v=scroll-sync-20261103-1';
+import {createFramework} from './framework-3d.js?v=visitor-local-20261103-1';
+import {STAGES,NODE_BY_ID,JOURNEY_EXAMPLE,routeFromRunValue} from './framework-topology.js?v=visitor-local-20261103-1';
 const root = document.documentElement;
 const isStaticDeployment = root.dataset.deployment === 'static';
 const $ = (selector, scope = document) => scope.querySelector(selector);
@@ -34,7 +34,7 @@ function translateStatic() {
   $$('[data-zh-aria]').forEach(el => el.setAttribute('aria-label', el.dataset[state.lang === 'zh' ? 'zhAria' : 'enAria']));
   root.lang = state.lang === 'zh' ? 'zh-CN' : 'en'; root.dataset.lang = state.lang;
   document.title = t('LEAN-LLM-OPT — 从语言到优化模型', 'LEAN-LLM-OPT — From language to optimization');
-  $('meta[name="description"]').content = t('LEAN-LLM-OPT 的多智能体优化建模框架、运输规划案例、基准结果与本地 Demo 介绍。','The LEAN-LLM-OPT multi-agent optimization framework, transportation case study, benchmark results, and local demo overview.');
+  $('meta[name="description"]').content = t('LEAN-LLM-OPT 的多智能体优化建模框架、运输规划案例、基准结果与交互式 Demo。','The LEAN-LLM-OPT multi-agent optimization framework, transportation case study, benchmark results, and interactive demo.');
   $('#lang-toggle').innerHTML = state.lang === 'zh' ? 'EN <span>↗</span>' : '中文 <span>↗</span>';
   $('#lang-toggle').setAttribute('aria-label', t('Switch to English', '切换到中文'));
   $('#motion-toggle').setAttribute('aria-pressed', String(state.reduced));
@@ -175,7 +175,6 @@ $('#graph-replay').addEventListener('click',()=>{state.flowPlaying=true;modelVie
 $('#graph-reset').addEventListener('click',()=>{modelView?.resetCamera();selectStage(0,true);});
 $('#graph-free').addEventListener('click',()=>{pageScrollIntentUntil=0;state.free=state.follow?true:!state.free;leaveLiveFollow();modelView?.setFree(state.free);renderStageDetail();});
 function syncDemoLinks(){
-  if(isStaticDeployment)return;
   const url=new URL('demo/',location.href);url.searchParams.set('lang',state.lang);url.searchParams.set('theme',state.theme);
   $$('[data-demo-link]').forEach(link=>{link.href=url.href;});
 }

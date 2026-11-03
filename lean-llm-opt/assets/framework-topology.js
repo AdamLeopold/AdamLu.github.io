@@ -40,7 +40,7 @@ export const JOURNEY_EXAMPLE = {
       'Recorded unmodified transportation demo run: 3 suppliers, 4 customers, and 12 continuous shipment variables.',
     ),
   },
-  source: {example: 'tp', url: '#demo', note: text('本地 Demo 的运输规划示例及其三份 CSV。', 'The transportation example and its three CSVs in the local demo.')},
+  source: {example: 'tp', url: 'demo/', note: text('Demo 页的运输规划示例及其三份 CSV。', 'The transportation example and its three CSVs on the Demo page.')},
 };
 export const EXAMPLE = JOURNEY_EXAMPLE;
 export const PRIMARY_PATH = ['query', 'classification', 'workflow', 'model', 'codegen', 'solver', 'solution'];

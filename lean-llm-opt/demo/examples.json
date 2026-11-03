@@ -1,0 +1,386 @@
+{
+  "schema_version": 1,
+  "examples": [
+    {
+      "id": "tp",
+      "title": {
+        "zh": "运输规划",
+        "en": "Transportation"
+      },
+      "description": {
+        "zh": "在供给与需求约束下安排运量，最小化运输成本。",
+        "en": "Choose shipments that meet demand within supply limits at minimum cost."
+      },
+      "dimensions": {
+        "zh": "3 个供应点 · 4 个客户",
+        "en": "3 suppliers · 4 customers"
+      },
+      "query": {
+        "zh": "根据 customer_demand.csv、supply_capacity.csv 和 transportation_costs.csv，决定每个供应点向每个客户运送的数量。所有客户收到的数量必须至少达到需求，供应点发出的总量不能超过供应能力。运输数量为非负连续变量，最小化总运输成本。使用全部供应点和客户。",
+        "en": "Using customer_demand.csv, supply_capacity.csv, and transportation_costs.csv, choose nonnegative continuous quantities shipped from every supplier to every customer. Meet or exceed each customer's demand, respect each supplier's capacity, and minimize total transportation cost. Use all suppliers and customers."
+      },
+      "source": "https://github.com/CoraLiang01/lean-llm-opt/tree/main/Large_Scale_Or_Files/TP_example",
+      "files": [
+        {
+          "name": "customer_demand.csv",
+          "content": "customer,demand\nC1,11\nC2,1148\nC3,54\nC4,833\n",
+          "columns": [
+            "customer",
+            "demand"
+          ],
+          "preview": [
+            [
+              "C1",
+              "11"
+            ],
+            [
+              "C2",
+              "1148"
+            ],
+            [
+              "C3",
+              "54"
+            ],
+            [
+              "C4",
+              "833"
+            ]
+          ],
+          "row_count": 4
+        },
+        {
+          "name": "supply_capacity.csv",
+          "content": "supplier,supply_capacity\nS1,4\nS2,575\nS3,1504\n",
+          "columns": [
+            "supplier",
+            "supply_capacity"
+          ],
+          "preview": [
+            [
+              "S1",
+              "4"
+            ],
+            [
+              "S2",
+              "575"
+            ],
+            [
+              "S3",
+              "1504"
+            ]
+          ],
+          "row_count": 3
+        },
+        {
+          "name": "transportation_costs.csv",
+          "content": ",C1,C2,C3,C4\nS1,0.63,49.71,33.75,1570.67\nS2,605.47,64.53,478.47,887.04\nS3,1139.04,4.78,1805.62,1302.89\n",
+          "columns": [
+            "",
+            "C1",
+            "C2",
+            "C3",
+            "C4"
+          ],
+          "preview": [
+            [
+              "S1",
+              "0.63",
+              "49.71",
+              "33.75",
+              "1570.67"
+            ],
+            [
+              "S2",
+              "605.47",
+              "64.53",
+              "478.47",
+              "887.04"
+            ],
+            [
+              "S3",
+              "1139.04",
+              "4.78",
+              "1805.62",
+              "1302.89"
+            ]
+          ],
+          "row_count": 3
+        }
+      ]
+    },
+    {
+      "id": "nrm",
+      "title": {
+        "zh": "收益管理",
+        "en": "Revenue management"
+      },
+      "description": {
+        "zh": "在库存、需求和共同发货容量限制下选择销售数量，最大化收入。",
+        "en": "Choose sales quantities within inventory, demand, and shared dispatch limits to maximize revenue."
+      },
+      "dimensions": {
+        "zh": "4 款产品 · 发货容量 100 件",
+        "en": "4 styles · 100-unit dispatch capacity"
+      },
+      "query": {
+        "zh": "nike_Shoes_Sales.csv 包含四款 Nike x Olivia Kim 鞋款的 Revenue、Demand 和 Initial Inventory。Revenue 为每件销售收入；Demand 是本销售期已知的总需求，Initial Inventory 是期初库存，销售期不补货。仅在四款总需求至少为 100 件时制定销售计划。为每款选择正整数销售数量，不超过该款需求和期初库存；四款合计销售不超过共同发货容量 100 件。最大化总销售收入。100 件发货容量是本教学情景明确给定的参数，不是 CSV 中的观测字段。",
+        "en": "nike_Shoes_Sales.csv contains Revenue, Demand, and Initial Inventory for four Nike x Olivia Kim shoe styles. Revenue is income per unit; Demand is the known total demand for this sales horizon, and Initial Inventory is starting stock. No replenishment is allowed. Plan sales only if total demand across the four styles is at least 100 units. Choose a positive integer sales quantity for each style, bounded by its demand and initial inventory. Total sales across all four styles must not exceed a shared dispatch capacity of 100 units. Maximize total sales revenue. The 100-unit dispatch capacity is an explicit teaching-scenario parameter, not an observed CSV field."
+      },
+      "source": "https://github.com/CoraLiang01/lean-llm-opt/tree/main/Large_Scale_Or_Files/NRM_example",
+      "note": {
+        "zh": "公开示例中四款 Nike x Olivia Kim 产品的原始记录；本教学情景将 Demand 解释为销售期已知总需求，并给定 100 件共同发货容量。",
+        "en": "Original records for the four Nike x Olivia Kim styles from the public example. This teaching scenario treats Demand as known total demand for the sales horizon and sets a shared dispatch capacity of 100 units."
+      },
+      "files": [
+        {
+          "name": "nike_Shoes_Sales.csv",
+          "content": "Product Name,Revenue,Demand,Initial Inventory\nNike x Olivia Kim Air Footscape,9097,26,240\nNike x Olivia Kim Air Force 1 '07,9995,53,281\nNike x Olivia Kim Air Max 98,11197,50,322\nNike x Olivia Kim Air Mowabb,11197,17,97\n",
+          "columns": [
+            "Product Name",
+            "Revenue",
+            "Demand",
+            "Initial Inventory"
+          ],
+          "preview": [
+            [
+              "Nike x Olivia Kim Air Footscape",
+              "9097",
+              "26",
+              "240"
+            ],
+            [
+              "Nike x Olivia Kim Air Force 1 '07",
+              "9995",
+              "53",
+              "281"
+            ],
+            [
+              "Nike x Olivia Kim Air Max 98",
+              "11197",
+              "50",
+              "322"
+            ],
+            [
+              "Nike x Olivia Kim Air Mowabb",
+              "11197",
+              "17",
+              "97"
+            ]
+          ],
+          "row_count": 4
+        }
+      ]
+    },
+    {
+      "id": "ra",
+      "title": {
+        "zh": "资源分配",
+        "en": "Resource allocation"
+      },
+      "description": {
+        "zh": "按产品收益和占用空间分配陈列资源，满足平台与品牌限制。",
+        "en": "Allocate display space by product value and space requirements, respecting platform and brand limits."
+      },
+      "dimensions": {
+        "zh": "3 种产品 · 1 个平台",
+        "en": "3 products · 1 platform"
+      },
+      "query": {
+        "zh": "将 products.csv 中的三种产品分配到 capacity.csv 的一个陈列平台。每种产品的数量是非负整数，每单位产品获得 Value 收益并占用 SpaceRequirement 空间。总空间不能超过 Capacity；产品名包含 Sony 的产品总空间不能超过 SonyLimit。没有其他产品或需求上限，最大化总收益。",
+        "en": "Allocate the three products in products.csv to the single display platform in capacity.csv. Product quantities are nonnegative integers. Each unit earns Value and uses SpaceRequirement space. Total space must not exceed Capacity; total space for products whose names contain Sony must not exceed SonyLimit. There are no other products or demand limits. Maximize total value."
+      },
+      "source": "https://github.com/CoraLiang01/lean-llm-opt/tree/main/Large_Scale_Or_Files/RA_example",
+      "note": {
+        "zh": "公开示例数据前三个产品和第一个平台的教学子集。",
+        "en": "Teaching subset: the first three products and first platform from the public example."
+      },
+      "files": [
+        {
+          "name": "products.csv",
+          "content": "Product,Value,SpaceRequirement\nSony Alpha Refrigerator,1818,400\nSony Bravia XR,1609,200\nSony HT-A7000 Soundbar,509,40\n",
+          "columns": [
+            "Product",
+            "Value",
+            "SpaceRequirement"
+          ],
+          "preview": [
+            [
+              "Sony Alpha Refrigerator",
+              "1818",
+              "400"
+            ],
+            [
+              "Sony Bravia XR",
+              "1609",
+              "200"
+            ],
+            [
+              "Sony HT-A7000 Soundbar",
+              "509",
+              "40"
+            ]
+          ],
+          "row_count": 3
+        },
+        {
+          "name": "capacity.csv",
+          "content": "PlatformID,Capacity,SonyLimit,AppleLimit\n1,3336,1200,1300\n",
+          "columns": [
+            "PlatformID",
+            "Capacity",
+            "SonyLimit",
+            "AppleLimit"
+          ],
+          "preview": [
+            [
+              "1",
+              "3336",
+              "1200",
+              "1300"
+            ]
+          ],
+          "row_count": 1
+        }
+      ]
+    },
+    {
+      "id": "flp",
+      "title": {
+        "zh": "设施选址",
+        "en": "Facility location"
+      },
+      "description": {
+        "zh": "联合决定启用哪些供应设施及其运量，最小化固定成本与运输成本。",
+        "en": "Choose which supply facilities to open and how much to ship, minimizing fixed and transportation costs."
+      },
+      "dimensions": {
+        "zh": "2 个设施 · 2 个客户",
+        "en": "2 facilities · 2 customers"
+      },
+      "query": {
+        "zh": "根据 demand.csv、fixed_cost.csv 和 transportation_costs.csv，决定启用哪些供应设施，以及每个设施向每个客户运输的数量。fixed_cost.csv 的 fixed_costs 列为启用设施的固定成本；运输成本矩阵的行为设施、列为客户，数值是单位运输成本。每个客户收到的总量必须恰好等于需求。设施启用变量为二元变量，运量为非负连续变量；未启用的设施不能运输。设施没有额外容量上限，最小化固定启用成本与运输成本之和。",
+        "en": "Using demand.csv, fixed_cost.csv, and transportation_costs.csv, choose which supply facilities to open and how much each facility ships to each customer. The fixed_costs column in fixed_cost.csv gives each facility's opening cost. Transportation matrix rows are facilities, columns are customers, and entries are unit shipping costs. Every customer must receive exactly its demand. Use binary facility-opening variables and nonnegative continuous shipments; a closed facility cannot ship. Facilities have no additional capacity limits. Minimize the sum of fixed opening and transportation costs."
+      },
+      "source": "https://github.com/CoraLiang01/lean-llm-opt/tree/main/Large_Scale_Or_Files/UFLP_example",
+      "note": {
+        "zh": "公开 UFLP 示例的完整三张表：无设施容量上限的选址与运输问题。",
+        "en": "All three tables from the public UFLP example: facility opening and shipping without facility capacity limits."
+      },
+      "files": [
+        {
+          "name": "demand.csv",
+          "content": "customer,demand\nC1,7564\nC2,5246\n",
+          "columns": [
+            "customer",
+            "demand"
+          ],
+          "preview": [
+            [
+              "C1",
+              "7564"
+            ],
+            [
+              "C2",
+              "5246"
+            ]
+          ],
+          "row_count": 2
+        },
+        {
+          "name": "fixed_cost.csv",
+          "content": ",fixed_costs\nS1,105.18150830480553\nS2,112.1842388512642\n",
+          "columns": [
+            "",
+            "fixed_costs"
+          ],
+          "preview": [
+            [
+              "S1",
+              "105.18150830480553"
+            ],
+            [
+              "S2",
+              "112.1842388512642"
+            ]
+          ],
+          "row_count": 2
+        },
+        {
+          "name": "transportation_costs.csv",
+          "content": ",C1,C2\nS1,937.3406504757702,86.93019411027852\nS2,49.3801614788785,1726.0621013627836\n",
+          "columns": [
+            "",
+            "C1",
+            "C2"
+          ],
+          "preview": [
+            [
+              "S1",
+              "937.3406504757702",
+              "86.93019411027852"
+            ],
+            [
+              "S2",
+              "49.3801614788785",
+              "1726.0621013627836"
+            ]
+          ],
+          "row_count": 2
+        }
+      ]
+    },
+    {
+      "id": "ap",
+      "title": {
+        "zh": "人员指派",
+        "en": "Assignment"
+      },
+      "description": {
+        "zh": "为经理与项目建立一一匹配，最小化总指派成本。",
+        "en": "Match managers to projects one to one at minimum total assignment cost."
+      },
+      "dimensions": {
+        "zh": "3 位经理 · 3 个项目",
+        "en": "3 managers · 3 projects"
+      },
+      "query": {
+        "zh": "manager_project_cost.csv 给出三位经理 MA、MB、MC 分别负责三个项目 P1、P2、P3 的成本。每位经理恰好负责一个项目，每个项目恰好分配给一位经理。使用二元指派变量，最小化总成本。",
+        "en": "manager_project_cost.csv contains costs for managers MA, MB, and MC to oversee projects P1, P2, and P3. Assign exactly one project to every manager and exactly one manager to every project. Use binary assignment variables and minimize total cost."
+      },
+      "source": "https://github.com/CoraLiang01/lean-llm-opt/tree/main/Large_Scale_Or_Files/AP_example/AP1",
+      "files": [
+        {
+          "name": "manager_project_cost.csv",
+          "content": ",P1,P2,P3\nMA,3000,3200,3100\nMB,2800,3300,2900\nMC,2900,3100,3000\n",
+          "columns": [
+            "",
+            "P1",
+            "P2",
+            "P3"
+          ],
+          "preview": [
+            [
+              "MA",
+              "3000",
+              "3200",
+              "3100"
+            ],
+            [
+              "MB",
+              "2800",
+              "3300",
+              "2900"
+            ],
+            [
+              "MC",
+              "2900",
+              "3100",
+              "3000"
+            ]
+          ],
+          "row_count": 3
+        }
+      ]
+    }
+  ]
+}

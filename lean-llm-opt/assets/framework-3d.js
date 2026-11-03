@@ -1,10 +1,10 @@
 import * as THREE from './vendor/three/three.module.js';
-import {buildFrameworkObject,svgFrameworkObject,OBJECT_PROFILES} from './framework-objects.js?v=scroll-sync-20261103-1';
-import {computeFlowRoute,sampleFlowRoute} from './framework-routes.js?v=scroll-sync-20261103-1';
-import {toDepthPoint,toDepthDirection,computeDepthCameraPose} from './framework-depth.js?v=scroll-sync-20261103-1';
-export {toDepthPoint,toDepthDirection} from './framework-depth.js?v=scroll-sync-20261103-1';
-import * as topology from './framework-topology.js?v=scroll-sync-20261103-1';
-export {TOPOLOGY,STAGES,TEACHING_CYCLE,sampleTeachingCycle,sampleTeachingFlows} from './framework-topology.js?v=scroll-sync-20261103-1';
+import {buildFrameworkObject,svgFrameworkObject,OBJECT_PROFILES} from './framework-objects.js?v=visitor-local-20261103-1';
+import {computeFlowRoute,sampleFlowRoute} from './framework-routes.js?v=visitor-local-20261103-1';
+import {toDepthPoint,toDepthDirection,computeDepthCameraPose} from './framework-depth.js?v=visitor-local-20261103-1';
+export {toDepthPoint,toDepthDirection} from './framework-depth.js?v=visitor-local-20261103-1';
+import * as topology from './framework-topology.js?v=visitor-local-20261103-1';
+export {TOPOLOGY,STAGES,TEACHING_CYCLE,sampleTeachingCycle,sampleTeachingFlows} from './framework-topology.js?v=visitor-local-20261103-1';
 const {TOPOLOGY,STAGES,NODE_BY_ID,activeEdges,resolveRunEvent,TEACHING_CYCLE,sampleTeachingCycle,sampleTeachingFlows}=topology;
 export const STATIONS=TOPOLOGY.groups||[];
 const clamp=(n,a=0,b=1)=>Math.max(a,Math.min(b,n));

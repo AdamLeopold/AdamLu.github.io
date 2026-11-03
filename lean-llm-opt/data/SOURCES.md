@@ -42,6 +42,6 @@ TP1 contains 18 distribution centers, 18 customers, and 324 continuous shipment 
 
 [TP1 原始数据 / Source tables](https://github.com/CoraLiang01/lean-llm-opt/tree/main/Test_Dataset/Large-scale-or/TP_testing/TP1) · [案例导出 / Case export](case.json) · [生成程序 / Generated program](transport-code.py)
 
-本地 Demo 的每次运行根据用户输入、上传数据和所选模型生成新产物；结果保存在相应的会话版本中。
+交互式 Demo 的每次运行根据用户输入、上传数据和所选模型生成新产物；结果保存在相应的会话版本中。
 
-Each local demo run generates new artifacts from the user’s query, uploaded data, and selected model. Results are retained in that session’s run history.
+Each interactive demo run generates new artifacts from the user’s query, uploaded data, and selected model. Results are retained in that session’s run history.
