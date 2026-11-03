@@ -1,10 +1,10 @@
 import * as THREE from './vendor/three/three.module.js';
-import {buildFrameworkObject,svgFrameworkObject,OBJECT_PROFILES} from './framework-objects.js?v=depth-20261103-1';
-import {computeFlowRoute,sampleFlowRoute} from './framework-routes.js?v=depth-20261103-1';
-import {toDepthPoint,toDepthDirection,computeDepthCameraPose} from './framework-depth.js?v=depth-20261103-1';
-export {toDepthPoint,toDepthDirection} from './framework-depth.js?v=depth-20261103-1';
-import * as topology from './framework-topology.js?v=depth-20261103-1';
-export {TOPOLOGY,STAGES,TEACHING_CYCLE,sampleTeachingCycle,sampleTeachingFlows} from './framework-topology.js?v=depth-20261103-1';
+import {buildFrameworkObject,svgFrameworkObject,OBJECT_PROFILES} from './framework-objects.js?v=thin-lines-20261103-1';
+import {computeFlowRoute,sampleFlowRoute} from './framework-routes.js?v=thin-lines-20261103-1';
+import {toDepthPoint,toDepthDirection,computeDepthCameraPose} from './framework-depth.js?v=thin-lines-20261103-1';
+export {toDepthPoint,toDepthDirection} from './framework-depth.js?v=thin-lines-20261103-1';
+import * as topology from './framework-topology.js?v=thin-lines-20261103-1';
+export {TOPOLOGY,STAGES,TEACHING_CYCLE,sampleTeachingCycle,sampleTeachingFlows} from './framework-topology.js?v=thin-lines-20261103-1';
 const {TOPOLOGY,STAGES,NODE_BY_ID,activeEdges,resolveRunEvent,TEACHING_CYCLE,sampleTeachingCycle,sampleTeachingFlows}=topology;
 export const STATIONS=TOPOLOGY.groups||[];
 const clamp=(n,a=0,b=1)=>Math.max(a,Math.min(b,n));
@@ -20,7 +20,8 @@ const FLOW_IDS={query:topology.JOURNEY_EXAMPLE?.query?.id||'example-query',data:
 const labelForKind=(kind,lang)=>({query:{zh:'问题描述',en:'Query'},data:{zh:'CSV 数据',en:'CSV data'},reference:{zh:'参考示例',en:'Reference'},artifact:{zh:'求解产物',en:'Output'}}[kind]?.[lang]||'');
 const SHOT_FOCUS=[null,['query','csv'],['classification'],['workflow'],['model','csvqa'],['codegen','solver'],['solution']];
 export const OBJECT_SCALE=.64;
-export const flowStrokeWidth=active=>active?3.8:2.8;
+export const flowStrokeWidth=active=>active?1.6:1.1;
+export const flowWorldWidth=(pixelWidth,depth,viewportHeight,fov=42)=>pixelWidth*2*Math.max(.1,depth)*Math.tan(fov*Math.PI/360)/Math.max(1,viewportHeight);
 export const scaledFootprint=(fp,scale=OBJECT_SCALE)=>Object.fromEntries(Object.entries(fp).map(([k,v])=>[k,['width','height','depth','minX','maxX','minY','maxY','minZ','maxZ'].includes(k)?v*scale:v]));
 export function depthRoutingFootprint(fp){const minZ=fp.minZ??-.35,maxZ=fp.maxZ??.65,minX=fp.minX??-fp.width/2,maxX=fp.maxX??fp.width/2;return{width:(maxZ-minZ)/1.2,height:maxX-minX,minX:minZ/1.2,maxX:maxZ/1.2,minY:-maxX,maxY:-minX};}
 class FlowCurve extends THREE.Curve{
@@ -194,9 +195,9 @@ export function createFramework({heroHost,detailHost,onStageChange=()=>{},onNode
  function worldCurveFor(edge,positions){
   const source=curveFor(edge,positions);if(!worldRouteCache.has(source)){const points=source.route.points.map(toDepthPoint),distances=[0];for(let i=1;i<points.length;i++)distances.push(distances.at(-1)+Math.hypot(...points[i].map((v,k)=>v-points[i-1][k])));worldRouteCache.set(source,new FlowCurve({...source.route,points,distances,length:distances.at(-1)}));}return worldRouteCache.get(source);
  }
- function ribbonGeometry(curve,width,dashWorld=0,viewDirection=new THREE.Vector3(0,-.6,-.8)){
+ function ribbonGeometry(curve,pixelWidth,dashWorld,viewDirection,camera,viewportHeight){
   const points=curve.route.points,vertices=[],indices=[];
-  for(let i=0;i<points.length;i++){const a=points[Math.max(0,i-1)],b=points[Math.min(points.length-1,i+1)],normal=new THREE.Vector3(b[0]-a[0],b[1]-a[1],b[2]-a[2]).cross(viewDirection).normalize().multiplyScalar(width/2),p=new THREE.Vector3(...points[i]);vertices.push(...p.clone().add(normal).toArray(),...p.clone().sub(normal).toArray());if(i<points.length-1&&(!dashWorld||Math.floor((curve.route.distances[i]+curve.route.distances[i+1])/2/dashWorld)%2===0)){const n=i*2;indices.push(n,n+1,n+2,n+1,n+3,n+2);}}
+  for(let i=0;i<points.length;i++){const a=points[Math.max(0,i-1)],b=points[Math.min(points.length-1,i+1)],depth=new THREE.Vector3(...points[i]).sub(camera.position).dot(viewDirection),width=flowWorldWidth(pixelWidth,depth,viewportHeight,camera.fov),normal=new THREE.Vector3(b[0]-a[0],b[1]-a[1],b[2]-a[2]).cross(viewDirection).normalize().multiplyScalar(width/2),p=new THREE.Vector3(...points[i]);vertices.push(...p.clone().add(normal).toArray(),...p.clone().sub(normal).toArray());if(i<points.length-1&&(!dashWorld||Math.floor((curve.route.distances[i]+curve.route.distances[i+1])/2/dashWorld)%2===0)){const n=i*2;indices.push(n,n+1,n+2,n+1,n+3,n+2);}}
   const geometry=new THREE.BufferGeometry();geometry.setAttribute('position',new THREE.Float32BufferAttribute(vertices,3));geometry.setIndex(indices);geometry.computeBoundingSphere();return geometry;
  }
  function arrowFractions(view,curve){
@@ -315,8 +316,8 @@ export function createFramework({heroHost,detailHost,onStageChange=()=>{},onNode
   const drawn=new Set(renderedRoutes(view).map(e=>e.id));
   for(const entry of links.values()){
    const edge=entry.edge,show=drawn.has(edge.id);entry.line.visible=show;entry.arrows.forEach(a=>a.visible=false);if(!show)continue;
-   const curve=worldCurveFor(edge,view.positions),isActive=active.has(edge.id),color=palette[edgeColor(edge)],width=flowStrokeWidth(isActive)*view.span/view.rect.height,direction=view.camera.getWorldDirection(new THREE.Vector3()),key=`${mobile?'m':'d'}|${width.toFixed(5)}|${direction.toArray().map(v=>v.toFixed(3)).join(',')}`;
-   const slot=`${view.hero?'hero':'detail'}|${mobile?'m':'d'}`;let layout=entry.layouts.get(slot);if(!layout||layout.key!==key){layout?.geometry.dispose();layout={key,geometry:ribbonGeometry(curve,width,edge.kind==='request'?view.span/view.rect.height*9:0,direction)};entry.layouts.set(slot,layout);}if(!entry.line.geometry.attributes.position)entry.line.geometry.dispose();entry.line.geometry=layout.geometry;
+   const curve=worldCurveFor(edge,view.positions),isActive=active.has(edge.id),color=palette[edgeColor(edge)],width=flowStrokeWidth(isActive),direction=view.camera.getWorldDirection(new THREE.Vector3()),key=`${mobile?'m':'d'}|${width}|${view.rect.height}|${view.camera.fov}|${view.camera.position.toArray().map(v=>v.toFixed(5)).join(',')}|${direction.toArray().map(v=>v.toFixed(5)).join(',')}`;
+   const slot=`${view.hero?'hero':'detail'}|${mobile?'m':'d'}`;let layout=entry.layouts.get(slot);if(!layout||layout.key!==key){layout?.geometry.dispose();layout={key,geometry:ribbonGeometry(curve,width,edge.kind==='request'?view.span/view.rect.height*9:0,direction,view.camera,view.rect.height)};entry.layouts.set(slot,layout);}if(!entry.line.geometry.attributes.position)entry.line.geometry.dispose();entry.line.geometry=layout.geometry;
    entry.material.color.setHex(color);entry.material.opacity=isActive?1:edge.kind==='flow'?.92:.78;
    arrowFractions(view,curveFor(edge,view.positions)).forEach((t,i)=>{const arrow=entry.arrows[i];arrow.visible=true;arrow.position.copy(worldPoint(curveFor(edge,view.positions).getPoint(t)));arrow.material.color.setHex(color);arrow.material.opacity=isActive?1:.9;arrow.scale.setScalar(view.span/view.rect.height*3.5/.065);arrow.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),worldDirection(curveFor(edge,view.positions).getTangent(t)));});
   }
