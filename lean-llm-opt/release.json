@@ -1,0 +1,84 @@
+{
+  "format": "lean-llm-opt-static-v1",
+  "deployment": "static",
+  "demo": "local-only",
+  "builtAt": "2026-11-03T03:03:23.854Z",
+  "runtimeFileCount": 17,
+  "fileCount": 19,
+  "totalBytes": 1651740,
+  "hashAlgorithm": "sha256",
+  "files": {
+    ".nojekyll": {
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    "assets/app.js": {
+      "bytes": 47404,
+      "sha256": "60b9fc8931f422b20ea435ca0aa920eabf8446be6a79c25e694153e41362ddc3"
+    },
+    "assets/favicon.svg": {
+      "bytes": 250,
+      "sha256": "14c83a5ebc0d55dfcac765b16dd621cef32fbf51ae5260e5362d6706ca44889e"
+    },
+    "assets/framework-3d.css": {
+      "bytes": 10182,
+      "sha256": "1e128db46644a5540b0dddb8d728f9245a2e141fc0deb18d1618df673298930d"
+    },
+    "assets/framework-3d.js": {
+      "bytes": 70532,
+      "sha256": "8ce38efe7e67d02a98c8d869f2c30276ae8975d649a6d6003086b37458678862"
+    },
+    "assets/framework-topology.js": {
+      "bytes": 41907,
+      "sha256": "695e14184fba4b175f960ac3077a78a9ca15b12e14d87556d5a9959c14fe349a"
+    },
+    "assets/redesign.css": {
+      "bytes": 19415,
+      "sha256": "3412f5d836abf03b6e1d3b38e23c9402124f8d7cb70a937a681c50955c579e4c"
+    },
+    "assets/style.css": {
+      "bytes": 49073,
+      "sha256": "bd78f58504143a2e166ee79c1b641b424acac168b82aa232de77113c2298c282"
+    },
+    "assets/vendor/three/LICENSE": {
+      "bytes": 1081,
+      "sha256": "852e0e8699169bf9f6fdc6bda3e682d078dcbc738b5d33e74df594721bff271d"
+    },
+    "assets/vendor/three/three.module.js": {
+      "bytes": 1272972,
+      "sha256": "76dea8151bc9352aef3528b4262e249b2604f62543828328db978d060d61a495"
+    },
+    "data/case.json": {
+      "bytes": 54713,
+      "sha256": "d584f9d6ee6327fe56b1fb767f76cfa0a39d346e77ab7e55303a441295c9cad6"
+    },
+    "data/research.json": {
+      "bytes": 14001,
+      "sha256": "100a89ed758228eeefd4038a552fa37ac0622124d2a53799526c6e5aad726095"
+    },
+    "data/SOURCES.md": {
+      "bytes": 6527,
+      "sha256": "0fc11339676db7a17decde8b1363611740ed869d6bca013abd7378660b688bad"
+    },
+    "data/transport-code.py": {
+      "bytes": 34738,
+      "sha256": "0815079d26294850f3efcdd8ee58067a90fab8d9c964f8f153d24e3799986454"
+    },
+    "data/transport/customer_demand.csv": {
+      "bytes": 159,
+      "sha256": "5499656a0e8e937cb80210810116f39b670b04c1e0883d781151e75e1c10defc"
+    },
+    "data/transport/supply_capacity.csv": {
+      "bytes": 165,
+      "sha256": "f8f169fca61e02f19bff5da273652ba016368ea526f6d0abead02007c23ee950"
+    },
+    "data/transport/transportation_costs.csv": {
+      "bytes": 6142,
+      "sha256": "d15d2c1db282122b170697a44c1a87961d3266f8d803948d470218c22c652275"
+    },
+    "index.html": {
+      "bytes": 22479,
+      "sha256": "49d29fadd0f9e444c82922bdb9384656847786ea05c9ee8acba3ab9cbe077804"
+    }
+  }
+}

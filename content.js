@@ -198,6 +198,7 @@ window.HOMEPAGE_CONTENT = {
       { name: "Chung-Piaw Teo", url: "https://iora.nus.edu.sg/people-p/teo-chung-piaw/" },
     ],
     links: [
+      { label: { en: "Project website", zh: "项目网站" }, url: "https://adamleopold.github.io/AdamLu.github.io/lean-llm-opt/" },
       { label: { en: "Paper", zh: "论文" }, url: "https://arxiv.org/abs/2601.09635" },
       { label: { en: "Code and data", zh: "代码与数据" }, url: "https://github.com/CoraLiang01/lean-llm-opt" },
       { label: { en: "Status source", zh: "状态来源" }, url: "https://rzhu.github.io/pub.html" },

@@ -1,0 +1,144 @@
+{
+  "paper": {
+    "title": "Large-Scale Optimization Model Auto-Formulation: Harnessing LLM Flexibility via Structured Workflow",
+    "authors": ["Kuo Liang", "Yuhang Lu", "Jianming Mao", "Shuyi Sun", "Chunwei Yang", "Congcong Zeng", "Xiao Jin", "Hanzhang Qin", "Ruihao Zhu", "Chung-Piaw Teo"],
+    "url": "https://papers.ssrn.com/sol3/papers.cfm?abstract_id=5329027",
+    "citation": "Kuo Liang, Yuhang Lu, Jianming Mao, Shuyi Sun, Chunwei Yang, Congcong Zeng, Xiao Jin, Hanzhang Qin, Ruihao Zhu, and Chung-Piaw Teo. Large-Scale Optimization Model Auto-Formulation: Harnessing LLM Flexibility via Structured Workflow. SSRN 5329027."
+  },
+  "repository": "https://github.com/CoraLiang01/lean-llm-opt",
+  "studies": {
+    "large": {
+      "title": {"zh": "大规模优化基准", "en": "Large-scale optimization benchmark"},
+      "description": {"zh": "在 Large-scale-or 的 101 道题目上，评估从问题描述和外部数据表生成优化模型与求解代码的能力。", "en": "The framework is evaluated on 101 Large-scale-or problems by generating optimization formulations and solver code from problem descriptions and external tables."},
+      "metric": {"zh": "最优目标值匹配率", "en": "Optimal-objective match rate"},
+      "note": {"zh": "结果取自公开基准汇总，按求解目标值与参考最优值的一致性评分。全部 101 题计入分母，包括运行失败。", "en": "Published benchmark results are scored by agreement between the computed objective and the reference optimum. All 101 problems, including failed runs, remain in the denominator."},
+      "sources": [
+        {"label": "GPT-4.1 benchmark summary", "url": "https://github.com/CoraLiang01/lean-llm-opt/blob/main/outputs/4.1-Full-1018-99/101/automatic/summary.csv"},
+        {"label": "gpt-oss-20B benchmark summary", "url": "https://github.com/CoraLiang01/lean-llm-opt/blob/main/outputs/final_101_oss20b/automatic/summary.csv"}
+      ],
+      "rows": [
+        {"group": "Large-scale-or", "model": "gpt41", "correct": 99, "total": 101, "rate": 98.02},
+        {"group": "Large-scale-or", "model": "oss", "correct": 93, "total": 101, "rate": 92.08}
+      ]
+    },
+    "small": {
+      "title": {"zh": "小规模基准", "en": "Small-scale benchmarks"},
+      "description": {"zh": "比较 LEAN-LLM-OPT 在 NL4OPT、MAMO Easy 与 IndustryOR 三个基准上的表现。", "en": "LEAN-LLM-OPT is evaluated with both base models on NL4OPT, MAMO Easy, and IndustryOR."},
+      "metric": {"zh": "报告的目标值匹配率", "en": "Reported objective-match rate"},
+      "note": {"zh": "NL4OPT 按稿件报告比例展示；MAMO Easy 与 IndustryOR 根据公开明细列出正确数与总数。各基准分别统计。", "en": "NL4OPT uses manuscript-reported rates. MAMO Easy and IndustryOR show correct and total counts from the published result files. Each benchmark is summarized separately."},
+      "sources": [
+        {"label": "NL4OPT GPT-4.1 results", "url": "https://github.com/CoraLiang01/lean-llm-opt/blob/main/Results/Benchmark_test/NL4OPT_LEAN_GPT4.1.csv"},
+        {"label": "NL4OPT gpt-oss-20B results", "url": "https://github.com/CoraLiang01/lean-llm-opt/blob/main/Results/Benchmark_test/NL4OPT_LEAN_OSS20B.csv"},
+        {"label": "MAMO Easy GPT-4.1 results", "url": "https://github.com/CoraLiang01/lean-llm-opt/blob/main/Results/Benchmark_test/MAMOe_LEAN_GPT4.1.xlsx"},
+        {"label": "MAMO Easy gpt-oss-20B results", "url": "https://github.com/CoraLiang01/lean-llm-opt/blob/main/Results/Benchmark_test/MAMOe_LEAN_OSS20B.csv"},
+        {"label": "IndustryOR GPT-4.1 results", "url": "https://github.com/CoraLiang01/lean-llm-opt/blob/main/Results/Benchmark_test/IndustryOR_LEAN_GPT4.1.xlsx"},
+        {"label": "IndustryOR gpt-oss-20B results", "url": "https://github.com/CoraLiang01/lean-llm-opt/blob/main/Results/Benchmark_test/IndustryOR_LEAN_OSS20B.csv"}
+      ],
+      "rows": [
+        {"group": "NL4OPT", "model": "gpt41", "correct": null, "total": null, "rate": 94.7},
+        {"group": "NL4OPT", "model": "oss", "correct": null, "total": null, "rate": 93.5},
+        {"group": "MAMO Easy", "model": "gpt41", "correct": 600, "total": 642, "rate": 93.46},
+        {"group": "MAMO Easy", "model": "oss", "correct": 587, "total": 642, "rate": 91.43},
+        {"group": "IndustryOR", "model": "gpt41", "correct": 65, "total": 100, "rate": 65.0},
+        {"group": "IndustryOR", "model": "oss", "correct": 59, "total": 100, "rate": 59.0}
+      ]
+    },
+    "components": {
+      "title": {"zh": "组件设置比较", "en": "Component settings"},
+      "description": {"zh": "RAG Only 移除建模与代码的完整示例；Few-shot Only 保留示例，以完整 pandas 表格替代定制的数据提取接口。", "en": "RAG Only removes worked formulation and code examples. Few-shot Only retains the examples and replaces the custom extraction interface with complete pandas tables."},
+      "metric": {"zh": "最优目标值匹配率", "en": "Optimal-objective match rate"},
+      "note": {"zh": "各组件设置在 101 道原题上分别运行，完整系统结果见大规模基准。gpt-oss 两种组件设置使用了不同的服务版本。", "en": "Each component setting was run separately on the 101 original problems; full-system results appear in the large-scale benchmark. The two gpt-oss settings used different server versions."},
+      "sources": [
+        {"label": "GPT-4.1 RAG Only summary", "url": "https://github.com/CoraLiang01/lean-llm-opt/blob/main/outputs/rag_only_1018-4.1/automatic/summary.csv"},
+        {"label": "GPT-4.1 Few-shot Only summary", "url": "https://github.com/CoraLiang01/lean-llm-opt/blob/main/outputs/few_shot_only_1018-4.1/automatic/summary.csv"},
+        {"label": "gpt-oss-20B RAG Only summary", "url": "https://github.com/CoraLiang01/lean-llm-opt/blob/main/outputs/ablation_gpt_oss_20b_rag_only/automatic/summary.csv"},
+        {"label": "gpt-oss-20B Few-shot Only summary", "url": "https://github.com/CoraLiang01/lean-llm-opt/blob/main/outputs/ablation_gpt_oss_20b_few_shot_only/automatic/summary.csv"}
+      ],
+      "rows": [
+        {"group": "RAG Only", "model": "gpt41", "correct": 88, "total": 101, "rate": 87.13},
+        {"group": "RAG Only", "model": "oss", "correct": 82, "total": 101, "rate": 81.19},
+        {"group": "Few-shot Only", "model": "gpt41", "correct": 78, "total": 101, "rate": 77.23},
+        {"group": "Few-shot Only", "model": "oss", "correct": 75, "total": 101, "rate": 74.26}
+      ]
+    },
+    "perturbation": {
+      "title": {"zh": "参数扰动测试", "en": "Parameter perturbations"},
+      "description": {"zh": "为 101 道原始题目分别使用三个数据种子，联合改变目标与约束中的业务参数，得到 303 个数值变体。每个可变原始参数加入 −2、−1、+1 或 +2 的整数偏移。", "en": "Three data seeds jointly perturb business parameters in objectives and constraints for all 101 source problems, producing 303 numerical variants. Each mutable primitive parameter receives an integer offset of −2, −1, +1, or +2."},
+      "metric": {"zh": "最优目标值匹配率", "en": "Optimal-objective match rate"},
+      "note": {"zh": "每个种子生成一组 101 题的数值变体。推理完成后对照参考目标值评分，相对与绝对误差容限均为 10⁻⁴；运行失败计入分母。", "en": "Each seed produces a set of 101 numerical variants. Reference objectives are used after inference for scoring, with relative and absolute tolerances of 10⁻⁴. Failed runs remain in the denominator."},
+      "sources": [
+        {"label": "Overall perturbation results", "url": "https://github.com/CoraLiang01/lean-llm-opt/blob/main/outputs/perturbation_303/summary.csv"},
+        {"label": "Results by data seed", "url": "https://github.com/CoraLiang01/lean-llm-opt/blob/main/outputs/perturbation_303/accuracy_by_seed.csv"},
+        {"label": "Results by problem type", "url": "https://github.com/CoraLiang01/lean-llm-opt/blob/main/outputs/perturbation_303/accuracy_by_problem_type.csv"},
+        {"label": "Perturbation dataset and protocol", "url": "https://github.com/CoraLiang01/lean-llm-opt/tree/main/Test_Dataset/Perturbation-Large-scale-or"}
+      ],
+      "rows": [
+        {"group": "Overall", "model": "gpt41", "correct": 295, "total": 303, "rate": 97.36},
+        {"group": "Overall", "model": "oss", "correct": 279, "total": 303, "rate": 92.08}
+      ],
+      "views": {
+        "overall": [
+          {"group": "Overall", "model": "gpt41", "correct": 295, "total": 303, "rate": 97.36},
+          {"group": "Overall", "model": "oss", "correct": 279, "total": 303, "rate": 92.08}
+        ],
+        "seed": [
+          {"group": "Seed 17", "model": "gpt41", "correct": 99, "total": 101, "rate": 98.02},
+          {"group": "Seed 17", "model": "oss", "correct": 92, "total": 101, "rate": 91.09},
+          {"group": "Seed 42", "model": "gpt41", "correct": 96, "total": 101, "rate": 95.05},
+          {"group": "Seed 42", "model": "oss", "correct": 93, "total": 101, "rate": 92.08},
+          {"group": "Seed 73", "model": "gpt41", "correct": 100, "total": 101, "rate": 99.01},
+          {"group": "Seed 73", "model": "oss", "correct": 94, "total": 101, "rate": 93.07}
+        ],
+        "type": [
+          {"group": "TP", "model": "gpt41", "correct": 27, "total": 27, "rate": 100.0},
+          {"group": "TP", "model": "oss", "correct": 27, "total": 27, "rate": 100.0},
+          {"group": "NRM", "model": "gpt41", "correct": 74, "total": 75, "rate": 98.67},
+          {"group": "NRM", "model": "oss", "correct": 75, "total": 75, "rate": 100.0},
+          {"group": "RA", "model": "gpt41", "correct": 65, "total": 66, "rate": 98.48},
+          {"group": "RA", "model": "oss", "correct": 64, "total": 66, "rate": 96.97},
+          {"group": "UFLP/FLP", "model": "gpt41", "correct": 41, "total": 42, "rate": 97.62},
+          {"group": "UFLP/FLP", "model": "oss", "correct": 37, "total": 42, "rate": 88.1},
+          {"group": "AP", "model": "gpt41", "correct": 15, "total": 15, "rate": 100.0},
+          {"group": "AP", "model": "oss", "correct": 15, "total": 15, "rate": 100.0},
+          {"group": "Mixture", "model": "gpt41", "correct": 50, "total": 54, "rate": 92.59},
+          {"group": "Mixture", "model": "oss", "correct": 41, "total": 54, "rate": 75.93},
+          {"group": "Others", "model": "gpt41", "correct": 23, "total": 24, "rate": 95.83},
+          {"group": "Others", "model": "oss", "correct": 20, "total": 24, "rate": 83.33}
+        ]
+      }
+    },
+    "repair": {
+      "title": {"zh": "审计与修复", "en": "Audit and repair"},
+      "description": {"zh": "在 36 个结构变体上，审查建模逻辑、数据使用与代码，再执行并复审修复后的程序。", "en": "The workflow reviews formulation logic, data usage, and code on 36 structural variants, then executes and reviews the repaired programs."},
+      "metric": {"zh": "修复后的最优目标值匹配率", "en": "Optimal-objective match rate after repair"},
+      "note": {"zh": "在同一组 36 题的修复前后对比中，GPT-4.1 新增 2 题目标值匹配，gpt-oss-20B 新增 4 题；两者均保留了原有正确结果。", "en": "Paired before-and-after results on the same 36 cases: GPT-4.1 gained 2 objective matches and gpt-oss-20B gained 4. Both retained all previously correct results."},
+      "sources": [
+        {"label": "GPT-4.1 audit-and-repair summary", "url": "https://github.com/CoraLiang01/lean-llm-opt/blob/main/outputs/variants_fallback_gpt41/summary.csv"},
+        {"label": "gpt-oss-20B audit-and-repair summary", "url": "https://github.com/CoraLiang01/lean-llm-opt/blob/main/outputs/variants_fallback_gpt_oss_20b/summary.csv"},
+        {"label": "Audit-and-repair implementation", "url": "https://github.com/CoraLiang01/lean-llm-opt/tree/main/fallback%20mechanism"}
+      ],
+      "rows": [
+        {"group": "Structural variants", "model": "gpt41", "correct": 35, "total": 36, "rate": 97.22, "before": 33, "after": 35, "rescued": 2, "harmed": 0},
+        {"group": "Structural variants", "model": "oss", "correct": 33, "total": 36, "rate": 91.67, "before": 29, "after": 33, "rescued": 4, "harmed": 0}
+      ]
+    },
+    "air": {
+      "title": {"zh": "航空收益管理案例", "en": "Airline revenue-management case study"},
+      "description": {"zh": "模拟选择型航空收益管理场景，考察票价舱位容量分配与网络规划的建模表现。", "en": "The simulated choice-based airline revenue-management study covers fare-type capacity allocation and network planning."},
+      "metric": {"zh": "稿件报告的建模准确率", "en": "Manuscript-reported modeling accuracy"},
+      "note": {"zh": "准确率按稿件中的两项案例结果报告，以比例展示。来源链接提供模拟数据、案例说明与实现。", "en": "Accuracy rates are reported from the manuscript’s two case studies. The linked sources provide simulation data, case documentation, and implementations."},
+      "manuscript_reported": true,
+      "sources": [
+        {"label": "Case-study dataset and documentation", "url": "https://github.com/CoraLiang01/lean-llm-opt/tree/main/Test_Dataset/Air_NRM"},
+        {"label": "GPT-4.1 case-study implementation", "url": "https://github.com/CoraLiang01/lean-llm-opt/blob/main/LEAN_LLM_OPT_4.1_Air_NRM.ipynb"},
+        {"label": "gpt-oss-20B case-study implementation", "url": "https://github.com/CoraLiang01/lean-llm-opt/blob/main/LEAN_LLM_OPT_gpt_oss_20b_Air_NRM.ipynb"}
+      ],
+      "rows": [
+        {"group": "Capacity allocation", "model": "gpt41", "correct": null, "total": null, "rate": 93.3},
+        {"group": "Capacity allocation", "model": "oss", "correct": null, "total": null, "rate": 86.7},
+        {"group": "Network planning", "model": "gpt41", "correct": null, "total": null, "rate": 92.1},
+        {"group": "Network planning", "model": "oss", "correct": null, "total": null, "rate": 82.5}
+      ]
+    }
+  }
+}
