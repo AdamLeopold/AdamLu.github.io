@@ -2,11 +2,11 @@
   "format": "lean-llm-opt-static-v1",
   "deployment": "static",
   "demo": "visitor-local-handoff",
-  "builtAt": "2026-11-03T09:21:56.924Z",
+  "builtAt": "2026-11-03T17:11:13.652Z",
   "runtimeFileCount": 89,
   "fileCount": 91,
-  "payloadBytes": 4266995,
-  "totalBytes": 4281981,
+  "payloadBytes": 4289479,
+  "totalBytes": 4304465,
   "hashAlgorithm": "sha256",
   "files": {
     ".nojekyll": {
@@ -346,24 +346,24 @@
       "sha256": "d15d2c1db282122b170697a44c1a87961d3266f8d803948d470218c22c652275"
     },
     "demo/demo.css": {
-      "bytes": 27141,
-      "sha256": "383bc09eff7ca491396e8120fec9ed5dc4e599d12c0355c75a7e27298ecebf8f"
+      "bytes": 41010,
+      "sha256": "9583652cdd9e56d2446cf873f0ce2e2a8437a623f38deb94d4861fb7a39f96a9"
     },
     "demo/demo.js": {
-      "bytes": 49713,
-      "sha256": "7e001ed3e339119c1d4bb4c2d9aafabc4448cb6c74266fad472e6bada8d9c649"
+      "bytes": 54415,
+      "sha256": "620c7b4414cfba43b03bb905ba1626f54b14640ae665d6c5d408dc7e633bf06c"
     },
     "demo/examples.json": {
       "bytes": 14622,
       "sha256": "03340a9801fb3a9aec19429149b4a496964dfe7bf77ac39018f5bf671ceb28fe"
     },
     "demo/index.html": {
-      "bytes": 20064,
-      "sha256": "b72cca89da9c25c6129b15bcf0778ab8f95b755661cddb51250cc9f7ac54c020"
+      "bytes": 20800,
+      "sha256": "e2976a4235036c399bbabb75788eab314c3b440c0ae98912dafdd40b846af631"
     },
     "downloads/lean-llm-opt-local.zip": {
-      "bytes": 1062292,
-      "sha256": "833c05e9913255ec2b23ede4b1f21d8796c49147873ee2d66bd6c6f85a73d9dc"
+      "bytes": 1065469,
+      "sha256": "01503583f4290ac194547ad455e79c03dff1a4d09721d3787fe08ca49600b8c6"
     },
     "index.html": {
       "bytes": 22919,
