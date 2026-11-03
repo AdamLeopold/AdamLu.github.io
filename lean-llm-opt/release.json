@@ -2,10 +2,11 @@
   "format": "lean-llm-opt-static-v1",
   "deployment": "static",
   "demo": "local-only",
-  "builtAt": "2026-11-03T03:03:23.854Z",
+  "builtAt": "2026-11-03T03:06:07.455Z",
   "runtimeFileCount": 17,
   "fileCount": 19,
-  "totalBytes": 1651740,
+  "payloadBytes": 1651740,
+  "totalBytes": 1654596,
   "hashAlgorithm": "sha256",
   "files": {
     ".nojekyll": {
