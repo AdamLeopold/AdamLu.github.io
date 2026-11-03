@@ -337,13 +337,13 @@ const CYCLE_STEPS = [
     }),
   cycleStep('code-generation', 5, 3000, ['生成求解程序', 'Generate the solver program'],
     ['数学模型与 D1 字段映射进入代码生成，参考代码提供程序模式。', 'The formulation and D1 field mapping enter code generation; code examples provide programming patterns.'],
-    queryTrack(['model', 'codegen'], 'formulation', ['Q1 · 数学模型', 'Q1 · Formulation']), dataTrack(['model', 'codegen'], 'records'), {
+    queryTrack(['model', 'codegen'], 'formulation', ['Q1 · 数学模型', 'Q1 · Formulation'], {window: [0, .75]}), dataTrack(['model', 'codegen'], 'records', {window: [.2, 1]}), {
       reference: referenceTrack(['references', 'codegen'], 'code-example'),
       transformations: [{node: 'codegen', kind: 'code', label: text('Python / Gurobi 程序', 'Python / Gurobi program')}],
     }),
   cycleStep('program-to-solver', 5, 1700, ['提交程序与数据映射', 'Submit the program and data mapping'],
     ['Q1 对应的程序与 D1 数据映射一起进入执行环节。', 'The program for Q1 and the D1 data mapping enter execution together.'],
-    queryTrack(['codegen', 'solver'], 'program', ['Q1 · 求解程序', 'Q1 · Solver program']), dataTrack(['codegen', 'solver'], 'records')),
+    queryTrack(['codegen', 'solver'], 'program', ['Q1 · 求解程序', 'Q1 · Solver program'], {window: [0, .75]}), dataTrack(['codegen', 'solver'], 'records', {window: [.2, 1]})),
   cycleStep('runtime-read-and-solve', 5, 3000, ['读取完整数据并求解', 'Read complete data and solve'],
     ['程序读取 D1 的完整三份 CSV，构造模型并调用 Gurobi。', 'The program reads all three complete CSVs in D1, builds the model, and calls Gurobi.'],
     queryTrack('solver', 'program', ['Q1 · 求解程序', 'Q1 · Solver program']), dataTrack('solver', 'runtime'), {

@@ -42,3 +42,5 @@
 
 :root[data-theme="light"] .graph-legend .legend-runtime:before{background:#94722e}
 :root[data-theme="light"] .graph-legend .legend-reference:before{background:#7855ab}:root[data-theme="light"] .graph-legend .legend-data:before{background:#087e6b}
+
+.graph-stage-caption{flex-wrap:wrap}.flow-key{font-family:var(--font);font-size:10px;letter-spacing:0;color:var(--muted)}

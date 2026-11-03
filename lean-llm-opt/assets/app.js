@@ -1,5 +1,5 @@
-import {createFramework} from './framework-3d.js?v=closeup-20261103-1';
-import {STAGES,NODE_BY_ID,JOURNEY_EXAMPLE,routeFromRunValue} from './framework-topology.js?v=closeup-20261103-1';
+import {createFramework} from './framework-3d.js?v=flowlines-20261103-1';
+import {STAGES,NODE_BY_ID,JOURNEY_EXAMPLE,routeFromRunValue} from './framework-topology.js?v=flowlines-20261103-1';
 const root = document.documentElement;
 const isStaticDeployment = root.dataset.deployment === 'static';
 const $ = (selector, scope = document) => scope.querySelector(selector);

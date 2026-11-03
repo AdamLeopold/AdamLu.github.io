@@ -1,7 +1,8 @@
 import * as THREE from './vendor/three/three.module.js';
-import {buildFrameworkObject,svgFrameworkObject,OBJECT_PROFILES} from './framework-objects.js?v=closeup-20261103-1';
-import * as topology from './framework-topology.js?v=closeup-20261103-1';
-export {TOPOLOGY,STAGES,TEACHING_CYCLE,sampleTeachingCycle} from './framework-topology.js?v=closeup-20261103-1';
+import {buildFrameworkObject,svgFrameworkObject,OBJECT_PROFILES} from './framework-objects.js?v=flowlines-20261103-1';
+import {computeFlowRoute,sampleFlowRoute} from './framework-routes.js?v=flowlines-20261103-1';
+import * as topology from './framework-topology.js?v=flowlines-20261103-1';
+export {TOPOLOGY,STAGES,TEACHING_CYCLE,sampleTeachingCycle} from './framework-topology.js?v=flowlines-20261103-1';
 const {TOPOLOGY,STAGES,NODE_BY_ID,activeEdges,resolveRunEvent,TEACHING_CYCLE,sampleTeachingCycle}=topology;
 export const STATIONS=TOPOLOGY.groups||[];
 const clamp=(n,a=0,b=1)=>Math.max(a,Math.min(b,n));
@@ -16,15 +17,24 @@ const BASE_IDS=new Set(['query','classification','workflow','model','codegen','s
 const FLOW_IDS={query:topology.JOURNEY_EXAMPLE?.query?.id||'example-query',data:topology.JOURNEY_EXAMPLE?.data?.id||'example-data',reference:'lean-reference-library',artifact:'example-artifact'};
 const labelForKind=(kind,lang)=>({query:{zh:'问题描述',en:'Query'},data:{zh:'CSV 数据',en:'CSV data'},reference:{zh:'参考示例',en:'Reference'},artifact:{zh:'求解产物',en:'Output'}}[kind]?.[lang]||'');
 const SHOT_FOCUS=[null,['query','csv'],['classification'],['workflow'],['model','csvqa'],['codegen','solver'],['solution']];
+export const OBJECT_SCALE=.64;
+export const flowStrokeWidth=active=>active?3.8:2.8;
+export const scaledFootprint=(fp,scale=OBJECT_SCALE)=>Object.fromEntries(Object.entries(fp).map(([k,v])=>[k,['width','height','depth','minX','maxX','minY','maxY','minZ','maxZ'].includes(k)?v*scale:v]));
+class FlowCurve extends THREE.Curve{
+ constructor(route){super();this.route=route;}
+ getPoint(t,target=new THREE.Vector3()){return target.fromArray(sampleFlowRoute(this.route,t).point);}
+ getTangent(t,target=new THREE.Vector3()){return target.fromArray(sampleFlowRoute(this.route,t).tangent).normalize();}
+}
 
 /** Fit the chosen station itself, rather than nudging a whole-system camera. */
-export function computeFraming({positions,footprints=new Map(),stage=0,selected=null,hero=false,runNode=null,aspect=1,zoom=1,pan={x:0,y:0}}){
+export function computeFraming({positions,footprints=new Map(),stage=0,selected=null,hero=false,runNode=null,aspect=1,zoom=1,pan={x:0,y:0},routePoints=[]}){
  const full=hero||(!selected&&!runNode&&stage===0),requested=full?[...positions.keys()]:selected?[selected]:runNode?[runNode]:SHOT_FOCUS[stage]||[...positions.keys()];
  const focusIds=requested.filter(id=>positions.has(id)),ids=focusIds.length?focusIds:[...positions.keys()];
  let left=Infinity,right=-Infinity,top=-Infinity,bottom=Infinity;
  for(const id of ids){const p=positions.get(id),fp=footprints.get(id)||{width:2.9,height:2.8};left=Math.min(left,p.x+(fp.minX??-fp.width/2));right=Math.max(right,p.x+(fp.maxX??fp.width/2));top=Math.max(top,p.y+(fp.maxY??fp.height/2));bottom=Math.min(bottom,p.y+(fp.minY??-fp.height/2));}
- const ratio=Math.max(.2,Number(aspect)||1),padding=full?1.7:1.0;
- let span=Math.max(top-bottom+padding,(right-left+padding)/ratio,full?6:3.6)/(hero?1:clamp(zoom,.7,1.6));
+ if(full)for(const p of routePoints){left=Math.min(left,p[0]);right=Math.max(right,p[0]);top=Math.max(top,p[1]);bottom=Math.min(bottom,p[1]);}
+ const ratio=Math.max(.2,Number(aspect)||1),padding=full?1.4:1.2;
+ let span=Math.max(top-bottom+padding,(right-left+padding)/ratio,full?6:ratio<1?8:5.2)/(hero?1:clamp(zoom,.7,1.6));
  const center={x:(left+right)/2+(hero?0:pan.x||0),y:(top+bottom)/2+(hero?0:pan.y||0)};
  const worldBounds={left:center.x-span*ratio/2,right:center.x+span*ratio/2,top:center.y+span/2,bottom:center.y-span/2};
  const visibleNodeIds=[...positions].filter(([id,p])=>{const fp=footprints.get(id)||{width:2.9,height:2.8};return p.x+fp.width/2>worldBounds.left&&p.x-fp.width/2<worldBounds.right&&p.y+fp.height/2>worldBounds.bottom&&p.y-fp.height/2<worldBounds.top;}).map(([id])=>id);
@@ -99,7 +109,7 @@ export function createFramework({heroHost,detailHost,onStageChange=()=>{},onNode
  const system=document.createElement('div');system.className='fw-system';system.setAttribute('aria-hidden','true');
  const canvas=document.createElement('canvas');canvas.className='fw-canvas';system.append(canvas);document.body.append(system);
  const labelLayer=document.createElement('div');labelLayer.className='fw-label-layer';document.body.append(labelLayer);
- const views=[{host:heroHost,hero:true},{host:detailHost,hero:false}].map(v=>({...v,labels:new Map(),packets:new Map(),labelMetrics:new Map(),target:new THREE.Vector3(),pan:new THREE.Vector2(),camera:new THREE.OrthographicCamera(-20,20,12,-12,.1,100),span:24,initialized:false}));
+ const views=[{host:heroHost,hero:true},{host:detailHost,hero:false}].map(v=>({...v,labels:new Map(),packets:new Map(),labelMetrics:new Map(),edgeLabels:new Map(),target:new THREE.Vector3(),pan:new THREE.Vector2(),camera:new THREE.OrthographicCamera(-20,20,12,-12,.1,100),span:24,initialized:false}));
  for(const v of views){v.host.classList.add('fw-host');v.host.removeAttribute('aria-hidden');v.labelRoot=document.createElement('div');v.labelRoot.className=`fw-view-labels${v.hero?' fw-view-labels--hero':''}`;labelLayer.append(v.labelRoot);}
  let renderer,scene;
  const graph=new THREE.Group(),raycaster=new THREE.Raycaster(),pointer=new THREE.Vector2();
@@ -143,6 +153,7 @@ export function createFramework({heroHost,detailHost,onStageChange=()=>{},onNode
  }
  function createIcon(node){
   const item=buildFrameworkObject(node,{THREE,palette:PALETTES.dark,helpers:{slab,box,bar,polyline,sheet,bodyShape}});
+  item.group.scale.multiplyScalar(OBJECT_SCALE);item.footprint=scaledFootprint(item.footprint);
   const hit=new THREE.Mesh(new THREE.BoxGeometry(2.6,2.8,2.2),new THREE.MeshBasicMaterial({visible:false}));hit.userData.nodeId=node.id;item.group.add(hit);hitTargets.push(hit);
   graph.add(item.group);meshes.set(node.id,item);
  }
@@ -160,19 +171,33 @@ export function createFramework({heroHost,detailHost,onStageChange=()=>{},onNode
   else{slab(group,0,-.02,.64,.77,.08,accent,0,.06);sheet(group,.015,.025,.53,.68,'paper-query',paper,.09,-.04);}
   group.rotation.set(.08,-.1,-.08);graph.add(group);moving.set(kind,{group,accent});
  }
- if(scene){for(const kind of['data','reference']){const material=new THREE.MeshBasicMaterial({color:PALETTES.dark[kind],transparent:true,opacity:.95}),group=new THREE.Group();group.add(bodyShape([[-.27,-.08],[.05,-.08],[.05,-.18],[.3,0],[.05,.18],[.05,.08],[-.27,.08]],material,.045,0));graph.add(group);signals.set(kind,{group,material});}buildBench(false);buildBench(true);for(const n of baseNodes())createIcon(n);for(const kind of['query','data','reference'])createMoving(kind);for(const e of TOPOLOGY.edges){if(!BASE_IDS.has(e.from)||!BASE_IDS.has(e.to))continue;const material=new THREE.LineBasicMaterial({color:PALETTES.dark.edge,transparent:true,opacity:.35,depthWrite:false});const line=new THREE.Line(new THREE.BufferGeometry(),material);const arrow=new THREE.Mesh(new THREE.ConeGeometry(.065,.18,6),new THREE.MeshBasicMaterial({color:PALETTES.dark.edge,transparent:true}));graph.add(line,arrow);links.set(e.id,{edge:e,line,arrow,material,layouts:new Map()});}}
- function positionsFor(view){const mobile=view.host.clientWidth<760;return new Map(baseNodes().map(n=>[n.id,positionOf(n,mobile)]));}
- function curveFor(edge,positions){
-  const from=positions.get(edge.from),to=positions.get(edge.to);if(!from||!to)return null;
-  const delta=to.clone().sub(from),distance=delta.length(),direction=delta.clone().normalize(),normal=new THREE.Vector3(-direction.y,direction.x,0);
-  const a=from.clone().addScaledVector(direction,Math.min(.98,distance*.23)),b=to.clone().addScaledVector(direction,-Math.min(.98,distance*.23));a.z=b.z=.025;
-  const bend=edge.kind==='flow'?0:edge.kind==='request'?.42:edge.kind==='runtime'?.32:edge.kind==='context'?.16:.2;
-  const c=a.clone().lerp(b,.33).addScaledVector(normal,bend),d=a.clone().lerp(b,.67).addScaledVector(normal,bend),vertical=Math.abs(delta.y)>Math.abs(delta.x);
-  // Long bypasses must not appear to pass through unrelated processing modules.
-  if(edge.kind==='runtime'){if(vertical){c.x+=4.5;d.x+=4.5;}else{c.y-=1.7;d.y-=1.7;}}
-  if(edge.kind==='artifact'){if(vertical){const offset=edge.from==='model'?-2.8:-1.9;c.x+=offset;d.x+=offset;}else{const offset=edge.from==='model'?2.4:-2;c.y+=offset;d.y+=offset;}}
-  return new THREE.CubicBezierCurve3(a,c,d,b);
+ if(scene){
+  for(const kind of['data','reference']){const material=new THREE.MeshBasicMaterial({color:PALETTES.dark[kind],transparent:true,opacity:.95}),group=new THREE.Group();group.add(bodyShape([[-.27,-.08],[.05,-.08],[.05,-.18],[.3,0],[.05,.18],[.05,.08],[-.27,.08]],material,.045,0));group.scale.setScalar(.7);graph.add(group);signals.set(kind,{group,material});}
+  buildBench(false);buildBench(true);for(const n of baseNodes())createIcon(n);for(const kind of['query','data','reference'])createMoving(kind);
+  for(const edge of TOPOLOGY.edges){const material=new THREE.MeshBasicMaterial({color:PALETTES.dark.edge,transparent:true,opacity:.65,depthWrite:false,side:THREE.DoubleSide});const line=new THREE.Mesh(new THREE.BufferGeometry(),material);line.renderOrder=1;
+   const arrows=Array.from({length:2},()=>{const arrow=new THREE.Mesh(new THREE.ConeGeometry(.065,.18,6),new THREE.MeshBasicMaterial({color:PALETTES.dark.edge,transparent:true,depthWrite:false}));arrow.renderOrder=2;graph.add(arrow);return arrow;});graph.add(line);links.set(edge.id,{edge,line,arrows,material,layouts:new Map()});}
  }
+ function positionsFor(view){const mobile=view.host.clientWidth<760;return new Map(baseNodes().map(n=>[n.id,positionOf(n,mobile)]));}
+ const routeCache=new Map();
+ function curveFor(edge,positions){
+  const mobile=Math.abs(positions.get('query').y-positions.get('solution').y)>1,key=`${mobile?'m':'d'}|${edge.id}`;
+  if(!routeCache.has(key))routeCache.set(key,new FlowCurve(computeFlowRoute(edge,positions,footprintsFor(),{mobile,z:.32})));
+  return routeCache.get(key);
+ }
+ function ribbonGeometry(curve,width,dashWorld=0){
+  const points=curve.route.points,vertices=[],indices=[];
+  for(let i=0;i<points.length;i++){const a=points[Math.max(0,i-1)],b=points[Math.min(points.length-1,i+1)],dx=b[0]-a[0],dy=b[1]-a[1],length=Math.hypot(dx,dy)||1,nx=-dy/length*width/2,ny=dx/length*width/2,p=points[i];vertices.push(p[0]+nx,p[1]+ny,p[2],p[0]-nx,p[1]-ny,p[2]);if(i<points.length-1&&(!dashWorld||Math.floor((curve.route.distances[i]+curve.route.distances[i+1])/2/dashWorld)%2===0)){const n=i*2;indices.push(n,n+1,n+2,n+1,n+3,n+2);}}
+  const geometry=new THREE.BufferGeometry();geometry.setAttribute('position',new THREE.Float32BufferAttribute(vertices,3));geometry.setIndex(indices);geometry.computeBoundingSphere();return geometry;
+ }
+ function arrowFractions(view,curve){
+  const ts=[];for(let i=1;i<80;i++)if(visiblePoint(view,curve.getPoint(i/80),.08))ts.push(i/80);if(!ts.length)return[];
+  const first=ts[0],last=ts.at(-1),pixels=(last-first)*curve.route.length*view.rect.height/view.span;
+  return pixels>100?[ts[Math.floor((ts.length-1)*.3)],ts[Math.floor((ts.length-1)*.78)]]:[ts[Math.floor((ts.length-1)*.72)]];
+ }
+ function neighborsOf(ids){const set=new Set(ids);for(const e of routes())if(e.kind==='flow'&&(ids.includes(e.from)||ids.includes(e.to))){set.add(e.from);set.add(e.to);}return set;}
+ function labelNodes(view){const focus=[...stageFocus(view)],allowed=view.framing.mode==='overview'?null:neighborsOf(focus);return baseNodes().filter(n=>view.visibleNodeIds.has(n.id)&&visiblePoint(view,view.positions.get(n.id),.15)&&(!allowed||allowed.has(n.id)));}
+ function renderedRoutes(view){const focus=stageFocus(view),active=activeLinkIds(view);return routes().filter(e=>view.framing.mode==='overview'||e.kind==='flow'&&(view.visibleNodeIds.has(e.from)||view.visibleNodeIds.has(e.to))||focus.has(e.from)||focus.has(e.to)||active.has(e.id));}
+ function edgeCaption(edge){const labels={query:['问题','Query'],classification:['问题类型','Type'],workflow:['建模工作流','Workflow'],model:['数学模型','Model'],codegen:['Python 程序','Python'],solver:['求解输出','Result']};return edge.kind==='flow'?labels[edge.from]?.[state.lang==='zh'?0:1]||'':tr(edge.label,state.lang);}
  function routes(){return activeEdges(state.route).filter(e=>BASE_IDS.has(e.from)&&BASE_IDS.has(e.to));}
  function stageFocus(view){return new Set(view.hero?baseNodes().map(n=>n.id):state.selected?[state.selected]:state.run?[state.run.nodeId]:SHOT_FOCUS[state.stage]||baseNodes().map(n=>n.id));}
  function activeLinkIds(view){
@@ -212,17 +237,13 @@ export function createFramework({heroHost,detailHost,onStageChange=()=>{},onNode
   const snapshot={stepId:frame.stepId,index:frame.index,total:TEACHING_CYCLE.steps.length,label:frame.label,description:frame.description,payload:{query:frame.query,data:frame.data,reference:frame.reference},progress:frame.localProgress,cycleProgress:frame.progress,elapsedMs:state.flowElapsed,durationMs:TEACHING_CYCLE.durationMs,paused:!state.flowPlaying||state.reduced||state.liveMode||document.hidden||!state.visible,live:state.liveMode,waiting:state.liveMode&&!state.run,packets,requests:state.liveMode?[]:frame.requests};if(state.liveMode){snapshot.stepId=state.run?`live-${state.run.nodeId}`:'live-waiting';snapshot.label=state.run?NODE_BY_ID.get(state.run.nodeId)?.title:{zh:'等待 Demo 任务',en:'Waiting for a demo run'};snapshot.description=state.run?{zh:'显示当前任务的实际阶段事件。',en:'Showing actual stage events from the current task.'}:{zh:'在 Demo 中发送问题以开始运行。',en:'Send a question in the demo to begin.'};snapshot.payload={query:{id:'live-query',label:labelForKind('query',state.lang)},data:{id:'live-data',label:labelForKind('data',state.lang)}};}return snapshot;
  }
  function notifyFlow(force=false){const snapshot=flowSnapshot(),signature=[snapshot.stepId,snapshot.paused,snapshot.live,snapshot.waiting,state.run?.nodeId,state.run?.status,state.lang].join('|');if(force||signature!==flowSignature){flowSignature=signature;onFlowChange(snapshot);}}
- function portAt(id,kind,positions,signal=false){
-  const point=positions.get(id)?.clone()||new THREE.Vector3();if(signal){point.y+=.38;}else{point.x+=kind==='data'?-.49:kind==='reference'?.67:.42;point.y+=kind==='reference'?.33:-.46;}point.z=1.14;return point;
- }
+ function portAt(id,kind,positions,signal=false){const p=positions.get(id).clone();if(!signal){p.x+=kind==='data'?-.1:kind==='reference'?.08:.1;p.y+=kind==='reference'?.08:0;}p.z=.32;return p;}
  function travelOf(packet,view,now){
   const phase=packet.stationary?1:packet.trackProgress??animationFraction(view,now),segments=[];
   for(const path of packet.paths){if(path.length===1)segments.push({path,from:path[0],to:path[0]});else for(let i=1;i<path.length;i++)segments.push({path,from:path[i-1],to:path[i]});}
   const t=phase*segments.length,index=Math.min(segments.length-1,Math.floor(t)),segment=segments[index],u=phase===1?1:t-index;if(!segment)return null;
   const edge=routes().find(e=>e.from===segment.from&&e.to===segment.to),from=portAt(segment.from,packet.kind,view.positions,packet.signal),to=portAt(segment.to,packet.kind,view.positions,packet.signal),base=edge?curveFor(edge,view.positions):null;
-  const curve=base?new THREE.CubicBezierCurve3(from,base.v1.clone().setZ(1.14),base.v2.clone().setZ(1.14),to):null;
-  let moving=curve?curve.getPoint(u):to,direction=curve?curve.getTangent(u).normalize():new THREE.Vector3(1,0,0);
-  if(curve&&!packet.signal){const lane=(packet.kind==='query'?.15:packet.kind==='data'?-.15:.05)*Math.sin(Math.PI*u);moving.x-=direction.y*lane;moving.y+=direction.x*lane;}
+  const points=base?[from.toArray(),...base.route.points,to.toArray()]:[to.toArray(),to.toArray()],sample=sampleFlowRoute({points},u),moving=new THREE.Vector3(...sample.point),direction=new THREE.Vector3(...sample.tangent);
   const request=Boolean(state.liveMode&&!packet.signal&&edge?.kind==='request'&&['data','reference'].includes(packet.kind)),point=request?portAt(packet.kind==='data'?'csv':'references',packet.kind,view.positions):moving;
   return{point,semanticPoint:point.clone(),direction,request:request?moving:null,path:segment.path,phase};
  }
@@ -232,13 +253,13 @@ export function createFramework({heroHost,detailHost,onStageChange=()=>{},onNode
   if(state.liveMode)for(const packet of packetsFor(view)){const travel=travelOf(packet,view,now);if(travel?.request)entries.push({kind:packet.kind,path:travel.path,point:travel.request,direction:travel.direction,label:packet.kind==='data'?{zh:'读取请求',en:'Data request'}:{zh:'检索请求',en:'Retrieval request'}});}
   return entries;
  }
- function footprintsFor(){return new Map(baseNodes().map(node=>{const profile=OBJECT_PROFILES[node.id]||OBJECT_PROFILES[iconOf(node)]||{width:2.9,height:2.8};return[node.id,meshes.get(node.id)?.footprint||profile];}));}
- function framingFor(view){return computeFraming({positions:view.positions||positionsFor(view),footprints:footprintsFor(),stage:state.stage,selected:state.selected,hero:view.hero,runNode:state.liveMode?state.run?.nodeId:null,aspect:view.rect.width/view.rect.height,zoom:state.zoom,pan:view.pan});}
+ function footprintsFor(){return new Map(baseNodes().map(node=>{const profile=OBJECT_PROFILES[node.id]||OBJECT_PROFILES[iconOf(node)]||{width:2.9,height:2.8};return[node.id,meshes.get(node.id)?.footprint||scaledFootprint(profile)];}));}
+ function framingFor(view){return computeFraming({positions:view.positions||positionsFor(view),footprints:footprintsFor(),stage:state.stage,selected:state.selected,hero:view.hero,runNode:state.liveMode?state.run?.nodeId:null,aspect:view.rect.width/view.rect.height,zoom:state.zoom,pan:view.pan,routePoints:routes().flatMap(e=>curveFor(e,view.positions).route.points)});}
  function cameraFrame(view,desired){
   const span=view.span,center={x:view.target.x,y:view.target.y},aspect=desired.aspect;
   const worldBounds={left:center.x-span*aspect/2,right:center.x+span*aspect/2,top:center.y+span/2,bottom:center.y-span/2};
   const fps=footprintsFor(),visibleNodeIds=baseNodes().filter(node=>{const p=view.positions.get(node.id),fp=fps.get(node.id);return p.x+fp.width/2>worldBounds.left&&p.x-fp.width/2<worldBounds.right&&p.y+fp.height/2>worldBounds.bottom&&p.y-fp.height/2<worldBounds.top;}).map(n=>n.id);
-  return{...desired,center,span,worldBounds,visibleNodeIds};
+  return{...desired,center,span,worldBounds,visibleNodeIds,objectScale:OBJECT_SCALE,projectedNodeBounds:Object.fromEntries([...fps].map(([id,fp])=>[id,{worldWidth:fp.width,worldHeight:fp.height,width:fp.width*view.rect.height/span,height:fp.height*view.rect.height/span}]))};
  }
  function fit(view,dt){
   view.positions=positionsFor(view);const desired=framingFor(view),center=new THREE.Vector3(desired.center.x,desired.center.y,0);
@@ -259,20 +280,23 @@ export function createFramework({heroHost,detailHost,onStageChange=()=>{},onNode
   fit(view,dt);const focus=stageFocus(view),active=activeLinkIds(view),palette=PALETTES[state.theme],mobile=view.rect.width<760;
   for(const[key,bench]of benches){bench.visible=key===(mobile?'mobile':'desktop');bench.userData.materials.desk.color.setHex(state.theme==='dark'?0x253849:0xd9d5c9);bench.userData.materials.edge.color.setHex(state.theme==='dark'?0xa48860:0x9b7f51);}
   for(const item of meshes.values()){
-   const {node,group,material,faceInk,ink,selection,progress,ledMaterial,shell,parts}=item;group.visible=view.visibleNodeIds.has(node.id);group.position.copy(view.positions.get(node.id));const contextOpacity=view.framing.mode==='overview'||focus.has(node.id)?1:.16;group.traverse(o=>{for(const m of(Array.isArray(o.material)?o.material:[o.material])){if(!m||m.visible===false)continue;if(!m.transparent){m.transparent=true;m.needsUpdate=true;}m.userData.baseOpacity??=m.opacity;m.opacity=m.userData.baseOpacity*contextOpacity;}});const selected=node.id===state.selected,run=node.id===state.run?.nodeId,guide=guideProgress(node,view,now),processing=guide!==null;
+   const {node,group,material,faceInk,ink,selection,progress,ledMaterial,shell,parts}=item;group.visible=view.visibleNodeIds.has(node.id);group.position.copy(view.positions.get(node.id));const contextOpacity=view.framing.mode==='overview'||focus.has(node.id)?1:.52;group.traverse(o=>{for(const m of(Array.isArray(o.material)?o.material:[o.material])){if(!m||m.visible===false)continue;if(!m.transparent){m.transparent=true;m.needsUpdate=true;}m.userData.baseOpacity??=m.opacity;m.opacity=m.userData.baseOpacity*contextOpacity;}});const selected=node.id===state.selected,run=node.id===state.run?.nodeId,guide=guideProgress(node,view,now),processing=guide!==null;
    const color=run&&state.run.status==='failed'?0xd56c7d:palette[nodeColor(node)];material.color.setHex(color);material.emissive.setHex(color);material.emissiveIntensity=processing?.18:.025;material.opacity=contextOpacity;shell.color.setHex(state.theme==='dark'?0xe7e9e8:0xf1eee6);faceInk.color.setHex(0x25455e);ink.color.setHex(palette.ink);
    selection.material.color.setHex(palette[nodeColor(node)]);selection.material.opacity=selected?1:!view.hero&&focus.has(node.id)?.7:0;
    progress.material.color.setHex(palette[nodeColor(node)]);progress.material.opacity=processing?.95:0;progress.scale.x=Math.max(.04,guide??0);progress.position.x=-(1-progress.scale.x)*.59;
    ledMaterial.color.setHex(run&&state.run.status==='failed'?0xe38c99:processing?0x78e2c3:palette[nodeColor(node)]);ledMaterial.opacity=processing?.95:.4;
    if(parts.drawer)parts.drawer.position.z=.08+(processing?Math.sin((guide??0)*Math.PI)*.12:0);updateTextureMode(group,state.liveMode);
   }
+  const drawn=new Set(renderedRoutes(view).map(e=>e.id));
   for(const entry of links.values()){
-   const edge=entry.edge,visible=routes().some(e=>e.id===edge.id)&&(view.visibleNodeIds.has(edge.from)||view.visibleNodeIds.has(edge.to));entry.line.visible=entry.arrow.visible=visible;if(!visible)continue;
-   const key=mobile?'mobile':'desktop';let layout=entry.layouts.get(key);if(!layout){const curve=curveFor(edge,view.positions);if(!curve)continue;layout={curve,geometry:new THREE.BufferGeometry().setFromPoints(curve.getPoints(32))};entry.layouts.set(key,layout);if(!entry.line.geometry.attributes.position)entry.line.geometry.dispose();}const{curve}=layout;entry.line.geometry=layout.geometry;
-   const isActive=active.has(edge.id),color=isActive?palette[edgeColor(edge)]:palette.edge;entry.material.color.setHex(color);entry.material.opacity=isActive?.9:.28;entry.arrow.material.color.setHex(color);entry.arrow.material.opacity=entry.material.opacity;entry.arrow.position.copy(curve.getPoint(.96));entry.arrow.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),curve.getTangent(.96).normalize());
+   const edge=entry.edge,show=drawn.has(edge.id);entry.line.visible=show;entry.arrows.forEach(a=>a.visible=false);if(!show)continue;
+   const curve=curveFor(edge,view.positions),isActive=active.has(edge.id),color=palette[edgeColor(edge)],width=flowStrokeWidth(isActive)*view.span/view.rect.height,key=`${mobile?'m':'d'}|${width.toFixed(5)}`;
+   const slot=`${view.hero?'hero':'detail'}|${mobile?'m':'d'}`;let layout=entry.layouts.get(slot);if(!layout||layout.key!==key){layout?.geometry.dispose();layout={key,geometry:ribbonGeometry(curve,width,edge.kind==='request'?view.span/view.rect.height*9:0)};entry.layouts.set(slot,layout);}if(!entry.line.geometry.attributes.position)entry.line.geometry.dispose();entry.line.geometry=layout.geometry;
+   entry.material.color.setHex(color);entry.material.opacity=isActive?1:edge.kind==='flow'?.92:.78;
+   arrowFractions(view,curve).forEach((t,i)=>{const arrow=entry.arrows[i];arrow.visible=true;arrow.position.copy(curve.getPoint(t));arrow.material.color.setHex(color);arrow.material.opacity=isActive?1:.9;arrow.scale.setScalar(view.span/view.rect.height*3.5/.065);arrow.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),curve.getTangent(t));});
   }
-  const packets=packetsFor(view);for(const[kind,item]of moving){const packet=packets.find(p=>p.kind===kind);item.group.visible=Boolean(packet);if(!packet)continue;const travel=travelOf(packet,view,now);if(!travel)continue;item.group.visible=visiblePoint(view,travel.point);item.group.position.copy(travel.point);item.group.position.z=1.14;item.group.scale.setScalar(view.hero?.9:1);item.accent.color.setHex(palette[kind==='reference'?'reference':kind==='data'?'data':'query']);const paperKind=kind==='query'?(packet.role==='result'?'paper-result':packet.role?.includes('formulation')?'paper-model':packet.role?.includes('program')?'paper-code':packet.role?.includes('workflow')?'paper-workflow':packet.role?.includes('classified')?'paper-classified':'paper-query'):'paper-data';if(kind==='query')item.group.traverse(o=>{if(o.userData.textureKind)o.userData.textureKind=paperKind;});updateTextureMode(item.group,state.liveMode);}
-  for(const[kind,item]of signals){const request=requestTravels(view,now).find(r=>r.kind===kind);item.group.visible=Boolean(request)&&visiblePoint(view,request.point);if(request){item.group.position.copy(request.point);item.group.position.z=1.1;item.group.rotation.z=Math.atan2(request.direction.y,request.direction.x);item.material.color.setHex(palette[kind]);}}graph.updateMatrixWorld(true);layoutLabels(view,focus);layoutPackets(view,now);
+  const packets=packetsFor(view);for(const[kind,item]of moving){const packet=packets.find(p=>p.kind===kind);item.group.visible=Boolean(packet);if(!packet)continue;const travel=travelOf(packet,view,now);if(!travel)continue;item.group.visible=visiblePoint(view,travel.point);item.group.position.copy(travel.point);item.group.scale.setScalar((view.hero?.9:1)*.68);item.accent.color.setHex(palette[kind==='reference'?'reference':kind==='data'?'data':'query']);const paperKind=kind==='query'?(packet.role==='result'?'paper-result':packet.role?.includes('formulation')?'paper-model':packet.role?.includes('program')?'paper-code':packet.role?.includes('workflow')?'paper-workflow':packet.role?.includes('classified')?'paper-classified':'paper-query'):'paper-data';if(kind==='query')item.group.traverse(o=>{if(o.userData.textureKind)o.userData.textureKind=paperKind;});updateTextureMode(item.group,state.liveMode);}
+  for(const[kind,item]of signals){const request=requestTravels(view,now).find(r=>r.kind===kind);item.group.visible=Boolean(request)&&visiblePoint(view,request.point);if(request){item.group.position.copy(request.point);item.group.rotation.z=Math.atan2(request.direction.y,request.direction.x);item.material.color.setHex(palette[kind]);}}graph.updateMatrixWorld(true);layoutLabels(view,focus);layoutPackets(view,now);
  }
  function labelFor(view,node){
   let label=view.labels.get(node.id);if(label)return label;label=document.createElement('button');label.type='button';label.className=`fw-label fw-label--${node.kind}`;label.dataset.node=node.id;label.tabIndex=view.hero?-1:0;
@@ -282,7 +306,7 @@ export function createFramework({heroHost,detailHost,onStageChange=()=>{},onNode
  function inlineText(node){const tools=node.inlineTools||[];return tools.map(v=>typeof v==='string'?v:tr(v.title||v.label||v,state.lang)).filter(Boolean).join(' · ');}
  function layoutLabels(view,focus){
   const candidates=[],live=new Set(),rect=view.rect;
-  for(const node of baseNodes().filter(n=>view.visibleNodeIds.has(n.id)&&(view.framing.mode==='overview'||focus.has(n.id)))){
+  for(const node of labelNodes(view)){
    const label=labelFor(view,node),mobile=rect.width<760,main=['query','classification','workflow','model','codegen','solver','solution'].includes(node.id),p=view.positions.get(node.id).clone(),fp=footprintsFor().get(node.id);if(!mobile||!main||view.framing.mode!=='overview')p.y+=(fp.minY??-fp.height/2)-.35;const point=project(view,p);if(mobile&&main&&view.framing.mode==='overview')point.x-=100;const name=tr(node.title,state.lang),tools=inlineText(node);
    const content=`<span>${escapeHTML(name)}</span>${tools?`<small>${escapeHTML(tools)}</small>`:''}`;if(label.innerHTML!==content)label.innerHTML=content;
    label.title=tr(node.description,state.lang);label.setAttribute('aria-label',`${name} — ${tr(node.description,state.lang)}`);label.setAttribute('aria-pressed',String(node.id===state.selected));label.classList.toggle('fw-label--selected',node.id===state.selected);label.classList.toggle('fw-label--dim',!view.hero&&!focus.has(node.id));label.classList.toggle('fw-label--run',node.id===state.run?.nodeId);label.dataset.runStatus=node.id===state.run?.nodeId?state.run.status:'';
@@ -292,8 +316,11 @@ export function createFramework({heroHost,detailHost,onStageChange=()=>{},onNode
   }
   for(const[id,label]of view.labels)if(!live.has(id))label.hidden=true;
   const measured=candidates.map(p=>({...p,...measureDOMLabel(p.label,view.labelMetrics,p.key)}));
-  const iconSize=Math.max(24,rect.height/view.span*2.5);view.iconBoxes=baseNodes().filter(n=>view.visibleNodeIds.has(n.id)).map(n=>({...project(view,view.positions.get(n.id)),width:iconSize,height:iconSize}));const placed=placeDOMLabels(measured,{left:Math.max(0,rect.left),right:Math.min(innerWidth,rect.right),top:Math.max(0,rect.top),bottom:Math.min(innerHeight,rect.bottom)},7,view.iconBoxes);view.captionBoxes=[...placed.values()];
+  const fps=footprintsFor();view.iconBoxes=baseNodes().filter(n=>view.visibleNodeIds.has(n.id)).map(n=>({...project(view,view.positions.get(n.id)),width:fps.get(n.id).width*rect.height/view.span,height:fps.get(n.id).height*rect.height/view.span}));const placed=placeDOMLabels(measured,{left:Math.max(0,rect.left),right:Math.min(innerWidth,rect.right),top:Math.max(0,rect.top),bottom:Math.min(innerHeight,rect.bottom)},7,view.iconBoxes);view.captionBoxes=[...placed.values()];
   for(const p of candidates){const box=placed.get(p.id);p.label.hidden=!box;if(box)p.label.style.transform=`translate(${box.x.toFixed(1)}px,${box.y.toFixed(1)}px) translate(-50%,-50%)`;}
+  const edgeItems=[];for(const edge of renderedRoutes(view).filter(e=>e.kind==='flow'||activeLinkIds(view).has(e.id))){const curve=curveFor(edge,view.positions),ts=arrowFractions(view,curve);if(!ts.length)continue;const p=curve.getPoint(ts.reduce((a,b)=>a+b,0)/ts.length);if(!visiblePoint(view,p,.15))continue;let label=view.edgeLabels.get(edge.id);if(!label){label=document.createElement('div');label.className='fw-edge-label';view.labelRoot.append(label);view.edgeLabels.set(edge.id,label);}label.textContent=edgeCaption(edge);label.dataset.kind=edgeColor(edge);const screen=project(view,p);edgeItems.push({id:edge.id,label,x:screen.x,y:screen.y-16,width:Math.min(150,[...label.textContent].reduce((a,c)=>a+(/[\u3400-\u9fff]/.test(c)?10:5.5),12)),height:24});}
+  const edgeBoxes=placeDOMLabels(edgeItems,{left:Math.max(0,rect.left),right:Math.min(innerWidth,rect.right),top:Math.max(0,rect.top),bottom:Math.min(innerHeight,rect.bottom)},4,[...view.iconBoxes,...view.captionBoxes]);
+  const visibleEdges=new Set();for(const item of edgeItems){const b=edgeBoxes.get(item.id);item.label.hidden=!b;if(b){visibleEdges.add(item.id);item.label.style.transform=`translate(${b.x.toFixed(1)}px,${b.y.toFixed(1)}px) translate(-50%,-50%)`;}}for(const[id,label]of view.edgeLabels)if(!visibleEdges.has(id))label.hidden=true;view.captionBoxes.push(...edgeBoxes.values());
  }
  function chipText(packet){return state.run?labelForKind(packet.kind,state.lang):({query:'Q1',data:'D1',reference:'R',artifact:'↗'}[packet.kind]||'');}
  function layoutPackets(view,now){
@@ -305,7 +332,7 @@ export function createFramework({heroHost,detailHost,onStageChange=()=>{},onNode
    candidates.push({id:key,element,x:point.x+22,y:point.y-29,width:state.run?92:52,height:28});live.add(key);
 
   }
-  for(const [i,requestTrack]of requestTravels(view,now).entries()){if(!visiblePoint(view,requestTrack.point,.05))continue;const key=`request-${requestTrack.kind}-${i}`;let element=view.packets.get(key);if(!element){element=document.createElement('div');element.className=`fw-request fw-request--${requestTrack.kind}`;element.setAttribute('aria-hidden','true');view.labelRoot.append(element);view.packets.set(key,element);}const p=project(view,requestTrack.point);element.textContent=state.lang==='zh'?(requestTrack.role==='runtime-read'?'完整 CSV':requestTrack.kind==='data'?'读取数据':'检索示例'):(requestTrack.role==='runtime-read'?'Complete CSVs':requestTrack.kind==='data'?'Read data':'Retrieve');element.hidden=false;candidates.push({id:key,element,x:p.x,y:p.y-16,width:state.lang==='en'?96:70,height:24});live.add(key);}
+  for(const [i,requestTrack]of requestTravels(view,now).entries()){if(!visiblePoint(view,requestTrack.point,.05))continue;const key=`request-${requestTrack.kind}-${i}`;let element=view.packets.get(key);if(!element){element=document.createElement('div');element.className=`fw-request fw-request--${requestTrack.kind}`;element.setAttribute('aria-hidden','true');view.labelRoot.append(element);view.packets.set(key,element);}const p=project(view,requestTrack.point);element.dataset.sourceX=p.x.toFixed(3);element.dataset.sourceY=p.y.toFixed(3);element.textContent=state.lang==='zh'?(requestTrack.role==='runtime-read'?'完整 CSV':requestTrack.kind==='data'?'读取数据':'检索示例'):(requestTrack.role==='runtime-read'?'Complete CSVs':requestTrack.kind==='data'?'Read data':'Retrieve');element.hidden=false;candidates.push({id:key,element,x:p.x,y:p.y-16,width:state.lang==='en'?96:70,height:24});live.add(key);}
   const r=view.rect,placed=placeDOMLabels(candidates,{left:Math.max(0,r.left),right:Math.min(innerWidth,r.right),top:Math.max(0,r.top),bottom:Math.min(innerHeight,r.bottom)},5,[...(view.captionBoxes||[]),...(view.iconBoxes||[])]);
   for(const p of candidates){const box=placed.get(p.id);p.element.hidden=!box;if(box)p.element.style.transform=`translate(${box.x.toFixed(1)}px,${box.y.toFixed(1)}px) translate(-50%,-50%)`;}
   for(const[key,element]of view.packets)if(!live.has(key))element.hidden=true;
@@ -339,7 +366,7 @@ export function createFramework({heroHost,detailHost,onStageChange=()=>{},onNode
   const phase=animationFraction(view,now),signature=JSON.stringify([view.host.clientWidth,view.host.clientHeight,state.lang,state.theme,state.route,view.hero?0:state.stage,state.flowFrame.stepId,state.liveMode,state.selected,state.run?.nodeId,state.run?.status,view.hero?1:state.zoom,state.flowPlaying,view.pan.x,view.pan.y,Math.round(phase*90)]);
   if(view.fallbackSignature===signature)return;view.fallbackSignature=signature;view.positions=positionsFor(view);
   const mobile=view.host.clientWidth<760,width=Math.max(260,view.rect.width),height=Math.max(320,view.rect.height),positions=view.positions;
-  const desired=framingFor(view);view.target.set(desired.center.x,desired.center.y,0);view.span=desired.span;view.framing=desired;view.focusIds=new Set(desired.focusIds);view.visibleNodeIds=new Set(desired.visibleNodeIds);view.initialized=true;
+  const desired=framingFor(view);view.target.set(desired.center.x,desired.center.y,0);view.span=desired.span;view.framing=cameraFrame(view,desired);view.focusIds=new Set(desired.focusIds);view.visibleNodeIds=new Set(desired.visibleNodeIds);view.initialized=true;
   const scale=height/desired.span,cx=desired.center.x,cy=desired.center.y;
   const map=p=>({x:width/2+(p.x-cx)*scale,y:height/2-(p.y-cy)*scale});const point=id=>map(positions.get(id));
   const viewWidth=width,viewHeight=height,panX=0,panY=0;
@@ -347,27 +374,33 @@ export function createFramework({heroHost,detailHost,onStageChange=()=>{},onNode
   const svgBounds={left:0,top:0,right:width,bottom:height};
   const visibleNodes=baseNodes().filter(n=>view.visibleNodeIds.has(n.id));
   const stationMarkup=STATIONS.map(station=>{const points=station.nodes.filter(id=>positions.has(id)&&view.visibleNodeIds.has(id)).map(point);if(!points.length)return'';const xs=points.map(p=>p.x),ys=points.map(p=>p.y),x=Math.min(...xs)-47,y=Math.min(...ys)-40,w=Math.max(...xs)-Math.min(...xs)+94,h=Math.max(...ys)-Math.min(...ys)+88;return `<g class="fw-fallback-station" data-station="${station.id}" data-nodes="${station.nodes.join(',')}"><rect class="fw-station-side" x="${x+3}" y="${y+5}" width="${w}" height="${h}" rx="12"/><rect class="fw-station-top" x="${x}" y="${y}" width="${w}" height="${h}" rx="12"/></g>`;}).join('');
-  const edgeMarkup=routes().filter(e=>view.visibleNodeIds.has(e.from)||view.visibleNodeIds.has(e.to)).map(edge=>{const curve=curveFor(edge,positions),a=map(curve.v0),b=map(curve.v1),c=map(curve.v2),d=map(curve.v3),kind=edgeColor(edge),selected=active.has(edge.id);return `<path class="fw-fallback-edge${selected?' fw-fallback-edge--active':''}" data-edge="${escapeHTML(edge.id)}" data-kind="${kind}" d="M${a.x.toFixed(2)} ${a.y.toFixed(2)}C${b.x.toFixed(2)} ${b.y.toFixed(2)},${c.x.toFixed(2)} ${c.y.toFixed(2)},${d.x.toFixed(2)} ${d.y.toFixed(2)}" marker-end="url(#fw-arrow-${kind}-${suffix})"/>`;}).join('');
-  const iconFactor=scale/38,fontSize=mobile?14:13,labels=layoutFallbackLabels(visibleNodes.filter(n=>visiblePoint(view,positions.get(n.id))&&(desired.mode==='overview'||focus.has(n.id))).map(node=>{const p=point(node.id),main=['query','classification','workflow','model','codegen','solver','solution'].includes(node.id);return{id:node.id,text:tr(node.title,state.lang),kind:node.kind,level:0,x:p.x,y:p.y,nodeWidth:82*iconFactor,nodeHeight:88*iconFactor,maxWidth:mobile&&main?125:180,preferredX:mobile&&main&&desired.mode==='overview'?p.x-166:undefined,preferredY:mobile&&main&&desired.mode==='overview'?p.y-23:p.y+44*iconFactor+8};}),width,height,fontSize,svgBounds);
+  const edgeMarkup=renderedRoutes(view).map(edge=>{const curve=curveFor(edge,positions),kind=edgeColor(edge),selected=active.has(edge.id),points=curve.route.points.map(p=>map(new THREE.Vector3(...p))),path=points.map((p,i)=>`${i?'L':'M'}${p.x.toFixed(2)} ${p.y.toFixed(2)}`).join(' ');
+   const arrows=arrowFractions(view,curve).map(t=>{const p=map(curve.getPoint(t)),d=curve.getTangent(t),angle=Math.atan2(-d.y,d.x)*180/Math.PI;return `<path class="fw-route-arrow" data-arrow-edge="${escapeHTML(edge.id)}" data-arrow-t="${t.toFixed(4)}" data-kind="${kind}" transform="translate(${p.x.toFixed(2)} ${p.y.toFixed(2)}) rotate(${angle.toFixed(2)})" d="M-4-3L4 0L-4 3Z"/>`;}).join('');
+   return `<path class="fw-fallback-edge${selected?' fw-fallback-edge--active':''}" data-edge="${escapeHTML(edge.id)}" data-kind="${kind}" data-lane="${escapeHTML(curve.route.lane)}" data-route-points="${escapeHTML(JSON.stringify(points.map(p=>[Number(p.x.toFixed(3)),Number(p.y.toFixed(3))])))}"${edge.kind==='request'?' stroke-dasharray="7 5"':''} stroke-width="${flowStrokeWidth(selected)}" vector-effect="non-scaling-stroke" d="${path}"/>${arrows}`;
+  }).join('');
+  const iconFactor=scale/38*OBJECT_SCALE,fontSize=mobile?14:13,labels=layoutFallbackLabels(labelNodes(view).map(node=>{const p=point(node.id),main=['query','classification','workflow','model','codegen','solver','solution'].includes(node.id);return{id:node.id,text:tr(node.title,state.lang),kind:node.kind,level:0,x:p.x,y:p.y,nodeWidth:82*iconFactor,nodeHeight:88*iconFactor,maxWidth:mobile&&main?125:180,preferredX:mobile&&main&&desired.mode==='overview'?p.x-166:undefined,preferredY:mobile&&main&&desired.mode==='overview'?p.y-23:p.y+44*iconFactor+8};}),width,height,fontSize,svgBounds);
   const nodes=visibleNodes.map(node=>{
    const portAttrs=['query','data','reference'].map(kind=>{const port=map(portAt(node.id,kind,positions));return `data-${kind}-port-x="${port.x.toFixed(3)}" data-${kind}-port-y="${port.y.toFixed(3)}"`;}).join(' ');
    const p=point(node.id),label=labels.get(node.id),selected=node.id===state.selected,working=node.id===state.run?.nodeId,tools=inlineText(node),kind=nodeColor(node),iconScale=iconFactor*(node.kind==='agent'?1.06:node.id==='csvqa'?.68:node.id==='solution'?.76:node.id==='csv'?.84:.92);
    const guideValue=guideProgress(node,view,now),guide=guideValue!==null;
    const caption=label?`<rect class="fw-fallback-caption" x="${label.x}" y="${label.y}" width="${label.width}" height="${label.height}" rx="4"/><text class="fw-fallback-name" text-anchor="middle" style="font-size:${fontSize}px">${label.lines.map((line,i)=>`<tspan x="${label.x+label.width/2}" y="${label.y+fontSize+4+i*(fontSize+3)}">${escapeHTML(line)}</tspan>`).join('')}</text>${tools?`<text class="fw-fallback-tool" x="${p.x}" y="${label.y+label.height+12}" text-anchor="middle">${escapeHTML(tools)}</text>`:''}`:'';
-   return `<g class="fw-fallback-node${selected?' fw-fallback-node--selected':''}${working?' fw-fallback-node--run':''}${guide?' fw-fallback-node--guide':''}" data-node="${node.id}" ${portAttrs} data-x="${p.x.toFixed(3)}" data-y="${p.y.toFixed(3)}" data-icon="${iconOf(node)}" data-station-owner="${STATIONS.find(station=>station.nodes.includes(node.id))?.id||node.id}" data-kind="${kind}" data-focused="${view.hero||focus.has(node.id)}" data-context="${desired.mode!=='overview'&&!focus.has(node.id)}" data-run-status="${working?state.run.status:''}" role="button" tabindex="${view.hero?-1:0}" aria-pressed="${selected}" aria-label="${escapeHTML(tr(node.title,state.lang))}"><title>${escapeHTML(tr(node.description,state.lang))}</title><g transform="translate(${p.x.toFixed(3)} ${p.y.toFixed(3)}) scale(${iconScale})"><g class="fw-fallback-depth" transform="translate(3 4)">${svgIcon(iconOf(node))}</g>${svgIcon(iconOf(node))}<path class="fw-fallback-selection" d="M-22 36H${guide?-22+44*Math.max(.08,guideValue):22}"/></g>${caption}</g>`;
+   return `<g class="fw-fallback-node${selected?' fw-fallback-node--selected':''}${working?' fw-fallback-node--run':''}${guide?' fw-fallback-node--guide':''}" data-node="${node.id}" ${portAttrs} data-x="${p.x.toFixed(3)}" data-y="${p.y.toFixed(3)}" data-icon="${iconOf(node)}" data-object-width="${(footprintsFor().get(node.id).width*scale).toFixed(3)}" data-object-height="${(footprintsFor().get(node.id).height*scale).toFixed(3)}" data-station-owner="${STATIONS.find(station=>station.nodes.includes(node.id))?.id||node.id}" data-kind="${kind}" data-focused="${view.hero||focus.has(node.id)}" data-context="${desired.mode!=='overview'&&!focus.has(node.id)}" data-run-status="${working?state.run.status:''}" role="button" tabindex="${view.hero?-1:0}" aria-pressed="${selected}" aria-label="${escapeHTML(tr(node.title,state.lang))}"><title>${escapeHTML(tr(node.description,state.lang))}</title><g transform="translate(${p.x.toFixed(3)} ${p.y.toFixed(3)}) scale(${iconScale})"><g class="fw-fallback-depth" transform="translate(3 4)">${svgIcon(iconOf(node))}</g>${svgIcon(iconOf(node))}<path class="fw-fallback-selection" d="M-22 36H${guide?-22+44*Math.max(.08,guideValue):22}"/></g>${caption}</g>`;
   }).join('');
-  const packetItems=[],packetReserved=[...labels.values()].map(p=>({x:p.x+p.width/2,y:p.y+p.height/2,width:p.width,height:p.height}));
+  const edgeTextItems=renderedRoutes(view).filter(e=>e.kind==='flow'||active.has(e.id)).map(edge=>{const curve=curveFor(edge,positions),ts=arrowFractions(view,curve),t=ts.length?ts.reduce((a,b)=>a+b,0)/ts.length:.5,p=curve.getPoint(t);if(!visiblePoint(view,p,.15))return null;const pos=map(p),label=edgeCaption(edge);return{id:edge.id,edge,label,x:pos.x,y:pos.y-16,width:Math.min(150,[...label].reduce((a,c)=>a+(/[\u3400-\u9fff]/.test(c)?10:5.5),12)),height:24};}).filter(Boolean);
+  const edgeTextBoxes=placeDOMLabels(edgeTextItems,svgBounds,4,[...labels.values()].map(p=>({x:p.x+p.width/2,y:p.y+p.height/2,width:p.width,height:p.height})).concat(visibleNodes.map(n=>({...point(n.id),width:footprintsFor().get(n.id).width*scale,height:footprintsFor().get(n.id).height*scale}))));
+  const edgeTextMarkup=edgeTextItems.map(item=>{const b=edgeTextBoxes.get(item.id);if(!b)return'';return `<g class="fw-route-caption" data-route-caption="${escapeHTML(item.id)}" data-kind="${edgeColor(item.edge)}" transform="translate(${(b.x-b.width/2).toFixed(2)} ${(b.y-b.height/2).toFixed(2)})"><rect width="${b.width}" height="${b.height}" rx="4"/><text x="${b.width/2}" y="16" text-anchor="middle">${escapeHTML(item.label)}</text></g>`;}).join('');
+  const packetItems=[],packetReserved=[...labels.values()].map(p=>({x:p.x+p.width/2,y:p.y+p.height/2,width:p.width,height:p.height})).concat([...edgeTextBoxes.values()]);
   for(const n of visibleNodes){const p=point(n.id);packetReserved.push({...p,width:82*iconFactor,height:88*iconFactor});}
   for(const packet of packetsFor(view)){const travel=travelOf(packet,view,now);if(!travel||!visiblePoint(view,travel.point,.05))continue;const p=map(travel.point);packetItems.push({id:packet.id,packet,travel,source:p,x:p.x+22,y:p.y-29,width:state.run?92:52,height:28});}
   for(const [i,request]of requestTravels(view,now).entries()){if(!visiblePoint(view,request.point,.05))continue;const p=map(request.point);packetItems.push({id:`request-${request.kind}-${i}`,packet:request,request:true,source:p,x:p.x,y:p.y-17,width:state.lang==='en'?112:76,height:25});}
   const packetBoxes=placeDOMLabels(packetItems,svgBounds,5,packetReserved);
   const packetMarkup=packetItems.map(item=>{
    const box=packetBoxes.get(item.id);if(!box)return'';const packet=item.packet,x=box.x-box.width/2,y=box.y-box.height/2;
-   if(item.request){const label=state.lang==='zh'?(packet.kind==='data'?'读取请求':'检索请求'):(packet.kind==='data'?'Data request':'Retrieval request');return `<g class="fw-fallback-request" data-request="${packet.kind}" transform="translate(${x.toFixed(2)} ${y.toFixed(2)})"><rect width="${box.width}" height="${box.height}" rx="12"/><text text-anchor="middle" x="${box.width/2}" y="16">${escapeHTML(label)}</text></g>`;}
+   if(item.request){const label=state.lang==='zh'?(packet.kind==='data'?'读取请求':'检索请求'):(packet.kind==='data'?'Data request':'Retrieval request');return `<g class="fw-fallback-request" data-request="${packet.kind}" data-source-x="${item.source.x.toFixed(3)}" data-source-y="${item.source.y.toFixed(3)}" transform="translate(${x.toFixed(2)} ${y.toFixed(2)})"><rect width="${box.width}" height="${box.height}" rx="12"/><text text-anchor="middle" x="${box.width/2}" y="16">${escapeHTML(label)}</text></g>`;}
    return `<g class="fw-fallback-packet" data-packet="${packet.kind}" data-journey-id="${escapeHTML(packet.id)}" data-source-x="${item.source.x.toFixed(3)}" data-source-y="${item.source.y.toFixed(3)}" data-requesting="${Boolean(item.travel.request)||!state.liveMode&&state.flowFrame.requests.some(r=>r.kind===packet.kind)}" data-path="${escapeHTML(item.travel.path.join(','))}" data-paths="${escapeHTML(JSON.stringify(packet.paths))}" transform="translate(${x.toFixed(2)} ${y.toFixed(2)})"><title>${escapeHTML(tr(packet.label,state.lang))}</title><rect width="${box.width}" height="${box.height}" rx="5"/><path class="fw-packet-glyph" d="${packet.kind==='data'?'M7 6H20V22H7ZM7 11H20M7 16H20M13 6V22':'M8 5H16L21 10V23H8ZM16 5V10H21M11 14H18M11 18H18'}"/><text x="27" y="19" class="fw-packet-text">${escapeHTML(chipText(packet))}</text></g>`;
   }).join('');
   const markers=['query','data','reference','output'].map(kind=>`<marker id="fw-arrow-${kind}-${suffix}" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M1 1L6 4L1 7" fill="none" stroke="var(--fw-${kind})" stroke-width="1.4"/></marker>`).join('');
-  holder.dataset.theme=state.theme;holder.dataset.flowStep=state.liveMode?(state.run?`live-${state.run.nodeId}`:'live-waiting'):state.flowFrame.stepId;holder.dataset.live=String(state.liveMode);holder.innerHTML=`<svg viewBox="${(width-viewWidth)/2+panX} ${(height-viewHeight)/2+panY} ${viewWidth} ${viewHeight}" role="group" aria-label="${state.lang==='zh'?'LEAN 优化建模流程与数据流':'LEAN optimization workflow and data flow'}"><defs>${markers}</defs>${stationMarkup}${edgeMarkup}${nodes}${packetMarkup}</svg>`;
+  holder.dataset.theme=state.theme;holder.dataset.flowStep=state.liveMode?(state.run?`live-${state.run.nodeId}`:'live-waiting'):state.flowFrame.stepId;holder.dataset.live=String(state.liveMode);holder.innerHTML=`<svg viewBox="${(width-viewWidth)/2+panX} ${(height-viewHeight)/2+panY} ${viewWidth} ${viewHeight}" role="group" aria-label="${state.lang==='zh'?'LEAN 优化建模流程与数据流':'LEAN optimization workflow and data flow'}"><defs>${markers}</defs>${stationMarkup}${edgeMarkup}${nodes}${edgeTextMarkup}${packetMarkup}</svg>`;
  }
  const lost=event=>{event.preventDefault();if(disposed)return;fallback=true;system.hidden=true;views.forEach(v=>{v.fallbackSignature=null;renderFallback(v);});requestFrame();};canvas.addEventListener('webglcontextlost',lost);cleanup.push(()=>canvas.removeEventListener('webglcontextlost',lost));
  const resizeObserver=new ResizeObserver(requestFrame);views.forEach(v=>resizeObserver.observe(v.host));const intersection=new IntersectionObserver(requestFrame,{rootMargin:'100px'});views.forEach(v=>intersection.observe(v.host));
