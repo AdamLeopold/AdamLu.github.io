@@ -64,3 +64,72 @@
   .arch-mobile-list summary{font-size:13px;cursor:pointer;color:var(--muted)}
   .arch-mobile-list p{font-size:13px;color:var(--muted);margin-top:10px}
 }
+
+/* Keep long case data inside the replay instead of widening its grid tracks. */
+.case-grid > *, .large-chart > *, .experiment-header > * {
+  min-width: 0;
+}
+.replay-content, .table-scroll, .code-block {
+  min-width: 0;
+  max-width: 100%;
+}
+.code-toolbar {
+  flex-wrap: wrap;
+}
+.math-block {
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+}
+.math-line, .math-constraint {
+  white-space: nowrap;
+}
+.case-step-enter, .replay-content > .case-step-enter {
+  min-width: 0;
+  animation: case-step-in .26s ease both;
+}
+.study-step-enter {
+  min-width: 0;
+  animation: case-step-in .26s ease both;
+}
+.study-step-enter .experiment-header {
+  animation: none;
+}
+.experiment-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 20px;
+  margin-bottom: 18px;
+}
+.experiment-controls .experiment-tabs {
+  flex: 1;
+  min-width: 0;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+#study-play {
+  flex: none;
+  min-width: 112px;
+  border: 1px solid var(--line-strong);
+  border-radius: 6px;
+  color: var(--accent);
+  background: var(--surface-soft);
+}
+#study-play[aria-pressed="true"] {
+  border-color: var(--accent);
+  background: var(--glow);
+}
+@keyframes case-step-in {
+  from { opacity: 0; transform: translateY(7px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .case-step-enter, .study-step-enter { animation: none; }
+}
+@media (max-width: 760px) {
+  .experiment-controls { align-items: flex-start; gap: 12px; }
+  .experiment-controls .experiment-tabs { flex-basis: 100%; flex-wrap: wrap; }
+  #study-play { padding: 8px 13px; font-size: 11px; }
+}

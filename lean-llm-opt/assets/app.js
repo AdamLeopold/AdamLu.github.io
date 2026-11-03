@@ -8,7 +8,7 @@ const state = {
   lang: root.dataset.lang === 'en' ? 'en' : 'zh',
   theme: root.dataset.theme || 'dark',
   reduced: root.dataset.motion === 'reduced',
-  stage: 0, node: null, manualStage: false, free: false, follow: false, flowPlaying: true, route: 'tailored', replay: 0, study: 'large', view: 'overall', dataTable: 'demand', playing: false,
+  stage: 0, node: null, manualStage: false, free: false, follow: false, flowPlaying: true, route: 'tailored', replay: 0, study: 'large', view: 'overall', dataTable: 'demand', playing: root.dataset.motion !== 'reduced', studyPlaying: root.dataset.motion !== 'reduced',
 };
 const t = (zh, en) => state.lang === 'zh' ? zh : en;
 const local = (value) => typeof value === 'object' ? value[state.lang] : value;
@@ -18,7 +18,8 @@ const number = (value, decimals = 0) => Number(value).toLocaleString(state.lang 
 const modelName = (model) => model === 'gpt41' ? 'GPT-4.1' : 'gpt-oss-20B';
 const clamp = (value, min = 0, max = 1) => Math.max(min, Math.min(max, value));
 const storage = (key, value) => { try { localStorage.setItem(`lean-${key}`, value); } catch (_) {} };
-let research, caseData, replayTimer, toastTimer, frameId = 0, modelView, flowFrame, lastRunEvent, liveTrace={files:[],objective:null,status:null,runId:null,route:null};
+let research, caseData, replayTimer = null, studyTimer = null, replayVisible = false, studyVisible = false, toastTimer, frameId = 0, modelView, flowFrame, lastRunEvent, liveTrace={files:[],objective:null,status:null,runId:null,route:null};
+const AUTOPLAY_DELAY = 10000;
 
 const stages = STAGES;
 const shortStages = [['总览','Overview'],['输入','Inputs'],['分类检索','Classify'],['工作流','Workflow'],['读数建模','Formulate'],['代码求解','Solve'],['结果','Results']];
@@ -40,6 +41,8 @@ function translateStatic() {
   $('#motion-toggle').setAttribute('aria-pressed', String(state.reduced));
   $('#theme-toggle').setAttribute('aria-label', t(state.theme === 'dark' ? '切换到浅色主题' : '切换到深色主题', state.theme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme'));
   $('#theme-toggle').setAttribute('aria-pressed', String(state.theme === 'light'));
+  syncDemoLauncher();
+  syncPlayButton();syncStudyPlayButton();
 }
 function updateURL() {
   const url = new URL(location.href);
@@ -78,7 +81,7 @@ function renderFlowStatus(frame=flowFrame){
   $('#flow-live-label').textContent=label;
   $('#flow-live-description').textContent=description;
   $('#hero-flow-label').textContent=live?`${t('实时任务','Live run')} · ${label}`:label;
-  $('#flow-mode-label').textContent=live?t('实时任务 · Demo 同步','LIVE RUN · DEMO SYNC'):state.reduced?t('双任务流程 · 静态视图','TWO TASKS · STATIC VIEW'):paused?t('双任务流程 · 已暂停','TWO TASKS · PAUSED'):t('双任务流程 · 错峰演示','TWO TASKS · STAGGERED FLOW');
+  $('#flow-mode-label').textContent=live?t('Demo 实时进度','LIVE DEMO PROGRESS'):state.reduced?t('流程演示 · 静态','WORKFLOW DEMO · STATIC'):paused?t('流程演示 · 暂停','WORKFLOW DEMO · PAUSED'):t('流程演示','WORKFLOW DEMO');
   const streams=flowFrame?.streams||[];$('#flow-streams').hidden=live;$('#flow-streams').innerHTML=streams.map(f=>`<span data-stream="${esc(f.streamId)}"><b>Q${f.taskIndex} / D${f.taskIndex}</b><span>${esc(local(f.label))}</span></span>`).join('');
   $('#flow-count').textContent=!live&&flowFrame?.total?`${String(flowFrame.index+1).padStart(2,'0')} / ${String(flowFrame.total).padStart(2,'0')}`:'';
   $('#flow-live-status').dataset.paused=String(paused&&!live);
@@ -138,7 +141,7 @@ function renderStageDetail() {
   const focusedIO=selectedNodeIO(node);
   const action=state.follow?`${liveTitle} · ${statusLabels[liveTrace.status]||t('等待阶段事件','Waiting for a stage event')}`:focusedIO?.action||local(stage.action||context.action||stage.description);
   const artifact=state.follow?(replying?t('在 Demo 页查看本次回复。','View the response on the demo page.'):liveTrace.objective!=null?`${t('求解器报告目标值','Reported objective')}: ${number(liveTrace.objective,2)}`:t('模型、程序与结果在 Demo 页查看。','View the formulation, program, and result on the demo page.')):focusedIO?.output||local(stage.output||context.artifact);
-  $('#arch-detail').innerHTML=`<p class="stage-kicker">${state.follow?t('实时任务','LIVE RUN'):t('步骤说明','STEP DETAILS')} / 0${state.stage}</p><h3>${esc(state.follow?liveTitle:local(node?.title||stage.title))}</h3><p class="role-summary">${esc(state.follow?liveDescription:local(node?.description||stage.description))}</p><dl class="flow-context"><div class="flow-context-item flow-query"><dt>${t('输入','INPUT')}</dt><dd>${esc(state.follow?query:focusedIO?.input||local(stage.input)||query)}</dd></div><div class="flow-context-item flow-processing"><dt>${t('处理','PROCESS')}</dt><dd>${esc(action)}</dd></div><div class="flow-context-item flow-artifact"><dt>${t('输出','OUTPUT')}</dt><dd>${esc(artifact)}</dd></div></dl>${state.follow?'':exampleEvidence(node)}<details class="task-input-details"><summary>${state.follow?t('本次任务输入','Task input'):t('本例查询与数据','Example query and data')}<span aria-hidden="true">＋</span></summary><div><p class="task-context-label">${state.follow?'QUERY':'QUERY · Q1'}</p><p>${esc(query)}</p><p class="task-context-label">${state.follow?'DATA':'DATA · D1'}</p><p>${esc(data)}</p>${!state.follow?`<ul class="task-file-list">${JOURNEY_EXAMPLE.data.files.map(file=>`<li>${esc(file)}</li>`).join('')}</ul>`:''}</div></details><p class="graph-help">${state.follow?t('在独立 Demo 页运行任务，这里同步显示阶段。','Run a task on the demo page to follow its stages here.'):(canGuideScroll()?t('滚动页面缩放与移动视角；点击模块查看细节，再滚动继续导览。流程动画可单独暂停。','Scroll the page to zoom and move the view. Select a module for details; scroll again to continue. Pause the flow animation separately.'):t('选择步骤或模块查看输入、处理与输出。','Select a step or module to view its input, action, and output.'))}</p>`;
+  $('#arch-detail').innerHTML=`<p class="stage-kicker">${state.follow?t('实时任务','LIVE RUN'):t('步骤说明','STEP DETAILS')} / 0${state.stage}</p><h3>${esc(state.follow?liveTitle:local(node?.title||stage.title))}</h3><p class="role-summary">${esc(state.follow?liveDescription:local(node?.description||stage.description))}</p><dl class="flow-context"><div class="flow-context-item flow-query"><dt>${t('输入','INPUT')}</dt><dd>${esc(state.follow?query:focusedIO?.input||local(stage.input)||query)}</dd></div><div class="flow-context-item flow-processing"><dt>${t('处理','PROCESS')}</dt><dd>${esc(action)}</dd></div><div class="flow-context-item flow-artifact"><dt>${t('输出','OUTPUT')}</dt><dd>${esc(artifact)}</dd></div></dl>${state.follow?'':exampleEvidence(node)}<details class="task-input-details"><summary>${state.follow?t('本次任务输入','Task input'):t('本例查询与数据','Example query and data')}<span aria-hidden="true">＋</span></summary><div><p class="task-context-label">${state.follow?'QUERY':'QUERY · Q1'}</p><p>${esc(query)}</p><p class="task-context-label">${state.follow?'DATA':'DATA · D1'}</p><p>${esc(data)}</p>${!state.follow?`<ul class="task-file-list">${JOURNEY_EXAMPLE.data.files.map(file=>`<li>${esc(file)}</li>`).join('')}</ul>`:''}</div></details><p class="graph-help">${state.follow?t('阶段信息与 Demo 同步。','Stages sync with the demo.'):(canGuideScroll()?t('滚动切换视角；点击查看模块，继续滚动返回导览。','Scroll to change the view. Select a module for details, then scroll to resume the tour.'):t('选择步骤或模块查看输入、处理与输出。','Select a step or module to view its input, action, and output.'))}</p>`;
   $$('#arch-controls button').forEach((el,i)=>el.setAttribute('aria-pressed',String(i===state.stage)));
   $('#graph-free').setAttribute('aria-pressed',String(state.free));
   $('#graph-route').textContent=state.follow?(state.route==='agnostic'?t('通用工作流','Type-agnostic workflow'):t('类型定制工作流','Type-tailored workflow')):t('TP · 类型定制工作流','TP · Type-tailored workflow');
@@ -178,6 +181,22 @@ function syncDemoLinks(){
   const url=new URL('demo/',location.href);url.searchParams.set('lang',state.lang);url.searchParams.set('theme',state.theme);
   $$('[data-demo-link]').forEach(link=>{link.href=url.href;});
 }
+function syncDemoLauncher(){
+  const launcher=$('#demo-launcher'),collapsed=launcher.classList.contains('is-collapsed');
+  $('#demo-launcher-toggle').setAttribute('aria-expanded',String(!collapsed));
+  $('#demo-launcher-toggle').setAttribute('aria-label',collapsed?t('展开 Demo 说明','Expand demo description'):t('收起 Demo 说明','Collapse demo description'));
+  $('#demo-launcher-description').hidden=collapsed;
+  $('#demo-launcher-link-label').textContent=collapsed?t('试用 Demo','Try demo'):t('打开工作台','Open workspace');
+  $('.demo-launcher-toggle-icon').textContent=collapsed?'+':'−';
+}
+function setDemoLauncherCollapsed(collapsed){
+  $('#demo-launcher').classList.toggle('is-collapsed',collapsed);$('#demo-launcher').dataset.collapsed=String(collapsed);
+  syncDemoLauncher();
+}
+const demoLauncherMedia=matchMedia('(max-width:760px)');
+setDemoLauncherCollapsed(demoLauncherMedia.matches);
+demoLauncherMedia.addEventListener('change',event=>setDemoLauncherCollapsed(event.matches));
+$('#demo-launcher-toggle').addEventListener('click',()=>setDemoLauncherCollapsed(!$('#demo-launcher').classList.contains('is-collapsed')));
 let demoChannel;
 function connectDemoChannel(){
   if(isStaticDeployment){$('#follow-run').hidden=true;return;}
@@ -198,8 +217,8 @@ function connectDemoChannel(){
   });
 }
 connectDemoChannel();
-window.addEventListener('pagehide',()=>{demoChannel?.close();demoChannel=null;});
-window.addEventListener('pageshow',event=>{if(event.persisted)connectDemoChannel();});
+window.addEventListener('pagehide',()=>{demoChannel?.close();demoChannel=null;clearReplayTimer();clearStudyTimer();});
+window.addEventListener('pageshow',event=>{if(event.persisted){connectDemoChannel();syncReplayPlayback();syncStudyPlayback();}});
 $('#follow-run').addEventListener('click',()=>{
   if(isStaticDeployment)return;
   pageScrollIntentUntil=0;
@@ -231,7 +250,7 @@ function renderReplay() {
   $('#replay-stage-title').textContent = replaySteps[state.replay][state.lang === 'zh' ? 0 : 1];
   $('#replay-prev').disabled = state.replay === 0; $('#replay-next').disabled = state.replay === 5;
   let html = '';
-  if (state.replay === 0) html = `<div class="case-grid"><div><p class="case-eyebrow">THE QUERY / TP1</p><h3 class="case-title">${t('满足客户需求，<br>最小化运输成本。','Meet every demand.<br>Minimize shipping cost.')}</h3><p class="case-description">${esc(local(caseData.query))}</p><div class="case-stats"><div><b>18</b><small>${t('配送中心','distribution centers')}</small></div><div><b>18</b><small>${t('客户群体','customer groups')}</small></div><div><b>3</b><small>${t('数据文件','data files')}</small></div></div></div>${fileCards()}</div>`;
+  if (state.replay === 0) html = `<div class="case-grid"><div><p class="case-eyebrow">${t('问题描述','THE QUERY')}</p><h3 class="case-title">${t('满足客户需求，<br>最小化运输成本。','Meet every demand.<br>Minimize shipping cost.')}</h3><p class="case-description">${esc(local(caseData.query))}</p><div class="case-stats"><div><b>18</b><small>${t('配送中心','distribution centers')}</small></div><div><b>18</b><small>${t('客户群体','customer groups')}</small></div><div><b>3</b><small>${t('数据文件','data files')}</small></div></div></div>${fileCards()}</div>`;
   if (state.replay === 1) html = `<div class="case-grid"><div><p class="case-eyebrow">RECOGNIZING THE STRUCTURE</p><h3 class="case-title">${t('问题分类：运输问题。','Classification: transportation problem.')}</h3><p class="case-description">${t('分类结果为 TP（运输问题）：配送中心受供应能力限制，客户有需求下界，每条运输线路有单位成本。','The task is classified as TP, a transportation problem: distribution centers have supply limits, customers have minimum demand, and each route has a unit cost.')}</p><p class="case-mechanism">${t('框架中，TP 分类用于选择运输问题的建模工作流。','Within the framework, the TP classification selects the transportation modeling workflow.')}</p></div><div class="classification-graphic"><span class="class-result">TP<small>TRANSPORTATION PROBLEM</small></span><div class="class-types">${['NRM','RA','TP','FLP','AP','Mixture','Others'].map(v=>`<span${v==='TP'?' class="selected"':''}>${v}</span>`).join('')}</div></div></div>`;
   if (state.replay === 2) html = `<div class="case-grid"><div><p class="case-eyebrow">DATA TABLES</p><h3 class="case-title">${t('数据：需求、容量与成本。','Data: demand, capacity, and cost.')}</h3><p class="case-description">${esc(local(caseData.csvObservation))}</p><div class="case-stats"><div><b>18 × 18</b><small>${t('运输成本矩阵','shipping cost matrix')}</small></div><div><b>54</b><small>${t('源表数据行','source table rows')}</small></div></div></div><div><div class="data-toolbar"><span class="case-eyebrow">SOURCE TABLES</span><select id="case-data-select" class="data-select" aria-label="${t('选择数据表','Choose a data table')}"><option value="demand">customer_demand.csv</option><option value="supply">supply_capacity.csv</option><option value="costs">transportation_costs.csv</option></select></div><div id="case-table"></div></div></div>`;
   if (state.replay === 3) html = `<div class="case-grid"><div><p class="case-eyebrow">THE MATHEMATICAL FORMULATION</p><h3 class="case-title">${t('变量、目标与约束。','Variables, objective, and constraints.')}</h3><p class="case-description">${esc(local(caseData.model.variables))}</p><ul class="constraint-list">${caseData.model.constraints.map(v=>`<li>${esc(local(v))}</li>`).join('')}</ul></div><div class="math-block"><div class="math-line">min ∑<sub>i,j</sub> c<sub>ij</sub> x<sub>ij</sub></div><div class="math-constraint">∑<sub>i</sub> x<sub>ij</sub> ≥ d<sub>j</sub> &nbsp; ∀j<br>∑<sub>j</sub> x<sub>ij</sub> ≤ s<sub>i</sub> &nbsp; ∀i<br>x<sub>ij</sub> ≥ 0 &nbsp; ∀i,j</div><p class="math-label">${t('c：单位运输成本　d：客户需求<br>s：配送中心供应能力','c: unit shipping cost · d: customer demand<br>s: distribution-center capacity')}</p></div></div>`;
@@ -241,9 +260,9 @@ function renderReplay() {
     html = `<div><div class="code-toolbar"><span>PYTHON / GUROBI · ${t('生成程序','GENERATED PROGRAM')}</span><a class="text-link" href="data/transport-code.py" download>${t('下载完整代码 ↓','Download full code ↓')}</a></div><pre class="code-block"><code>${highlightPython(snippet)}</code></pre><p class="case-mechanism">${t('运行程序时，将 transport 数据目录放在脚本同级目录。','Place the transport data directory beside the script to run the program.')}</p></div>`;
   }
   if (state.replay === 5) html = `<div class="case-grid"><div><p class="case-eyebrow">THE RECORDED SOLUTION</p><h3 class="case-title">${t('最优方案：<br>28 条运输流。','Optimal plan:<br>28 active shipping routes.')}</h3><p class="solution-label">${t('最优目标值 / TOTAL TRANSPORT COST','OPTIMAL OBJECTIVE / TOTAL TRANSPORT COST')}</p><p class="solution-value">${number(caseData.objective,4)}</p><p class="case-description">${t('参考目标值','Reference objective')}: ${number(caseData.reference_objective,4)}</p><div class="solution-checks"><span>${t('全部客户需求得到满足','Every customer demand is satisfied')}</span><span>${t('全部配送中心容量约束得到满足','All distribution-center capacities are respected')}</span><span>${t('最优目标值与参考值匹配','Optimal objective matches the reference')}</span></div><a class="text-link" href="data/case.json" download style="display:inline-block;margin-top:20px">${t('下载案例数据 ↓','Download the case data ↓')}</a></div><div>${transportSVG()}<p class="flow-note" id="flow-inspector" role="status">${t('线宽表示运量；选择连线查看数值','Line width encodes shipment volume; select a link for values')}</p></div></div>`;
-  panel.innerHTML = html;
+  panel.innerHTML = `<div class="case-step-enter">${html}</div>`;
   if (state.replay === 2) {$('#case-data-select').value = state.dataTable; renderCaseTable();}
-  syncPlayButton();
+  syncPlayButton();syncReplayPlayback();
 }
 function highlightPython(code) {
   return code.split('\n').map((line,i) => {
@@ -275,26 +294,39 @@ function transportSVG() {
 }
 function selectReplay(index, manual = true) {
   if (manual) stopReplay();
-  state.replay=clamp(index,0,5);renderReplay();
+  state.replay=clamp(index,0,replaySteps.length-1);if(state.replay===replaySteps.length-1)stopReplay();renderReplay();
 }
-function stopReplay() {clearInterval(replayTimer);state.playing=false;syncPlayButton();}
+function clearReplayTimer(){if(replayTimer!==null){clearTimeout(replayTimer);replayTimer=null;}}
+function stopReplay() {clearReplayTimer();state.playing=false;syncPlayButton();}
+function syncReplayPlayback(){
+  if(!caseData||!state.playing||state.reduced||document.hidden||!replayVisible){clearReplayTimer();return;}
+  if(state.replay>=replaySteps.length-1){stopReplay();return;}
+  if(replayTimer!==null)return;
+  replayTimer=setTimeout(()=>{replayTimer=null;if(!state.playing||state.reduced||document.hidden||!replayVisible){syncReplayPlayback();return;}selectReplay(state.replay+1,false);},AUTOPLAY_DELAY);
+}
+function startReplay(){
+  if(state.reduced||!caseData)return;
+  if(state.replay===replaySteps.length-1)state.replay=0;
+  state.playing=true;renderReplay();
+}
 function syncPlayButton() {
-  $('#replay-play').innerHTML = `<span>${state.playing ? 'Ⅱ' : '▶'}</span><span>${state.playing ? t('暂停','Pause') : t('自动播放','Play replay')}</span>`;
-  $('#replay-play').setAttribute('aria-label',state.playing ? t('暂停回放','Pause replay') : t('播放案例回放','Play case replay'));
+  const label=state.reduced?t('手动浏览','Manual view'):state.playing?t('暂停','Pause'):state.replay===replaySteps.length-1?t('重新播放','Replay'):t('播放','Play');
+  $('#replay-play').innerHTML = `<span>${state.playing&&!state.reduced ? 'Ⅱ' : '▶'}</span><span>${label}</span>`;
+  $('#replay-play').setAttribute('aria-label',state.playing?t('暂停案例播放','Pause case playback'):t('播放案例','Play case'));
+  $('#replay-play').setAttribute('aria-pressed',String(state.playing&&!state.reduced));$('#replay-play').disabled=state.reduced||!caseData;
 }
 $('#replay-prev').addEventListener('click',()=>selectReplay(state.replay-1));
 $('#replay-next').addEventListener('click',()=>selectReplay(state.replay+1));
 $('#replay-tabs').addEventListener('click',event=>{const button=event.target.closest('[data-replay]');if(button)selectReplay(Number(button.dataset.replay));});
-$('#replay-content').addEventListener('change',event=>{if(event.target.id==='case-data-select'){state.dataTable=event.target.value;renderCaseTable();}});
+$('#replay-content').addEventListener('change',event=>{if(event.target.id==='case-data-select'){stopReplay();state.dataTable=event.target.value;renderCaseTable();}});
+$('#replay-content').addEventListener('focusin',stopReplay);
 for (const type of ['pointerover','focusin','click']) $('#replay-content').addEventListener(type,event=>{
   const edge=event.target.closest('.transport-network .edge');
   if(edge) $('#flow-inspector').textContent=edge.getAttribute('aria-label');
 });
 $('#replay-play').addEventListener('click',()=>{
   if (state.playing) return stopReplay();
-  if(state.replay===5) selectReplay(0);
-  state.playing=true;syncPlayButton();
-  replayTimer=setInterval(()=>{if(state.replay<5)selectReplay(state.replay+1,false);else stopReplay();},6500);
+  startReplay();
 });
 
 function groupLabel(group) {
@@ -310,11 +342,38 @@ function renderStudyPanel() {
   const rows=state.study==='perturbation'?study.views[state.view]:study.rows;
   const panel=$('#experiment-panel');panel.setAttribute('aria-labelledby',`study-tab-${state.study}`);
   const big=(state.study==='large'||(state.study==='perturbation'&&state.view==='overall'));
-  panel.innerHTML=`<div class="experiment-header"><div><h3>${esc(local(study.title))}</h3><p>${esc(local(study.description))}</p></div><div class="legend"><span>GPT-4.1</span><span>gpt-oss-20B</span></div></div><div class="chart-toolbar"><span class="metric-label">${esc(local(study.metric))} / %</span>${state.study==='perturbation'?`<div class="view-switch" role="group" aria-label="${t('扰动结果分组','Group perturbation results')}">${[['overall',t('总体','Overall')],['seed',t('按种子','By seed')],['type',t('按类型','By type')]].map(([key,label])=>`<button type="button" data-view="${key}" aria-pressed="${state.view===key}">${label}</button>`).join('')}</div>`:''}</div><div class="chart-area">${state.study==='repair'?repairChart(rows):big?largeChart(rows):barChart(rows)}</div><div class="study-footer"><p class="study-note">${esc(studyNote(state.study, study))}</p><div class="study-sources">${study.sources.map((v,i)=>`<a href="${esc(v.url)}" target="_blank" rel="noopener">${t('来源','SOURCE')} ${String(i+1).padStart(2,'0')} ↗</a>`).join('')}<a href="data/research.json" download>${t('下载汇总数据','Download data')} ↓</a></div><details class="results-table-details"><summary>${t('查看数值表与来源说明','View values and source details')}</summary>${tableHTML([t('分组','Group'),t('模型','Model'),t('正确 / 总数','Matched / total'),t('率值','Rate')],rows.map(v=>[groupLabel(v.group),modelName(v.model),v.total?`${v.correct} / ${v.total}`:t('报告值','Reported'),`${pct(v.rate)}%`]))}<div class="study-sources">${study.sources.map(v=>`<a href="${esc(v.url)}" target="_blank" rel="noopener">${esc(v.label)} ↗</a>`).join('')}<a href="data/SOURCES.md" target="_blank">${t('完整来源说明','Source notes')} ↗</a></div></details></div>`;
+  const html=`<div class="experiment-header"><div><h3>${esc(local(study.title))}</h3><p>${esc(local(study.description))}</p></div><div class="legend"><span>GPT-4.1</span><span>gpt-oss-20B</span></div></div><div class="chart-toolbar"><span class="metric-label">${esc(local(study.metric))} / %</span>${state.study==='perturbation'?`<div class="view-switch" role="group" aria-label="${t('扰动结果分组','Group perturbation results')}">${[['overall',t('总体','Overall')],['seed',t('按种子','By seed')],['type',t('按类型','By type')]].map(([key,label])=>`<button type="button" data-view="${key}" aria-pressed="${state.view===key}">${label}</button>`).join('')}</div>`:''}</div><div class="chart-area">${state.study==='repair'?repairChart(rows):big?largeChart(rows):barChart(rows)}</div><div class="study-footer"><p class="study-note">${esc(studyNote(state.study, study))}</p><div class="study-sources">${study.sources.map((v,i)=>`<a href="${esc(v.url)}" target="_blank" rel="noopener">${t('来源','SOURCE')} ${String(i+1).padStart(2,'0')} ↗</a>`).join('')}<a href="data/research.json" download>${t('下载汇总数据','Download data')} ↓</a></div><details class="results-table-details"><summary>${t('查看数值表与来源说明','View values and source details')}</summary>${tableHTML([t('分组','Group'),t('模型','Model'),t('正确 / 总数','Matched / total'),t('匹配率','Match rate')],rows.map(v=>[groupLabel(v.group),modelName(v.model),v.total?`${v.correct} / ${v.total}`:t('报告值','Reported'),`${pct(v.rate)}%`]))}<div class="study-sources">${study.sources.map(v=>`<a href="${esc(v.url)}" target="_blank" rel="noopener">${esc(v.label)} ↗</a>`).join('')}<a href="data/SOURCES.md" target="_blank">${t('完整来源说明','Source notes')} ↗</a></div></details></div>`;
+  panel.innerHTML=`<div class="study-step-enter">${html}</div>`;
   $$('#experiment-tabs button').forEach(el=>{const selected=el.dataset.study===state.study;el.setAttribute('aria-selected',String(selected));el.tabIndex=selected?0:-1;});
+  syncStudyPlayButton();syncStudyPlayback();
 }
 function studyNote(key,study) {
   return local(study.note);
+}
+function clearStudyTimer(){if(studyTimer!==null){clearTimeout(studyTimer);studyTimer=null;}}
+function stopStudy(){clearStudyTimer();state.studyPlaying=false;syncStudyPlayButton();}
+function selectStudy(key,manual=true){
+  if(!Object.hasOwn(studyLabels,key))return;
+  if(manual)stopStudy();state.study=key;
+  if(key===Object.keys(studyLabels).at(-1))stopStudy();renderStudyPanel();
+}
+function syncStudyPlayback(){
+  if(!research||!state.studyPlaying||state.reduced||document.hidden||!studyVisible){clearStudyTimer();return;}
+  const keys=Object.keys(studyLabels),index=keys.indexOf(state.study);
+  if(index>=keys.length-1){stopStudy();return;}
+  if(studyTimer!==null)return;
+  studyTimer=setTimeout(()=>{studyTimer=null;if(!state.studyPlaying||state.reduced||document.hidden||!studyVisible){syncStudyPlayback();return;}selectStudy(keys[index+1],false);},AUTOPLAY_DELAY);
+}
+function startStudy(){
+  if(state.reduced||!research)return;
+  if(state.study===Object.keys(studyLabels).at(-1))state.study=Object.keys(studyLabels)[0];
+  state.studyPlaying=true;renderStudyPanel();
+}
+function syncStudyPlayButton(){
+  const last=state.study===Object.keys(studyLabels).at(-1),label=state.reduced?t('手动浏览','Manual view'):state.studyPlaying?t('暂停切换','Pause rotation'):last?t('重新播放','Replay'):t('继续切换','Resume rotation');
+  $('#study-play').textContent=label;$('#study-play').disabled=state.reduced||!research;
+  $('#study-play').setAttribute('aria-label',state.studyPlaying?t('暂停实验切换','Pause study rotation'):t('播放实验结果','Play study results'));
+  $('#study-play').setAttribute('aria-pressed',String(state.studyPlaying&&!state.reduced));
 }
 function largeChart(rows) {
   return `<div class="large-chart">${rows.map(v=>`<div class="${v.model}"><p class="model-name">LEAN-LLM-OPT / ${modelName(v.model)}</p><div class="large-score"><strong>${pct(v.rate)}<small>%</small></strong><span>${v.correct} / ${v.total}</span></div><div class="unit-grid" aria-hidden="true">${Array.from({length:v.total},(_,i)=>`<i style="--i:${i}"${i>=v.correct?' class="missed"':''}></i>`).join('')}</div><p class="unit-key">${t('每个方格代表 1 个测试问题','Each tile represents one evaluated instance')}</p></div>`).join('')}</div>`;
@@ -326,8 +385,10 @@ function barChart(rows) {
 function repairChart(rows) {
   return `<div class="large-chart">${rows.map(v=>`<div class="repair-model ${v.model}"><p class="model-name">${modelName(v.model)}</p><div class="repair-score"><span class="before">${v.before}</span><span class="arrow">→</span><span>${v.after}<small> / ${v.total}</small></span></div><div class="repair-track" aria-hidden="true"><i class="bar-fill" style="--value:${v.rate}%"></i><i class="repair-gain" style="--start:${v.before/v.total*100}%;--gain:${(v.after-v.before)/v.total*100}%"></i></div><p class="repair-summary">${t('目标值匹配率','Objective match rate')}: ${pct(v.before/v.total*100)}% → ${pct(v.rate)}%</p><div class="solution-checks"><span>${t('修复成功','Corrected')}: ${v.rescued}</span><span>${t('新增错误','New errors')}: ${v.harmed}</span></div></div>`).join('')}</div>`;
 }
-$('#experiment-tabs').addEventListener('click',event=>{const button=event.target.closest('[data-study]');if(button){state.study=button.dataset.study;renderStudyPanel();}});
-$('#experiment-panel').addEventListener('click',event=>{const button=event.target.closest('[data-view]');if(button){state.view=button.dataset.view;renderStudyPanel();$(`[data-view="${state.view}"]`)?.focus({preventScroll:true});}});
+$('#experiment-tabs').addEventListener('click',event=>{const button=event.target.closest('[data-study]');if(button)selectStudy(button.dataset.study);});
+$('#experiment-panel').addEventListener('click',event=>{const button=event.target.closest('[data-view]');if(button){stopStudy();state.view=button.dataset.view;renderStudyPanel();$(`[data-view="${state.view}"]`)?.focus({preventScroll:true});}});
+$('#study-play').addEventListener('click',()=>{if(state.studyPlaying)stopStudy();else startStudy();});
+$('#experiment-panel').addEventListener('focusin',stopStudy);
 function renderAirline() {
   const study=research.studies.air;
   const groups=[...new Set(study.rows.map(v=>v.group))];
@@ -345,7 +406,7 @@ function installTabKeyboard(container, selector, callback) {
   });
 }
 installTabKeyboard($('#replay-tabs'),'[role="tab"]',button=>selectReplay(Number(button.dataset.replay)));
-installTabKeyboard($('#experiment-tabs'),'[role="tab"]',button=>{state.study=button.dataset.study;renderStudyPanel();});
+installTabKeyboard($('#experiment-tabs'),'[role="tab"]',button=>selectStudy(button.dataset.study));
 
 $('#lang-toggle').addEventListener('click',()=>{
   const position=anchorSnapshot();state.lang=state.lang==='zh'?'en':'zh';storage('lang',state.lang);
@@ -360,7 +421,7 @@ $('#motion-toggle').addEventListener('click',()=>{
   if(matchMedia('(prefers-reduced-motion: reduce)').matches && state.reduced){notify(t('已遵循系统的减少动态效果设置','Following your system’s reduced-motion setting'));return;}
   const position=anchorSnapshot(),inArchitecture=position.element.id==='architecture',stage=state.stage;
   state.reduced=!state.reduced;root.dataset.motion=state.reduced?'reduced':'full';storage('motion',state.reduced?'reduced':'full');
-  if(state.reduced)stopReplay();translateStatic();renderArchitecture();modelView?.setReduced(state.reduced);
+  if(state.reduced){stopReplay();stopStudy();}translateStatic();renderArchitecture();modelView?.setReduced(state.reduced);
   if(inArchitecture){
     const track=$('#arch-track'),top=track.getBoundingClientRect().top+scrollY;
     if(canPin())window.scrollTo({top:top+(track.offsetHeight-innerHeight)*stage/6,behavior:'instant'});
@@ -401,6 +462,9 @@ function frame(){
   frameId=0;const max=document.documentElement.scrollHeight-innerHeight;
   $('#reading-progress').style.transform=`scaleX(${max>0?clamp(scrollY/max):0})`;
   const track=$('#arch-track'),box=track.getBoundingClientRect();
+  const launcher=$('#demo-launcher'),overArchitecture=box.top<innerHeight&&box.bottom>0;
+  if(launcher?.classList&&overArchitecture&&!launcher.classList.contains('over-architecture'))setDemoLauncherCollapsed(true);
+  launcher?.classList?.toggle('over-architecture',overArchitecture);
   const pageMoved=architectureScrollY===null||architectureScrollY!==scrollY;architectureScrollY=scrollY;
   resumeScrollGuide(pageMoved);
   if(canGuideScroll()&&!state.free&&!state.follow&&!state.node&&!state.manualStage&&(canPin()||pageMoved)){
@@ -418,8 +482,10 @@ window.addEventListener('scroll',requestFrame,{passive:true});window.addEventLis
 window.addEventListener('wheel',notePageScrollIntent,{passive:true});window.addEventListener('touchmove',notePageScrollIntent,{passive:true});
 window.addEventListener('keydown',notePageScrollKey);
 window.addEventListener('pointerdown',noteScrollbarIntent,{passive:true});
- document.addEventListener('visibilitychange',()=>{root.dataset.inactive=String(document.hidden);if(document.hidden){cancelAnimationFrame(frameId);frameId=0;stopReplay();}else requestFrame();});
-matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change',event=>{if(event.matches){state.reduced=true;root.dataset.motion='reduced';stopReplay();translateStatic();renderArchitecture();modelView?.setReduced(true);requestFrame();}});
+ document.addEventListener('visibilitychange',()=>{root.dataset.inactive=String(document.hidden);if(document.hidden){cancelAnimationFrame(frameId);frameId=0;}else requestFrame();syncReplayPlayback();syncStudyPlayback();});
+matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change',event=>{if(event.matches){state.reduced=true;root.dataset.motion='reduced';stopReplay();stopStudy();translateStatic();renderArchitecture();modelView?.setReduced(true);requestFrame();}});
+const autoplayVisibilityObserver=new IntersectionObserver(entries=>{for(const entry of entries){if(entry.target.id==='replay')replayVisible=entry.isIntersecting;if(entry.target.id==='experiments')studyVisible=entry.isIntersecting;}syncReplayPlayback();syncStudyPlayback();},{threshold:0});
+autoplayVisibilityObserver.observe($('#replay'));autoplayVisibilityObserver.observe($('#experiments'));
 const revealObserver=new IntersectionObserver(entries=>entries.forEach(entry=>{if(entry.isIntersecting){entry.target.classList.remove('waiting');revealObserver.unobserve(entry.target);}}),{threshold:.08});
 $$('.reveal').forEach(el=>{if(el.getBoundingClientRect().top>innerHeight&&!state.reduced)el.classList.add('waiting');revealObserver.observe(el);});
 translateStatic();renderArchitecture();
@@ -430,6 +496,7 @@ try {
   renderReplay();renderExperiments();renderAirline();$('#citation').textContent=research.paper.citation;
   document.body.dataset.ready='true';requestFrame();
 } catch(error) {
+  stopReplay();stopStudy();
   console.error('Research data could not be loaded.',error);
   const message=`<p class="error-state">${t('研究数据暂时无法加载，请刷新页面或访问官方仓库。','Research data could not be loaded. Refresh the page or visit the repository.')} <a href="https://github.com/CoraLiang01/lean-llm-opt">${t('查看官方资料 ↗','View the official resources ↗')}</a></p>`;
   $('#replay-content').innerHTML=message;$('#experiment-panel').innerHTML=message;

@@ -8,14 +8,15 @@
   <script>{const p=new URLSearchParams(location.search);const read=k=>{try{return localStorage.getItem(k)}catch{return null}};document.documentElement.dataset.theme=(p.get('theme')||read('lean-theme'))==='light'?'light':'dark';document.documentElement.dataset.lang=(p.get('lang')||read('lean-lang'))==='en'?'en':'zh';document.documentElement.lang=document.documentElement.dataset.lang==='en'?'en':'zh-CN'}</script>
   <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="../assets/vendor/katex/katex.min.css">
-  <link rel="stylesheet" href="demo.css?v=classic-demo-20261104-1">
+  <link rel="stylesheet" href="demo.css?v=polished-demo-20261104-1">
   <script defer src="../assets/vendor/katex/katex.min.js"></script>
   <script defer src="../assets/vendor/katex/auto-render.min.js"></script>
-  <script type="module" src="demo.js?v=classic-demo-20261104-1"></script>
+  <script type="module" src="demo.js?v=polished-demo-20261104-1"></script>
 </head>
 <body>
   <a href="#composer" class="skip-link" data-zh="跳到问题输入" data-en="Skip to question">跳到问题输入</a>
   <header class="studio-header">
+    <button class="icon-button" id="history-open" type="button" aria-label="对话记录 / Conversations" aria-controls="conversation-history" aria-haspopup="dialog" aria-expanded="false">☰</button>
     <button class="icon-button mobile-only" id="settings-open" type="button" aria-label="设置 / Settings" aria-controls="settings-panel" aria-expanded="false">☷</button>
     <a class="studio-brand" href="../"><svg viewBox="0 0 30 30" aria-hidden="true"><path d="m15 2 13 7.5v15L15 17 2 24.5v-15ZM2 9.5l13 7.5 13-7.5M15 2v15"/></svg><span>LEAN-LLM-OPT</span></a>
     <span class="studio-tag" data-zh="交互建模工作台" data-en="INTERACTIVE MODELING">交互建模工作台</span>
@@ -25,7 +26,6 @@
   <div class="workspace">
     <aside class="settings-panel" id="settings-panel" aria-label="模型与文件 / Models and files">
       <div class="panel-heading"><span class="eyebrow" data-zh="运行设置" data-en="RUN SETTINGS">运行设置</span><button class="icon-button mobile-only" id="settings-close" type="button" aria-label="关闭设置 / Close settings">×</button></div>
-      <button id="new-session" class="new-session" type="button"><span>＋</span><span data-zh="新建对话" data-en="New conversation">新建对话</span><small>↗</small></button>
       <div class="setting-field"><label for="provider" data-zh="模型服务" data-en="Model service">模型服务</label><select id="provider"><option value="" disabled data-zh="选择模型服务" data-en="Choose a model service">选择模型服务</option><option value="ollama">Ollama · gpt-oss:20b</option><option value="openai">OpenAI · GPT-4.1</option></select></div>
       <div class="setting-field"><label for="model" data-zh="模型" data-en="Model">模型</label><input id="model" value="gpt-oss:20b" readonly autocomplete="off" spellcheck="false"></div>
       <div class="setting-field key-field" id="key-field" hidden><label for="api-key">OpenAI API key</label><input id="api-key" type="password" placeholder="sk-…" autocomplete="off" spellcheck="false"><p class="field-hint" data-zh="工作台不持久保存 Key；刷新后需重新输入。" data-en="The workspace does not save your key. Re-enter it after a refresh.">工作台不持久保存 Key；刷新后需重新输入。</p></div>
@@ -52,6 +52,13 @@
   </div>
   <button id="artifact-backdrop" class="artifact-backdrop" type="button" tabindex="-1" aria-label="关闭结果 / Close results" hidden></button>
   <button id="drawer-backdrop" class="drawer-backdrop" aria-label="关闭设置 / Close settings" hidden></button>
+  <dialog id="conversation-history" class="history-drawer" aria-labelledby="history-title">
+    <div class="preview-heading"><div><p class="eyebrow" data-zh="建模工作台" data-en="MODELING WORKSPACE">建模工作台</p><h2 id="history-title" data-zh="对话" data-en="Conversations">对话</h2></div><button id="history-close" class="icon-button" type="button" aria-label="关闭对话记录 / Close conversations">×</button></div>
+    <button id="new-session" class="new-session" type="button"><span>＋</span><span data-zh="新建对话" data-en="New conversation">新建对话</span><small>↗</small></button>
+    <p id="history-status" class="history-meta" role="status"></p>
+    <div id="history-list" class="history-list" aria-label="历史对话 / Conversation history"></div>
+    <p class="history-meta history-footer" data-zh="对话保存在本机工作台，服务重启后开启新的记录。" data-en="Conversations are kept by the local workspace until the service restarts.">对话保存在本机工作台，服务重启后开启新的记录。</p>
+  </dialog>
   <dialog id="file-preview" aria-labelledby="preview-title" aria-describedby="preview-meta"><div class="preview-heading"><div><p class="eyebrow" data-zh="源文件预览" data-en="SOURCE PREVIEW">源文件预览</p><h2 id="preview-title"></h2><p id="preview-meta"></p></div><button id="preview-close" class="icon-button" type="button" aria-label="关闭预览 / Close preview">×</button></div><div id="preview-table" class="preview-table" tabindex="0" role="region" aria-label="CSV 预览表 / CSV preview table"></div><p class="field-hint" data-zh="预览前 20 行，求解使用完整数据。" data-en="First 20 rows shown; solves use the complete files.">预览前 20 行，求解使用完整数据。</p></dialog>
 
   <dialog id="local-setup" class="local-setup" aria-labelledby="setup-title" aria-describedby="setup-summary">

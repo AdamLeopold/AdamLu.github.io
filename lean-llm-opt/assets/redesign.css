@@ -55,7 +55,7 @@
 @media(min-width:1001px) and (min-height:680px){
   :root:not([data-motion="reduced"]) .architecture-graph .arch-track{height:390svh!important}
   :root:not([data-motion="reduced"]) .architecture-graph .arch-pin{position:sticky;top:0;display:block;height:100svh;min-height:0;overflow:hidden;padding:0}
-  :root:not([data-motion="reduced"]) .architecture-graph .arch-pin>.wrap{display:grid;grid-template-rows:auto minmax(0,1fr) auto;align-content:stretch;gap:12px;height:100%;min-height:0;padding-top:76px;padding-bottom:14px}
+  :root:not([data-motion="reduced"]) .architecture-graph .arch-pin>.wrap{display:grid;grid-template-rows:auto minmax(0,1fr) auto;align-content:stretch;gap:12px;height:100%;min-height:0;padding-top:94px;padding-bottom:14px}
   :root:not([data-motion="reduced"]) .architecture-graph .arch-heading{display:flex;align-items:center;gap:16px;min-height:0}
   :root:not([data-motion="reduced"]) .architecture-graph .arch-heading h2{font-size:clamp(24px,2.3vw,34px);line-height:1.25}
   :root:not([data-motion="reduced"]) .architecture-graph .arch-heading .section-index{margin-bottom:7px}
@@ -82,3 +82,168 @@
   :root:not([data-motion="reduced"]) .architecture-graph .arch-detail{max-height:600px;overflow-y:auto;overscroll-behavior:auto}
 }
 :root[data-motion="reduced"] .architecture-graph .arch-detail{height:auto;max-height:none;overflow:visible}
+
+/* A small persistent demo entrance; architecture controls stay unobstructed. */
+.demo-launcher {
+  position: fixed;
+  right: 22px;
+  bottom: 22px;
+  z-index: 50;
+  width: 264px;
+  max-width: calc(100vw - 32px);
+  padding: 16px;
+  border: 1px solid var(--line-strong);
+  border-radius: 16px;
+  color: var(--fg);
+  background: var(--glass);
+  box-shadow: 0 10px 35px rgba(0, 0, 0, .12);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+.demo-launcher-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+.demo-launcher-heading {
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+.demo-launcher-toggle {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  min-width: 29px;
+  min-height: 29px;
+  padding: 4px 7px;
+  border: 1px solid var(--line);
+  border-radius: 9px;
+  color: var(--accent);
+  background: var(--surface-soft);
+  font-size: 12px;
+}
+.demo-launcher-toggle-label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.demo-launcher-toggle svg {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: transform .16s ease;
+}
+.demo-launcher-toggle[aria-expanded="false"] svg {
+  transform: rotate(180deg);
+}
+.demo-launcher-body {
+  margin-top: 11px;
+}
+.demo-launcher-body[hidden] {
+  display: none !important;
+}
+.demo-launcher-body > p {
+  margin: 0 0 13px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.75;
+}
+.demo-launcher-link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 10px 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: 10px;
+  color: var(--accent);
+  background: var(--glow);
+  font-size: 12px;
+  line-height: 1.5;
+}
+.demo-launcher-link:hover, .demo-launcher-toggle:hover {
+  border-color: var(--accent);
+}
+.demo-launcher.is-collapsed {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: auto;
+  padding: 6px;
+  border-radius: 14px;
+}
+.demo-launcher.is-collapsed .demo-launcher-heading {
+  display: none;
+}
+.demo-launcher.is-collapsed .demo-launcher-toggle {
+  min-width: 29px;
+  min-height: 30px;
+  padding: 4px 6px;
+  border-color: var(--line);
+}
+.demo-launcher.is-collapsed .demo-launcher-header {
+  order: 2;
+}
+.demo-launcher.is-collapsed .demo-launcher-body {
+  order: 1;
+  margin-top: 0;
+}
+.demo-launcher.is-collapsed .demo-launcher-body > p {
+  display: none;
+}
+.demo-launcher.is-collapsed .demo-launcher-link {
+  padding: 7px 10px;
+  border-color: transparent;
+  background: transparent;
+  font-size: 12px;
+}
+.demo-launcher-toggle-icon {
+  display: grid;
+  width: 14px;
+  place-items: center;
+  font-size: 18px;
+  line-height: 1;
+}
+.demo-launcher.over-architecture {
+  bottom: 78px;
+}
+.footer {
+  padding-bottom: 185px;
+}
+@media (min-width: 1001px) and (max-height: 820px) {
+  :root:not([data-motion="reduced"]) .architecture-graph .flow-live-status {
+    height: 100px;
+    min-height: 100px;
+    max-height: 100px;
+  }
+  :root:not([data-motion="reduced"]) .architecture-graph #flow-live-description {
+    height: 16px;
+    min-height: 16px;
+    -webkit-line-clamp: 1;
+  }
+}
+@media (max-width: 760px) {
+  .demo-launcher {
+    right: 14px;
+    bottom: calc(14px + env(safe-area-inset-bottom, 0px));
+    width: min(264px, calc(100vw - 28px));
+    padding: 13px;
+  }
+  .demo-launcher.is-collapsed { width: auto; padding: 5px; }
+  .demo-launcher.over-architecture {
+    bottom: calc(76px + env(safe-area-inset-bottom, 0px));
+  }
+  .footer { padding-bottom: calc(102px + env(safe-area-inset-bottom, 0px)); }
+}
