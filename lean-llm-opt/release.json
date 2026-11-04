@@ -2,11 +2,11 @@
   "format": "lean-llm-opt-static-v1",
   "deployment": "static",
   "demo": "visitor-local-handoff",
-  "builtAt": "2026-11-03T17:56:25.978Z",
+  "builtAt": "2026-11-04T06:44:42.074Z",
   "runtimeFileCount": 96,
   "fileCount": 98,
-  "payloadBytes": 4637553,
-  "totalBytes": 4653620,
+  "payloadBytes": 4644140,
+  "totalBytes": 4660207,
   "hashAlgorithm": "sha256",
   "files": {
     ".nojekyll": {
@@ -14,36 +14,36 @@
       "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     },
     "assets/app.js": {
-      "bytes": 59165,
-      "sha256": "8b9bea21bbd6b5060a03637d59c084e36211969e5336eacb86579a0acf2b0968"
+      "bytes": 59314,
+      "sha256": "7f2c2d14a47c334e58f4f42d9af135f7b0c3cf98410200d4f2c1942e3edd61d7"
     },
     "assets/favicon.svg": {
       "bytes": 250,
       "sha256": "14c83a5ebc0d55dfcac765b16dd621cef32fbf51ae5260e5362d6706ca44889e"
     },
     "assets/framework-3d.css": {
-      "bytes": 11960,
-      "sha256": "9c95a788d1a9d08443134b8cb581311dd7dff813bf96bf344f416c04717d2d28"
+      "bytes": 14211,
+      "sha256": "e396067479a3c660626a98280790cb42f2c1a3457348dfe3980a2f6fed0ae9a5"
     },
     "assets/framework-3d.js": {
-      "bytes": 73330,
-      "sha256": "730d58bb9d9742c9981222964731cf7dadb12e69a0213380b668f6019926f1e8"
+      "bytes": 78258,
+      "sha256": "6be9e2d129afe816bb98e8b6cf1469b595dd27b822cb96a76ab6bf27bb1b6eb2"
     },
     "assets/framework-depth.js": {
-      "bytes": 5451,
-      "sha256": "15ae818d9ce4fe5204921d9c6c72795b692680f0e49cb8a9e023fc457286a022"
+      "bytes": 5597,
+      "sha256": "bf8bd66290205194cb20a35df318916f4928b46601bca3d5a6353e66614a1938"
     },
     "assets/framework-objects.js": {
-      "bytes": 18625,
-      "sha256": "370502b3c3b3f8d8866707d99381d2aec09a7cd69870b648fea4b893362ae44b"
+      "bytes": 19135,
+      "sha256": "9e614f84e7805bf6e4df0f626c21311c3746d5627a45fd1d0d1c42a28a9fb492"
     },
     "assets/framework-routes.js": {
-      "bytes": 17477,
-      "sha256": "3717f88243cad6cdcb948135ee44a7156cda3d44cb09420a226f455e3ff66ee3"
+      "bytes": 16045,
+      "sha256": "8cd7adc5932eabf1f842943706cc983684f876275a1b18954a83419b01623f29"
     },
     "assets/framework-topology.js": {
-      "bytes": 44172,
-      "sha256": "1ba1283853c0b4b113455788cb780891ffad59bc824395244e34797f3c99aa5e"
+      "bytes": 44200,
+      "sha256": "dc4736f535775c4a8cfb02056750c0f574aa112da499bb9ad50b53300d2bb391"
     },
     "assets/redesign.css": {
       "bytes": 27715,
@@ -394,8 +394,8 @@
       "sha256": "31562417bd0e0d53f85c15298c210702a6342cef2e42d4769a3931e9e97d7ef6"
     },
     "index.html": {
-      "bytes": 22644,
-      "sha256": "aadfbf1daca67c6089a86f2f6f3bd7b0f0d942cc08a97f839b977fcdc0b55d7e"
+      "bytes": 22651,
+      "sha256": "3d860cbd44a8b19f9dcd2f671dceec14c0cb5b03036ef89a9a32c2729ab72853"
     }
   }
 }

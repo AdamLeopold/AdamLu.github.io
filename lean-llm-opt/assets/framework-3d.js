@@ -1,10 +1,10 @@
 import * as THREE from './vendor/three/three.module.js';
-import {buildFrameworkObject,svgFrameworkObject,OBJECT_PROFILES} from './framework-objects.js?v=visitor-local-20261103-1';
-import {computeFlowRoute,sampleFlowRoute} from './framework-routes.js?v=visitor-local-20261103-1';
-import {toDepthPoint,toDepthDirection,computeDepthCameraPose} from './framework-depth.js?v=visitor-local-20261103-1';
-export {toDepthPoint,toDepthDirection} from './framework-depth.js?v=visitor-local-20261103-1';
-import * as topology from './framework-topology.js?v=visitor-local-20261103-1';
-export {TOPOLOGY,STAGES,TEACHING_CYCLE,sampleTeachingCycle,sampleTeachingFlows} from './framework-topology.js?v=visitor-local-20261103-1';
+import {buildFrameworkObject,svgFrameworkObject,OBJECT_PROFILES} from './framework-objects.js?v=local-partitions-20261104-1';
+import {computeFlowRoute,sampleFlowRoute} from './framework-routes.js?v=local-partitions-20261104-1';
+import {toDepthPoint,toDepthDirection,computeDepthCameraPose} from './framework-depth.js?v=local-partitions-20261104-1';
+export {toDepthPoint,toDepthDirection} from './framework-depth.js?v=local-partitions-20261104-1';
+import * as topology from './framework-topology.js?v=local-partitions-20261104-1';
+export {TOPOLOGY,STAGES,TEACHING_CYCLE,sampleTeachingCycle,sampleTeachingFlows} from './framework-topology.js?v=local-partitions-20261104-1';
 const {TOPOLOGY,STAGES,NODE_BY_ID,activeEdges,resolveRunEvent,TEACHING_CYCLE,sampleTeachingCycle,sampleTeachingFlows}=topology;
 export const STATIONS=TOPOLOGY.groups||[];
 const clamp=(n,a=0,b=1)=>Math.max(a,Math.min(b,n));
@@ -18,7 +18,11 @@ const PALETTES={
 const BASE_IDS=new Set(['query','classification','workflow','model','codegen','solver','solution','references','csv','csvqa']);
 const FLOW_IDS={query:topology.JOURNEY_EXAMPLE?.query?.id||'example-query',data:topology.JOURNEY_EXAMPLE?.data?.id||'example-data',reference:'lean-reference-library',artifact:'example-artifact'};
 const labelForKind=(kind,lang)=>({query:{zh:'问题描述',en:'Query'},data:{zh:'CSV 数据',en:'CSV data'},reference:{zh:'参考示例',en:'Reference'},artifact:{zh:'求解产物',en:'Output'}}[kind]?.[lang]||'');
-const SHOT_FOCUS=[null,['query','csv'],['classification'],['workflow'],['model','csvqa'],['codegen','solver'],['solution']];
+// Frame the two endpoints of the operation, including the tool or record it uses.
+const SHOT_FOCUS=[null,['query','csv'],['classification','references'],['workflow','references'],['model','csvqa'],['codegen','solver'],['solver','solution']];
+function chapterForNode(id, currentStage){
+ return SHOT_FOCUS[currentStage]?.includes(id) ? currentStage : NODE_BY_ID.get(id)?.stage;
+}
 export const OBJECT_SCALE=.64;
 export const flowStrokeWidth=active=>active?1.6:1.1;
 export const flowWorldWidth=(pixelWidth,depth,viewportHeight,fov=42)=>pixelWidth*2*Math.max(.1,depth)*Math.tan(fov*Math.PI/360)/Math.max(1,viewportHeight);
@@ -32,7 +36,9 @@ class FlowCurve extends THREE.Curve{
 
 /** Fit the chosen station itself, rather than nudging a whole-system camera. */
 export function computeFraming({positions,footprints=new Map(),stage=0,selected=null,hero=false,runNode=null,aspect=1,zoom=1,pan={x:0,y:0},routePoints=[]}){
- const full=hero||(!selected&&!runNode&&stage===0),requested=full?[...positions.keys()]:selected?[selected]:runNode?[runNode]:SHOT_FOCUS[stage]||[...positions.keys()];
+ const full=hero||(!selected&&!runNode&&stage===0);
+ const chapter=selected?chapterForNode(selected,stage):stage;
+ const requested=full?[...positions.keys()]:runNode?[runNode]:SHOT_FOCUS[chapter]||[selected];
  const focusIds=requested.filter(id=>positions.has(id)),ids=focusIds.length?focusIds:[...positions.keys()];
  let left=Infinity,right=-Infinity,top=-Infinity,bottom=Infinity;
  for(const id of ids){const p=positions.get(id),fp=footprints.get(id)||{width:2.9,height:2.8};left=Math.min(left,p.x+(fp.minX??-fp.width/2));right=Math.max(right,p.x+(fp.maxX??fp.width/2));top=Math.max(top,p.y+(fp.maxY??fp.height/2));bottom=Math.min(bottom,p.y+(fp.minY??-fp.height/2));}
@@ -92,8 +98,41 @@ export function placeDOMLabels(items,bounds,gap=7,reserved=[]){
   return result;
 }
 
-/** Deterministic SVG-space label placement; it never moves the graph nodes. */
-export function layoutFallbackLabels(items,width,height,fontSize=13,bounds={left:0,top:0,right:width,bottom:height}){
+/** Names stay near their icon, with focal names placed before surrounding context. */
+export function layoutNodeLabels(items,bounds,reserved=[]){
+  const gap=4,margin=4,result=new Map(),placed=[];
+  const icons=reserved.length?reserved:items.map(item=>item.anchorBox||{x:item.x,y:item.y,width:32,height:32});
+  const intersects=(a,b)=>Math.abs(a.x-b.x)<(a.width+b.width)/2+gap&&Math.abs(a.y-b.y)<(a.height+b.height)/2+gap;
+  const ordered=items.map((item,index)=>({...item,index})).sort((a,b)=>(b.priority||0)-(a.priority||0)||a.index-b.index);
+  for(const item of ordered){
+    const {width,height}=item,anchor=item.anchorBox||{x:item.x,y:item.y,width:32,height:32};
+    if(![width,height,anchor.x,anchor.y,anchor.width,anchor.height].every(Number.isFinite))continue;
+    const minX=bounds.left+margin+width/2,maxX=bounds.right-margin-width/2,minY=bounds.top+margin+height/2,maxY=bounds.bottom-margin-height/2;
+    if(maxX<minX||maxY<minY)continue;
+    const left=anchor.x-(anchor.width+width)/2-gap,right=anchor.x+(anchor.width+width)/2+gap;
+    const above=anchor.y-(anchor.height+height)/2-gap,below=anchor.y+(anchor.height+height)/2+gap;
+    const preferred={x:item.side===undefined?anchor.x:item.side<0?left:right,y:item.side===undefined?above:anchor.y};
+    const blockers=[...icons,...placed],candidates=[preferred,{x:anchor.x,y:above},{x:anchor.x,y:below},{x:left,y:anchor.y},{x:right,y:anchor.y},
+      {x:left,y:above},{x:right,y:above},{x:left,y:below},{x:right,y:below}];
+    for(const box of blockers)candidates.push({x:preferred.x,y:box.y-(box.height+height)/2-gap},{x:preferred.x,y:box.y+(box.height+height)/2+gap},
+      {x:box.x-(box.width+width)/2-gap,y:preferred.y},{x:box.x+(box.width+width)/2+gap,y:preferred.y});
+    const attachmentCost=box=>{
+      const dx=Math.max(0,Math.abs(box.x-anchor.x)-(width+anchor.width)/2);
+      const dy=Math.max(0,Math.abs(box.y-anchor.y)-(height+anchor.height)/2);
+      return Math.hypot(dx,dy)+.08*Math.hypot(box.x-preferred.x,box.y-preferred.y);
+    };
+    const choose=points=>points.map(point=>({x:clamp(point.x,minX,maxX),y:clamp(point.y,minY,maxY),width,height}))
+      .filter(box=>!blockers.some(blocker=>intersects(box,blocker)))
+      .sort((a,b)=>attachmentCost(a)-attachmentCost(b))[0];
+    let choice=choose(candidates);
+    if(!choice){const extra=[];for(const x of [preferred.x,anchor.x,minX,maxX])for(let y=minY;y<=maxY;y+=Math.max(12,height+gap))extra.push({x,y});choice=choose(extra);}
+    if(choice){placed.push(choice);result.set(item.id,{...choice,moved:Math.hypot(choice.x-preferred.x,choice.y-preferred.y)>1});}
+  }
+  return result;
+}
+
+/** SVG and DOM names share the same icon-relative collision layout. */
+export function layoutFallbackLabels(items,width,height,fontSize=12,bounds={left:0,top:0,right:width,bottom:height},reserved=[]){
   const measure=text=>[...text].reduce((sum,c)=>sum+fontSize*(/[\u3400-\u9fff]/.test(c)?1:/[MW@]/.test(c)?.88:/[ilI.,:;'|!]/.test(c)?.31:/\s/.test(c)?.35:.61),0);
   const wrap=(text,maxWidth)=>{
     const cjk=/[\u3400-\u9fff]/.test(text),words=cjk?[...text]:text.split(/\s+/),lines=[];let line='';
@@ -101,29 +140,18 @@ export function layoutFallbackLabels(items,width,height,fontSize=13,bounds={left
     for(const word of words){const next=line+(line&&!cjk?' ':'')+word;if(line&&measure(next)>max){lines.push(line);line=word;}else line=next;}
     if(line)lines.push(line);return lines;
   };
-  const overlap=(a,b,gap=5)=>a.x<b.x+b.width+gap&&a.x+a.width+gap>b.x&&a.y<b.y+b.height+gap&&a.y+a.height+gap>b.y;
-  const placed=[],result=new Map(),nodeBoxes=items.map(item=>({x:item.x-(item.nodeWidth||32)/2,y:item.y-(item.nodeHeight||32)/2,width:item.nodeWidth||32,height:item.nodeHeight||32}));
-  const ordered=[...items].sort((a,b)=>(b.level||0)-(a.level||0)||((a.kind==='agent'?-1:0)-(b.kind==='agent'?-1:0)));
-  for(const item of ordered){
-    const lines=wrap(item.text,item.maxWidth),w=Math.min(bounds.right-bounds.left-20,Math.max(...lines.map(measure))+16),h=lines.length*(fontSize+3)+8;
-    const preferred={x:item.preferredX??item.x-w/2,y:item.preferredY??item.y-23-h};let chosen=null,best=null;
-    search:for(let row=0;row<10&&!chosen;row++){
-      const dys=row===0?[0]:[-row*(h+7),row*(h+7)];
-      for(const dy of dys)for(const dx of [0,-w*.55,w*.55,-w,w]){
-        const box={x:clamp(preferred.x+dx,bounds.left+8,bounds.right-w-8),y:clamp(preferred.y+dy,bounds.top+8,bounds.bottom-h-12),width:w,height:h};
-        const collisions=placed.filter(p=>overlap(box,p)).length+nodeBoxes.filter(p=>overlap(box,p,2)).length;
-        const cost=collisions*100000+Math.abs(box.x-preferred.x)+Math.abs(box.y-preferred.y)*1.1;
-        if(!best||cost<best.cost)best={box,cost};
-        if(!collisions){chosen=box;break search;}
-      }
-    }
-    chosen??=best.box;placed.push(chosen);
-    result.set(item.id,{...chosen,lines,fontSize,moved:Math.abs(chosen.x-preferred.x)>1||Math.abs(chosen.y-preferred.y)>1});
-  }
+  const result=new Map(),measured=items.map(item=>{
+    const lines=wrap(item.text,item.maxWidth),extraLines=item.tools?wrap(item.tools,item.maxWidth):[],nameHeight=lines.length*(fontSize+2)+4;
+    const labelWidth=Math.min(bounds.right-bounds.left-8,Math.max(...lines.map(measure),...extraLines.map(measure))+6);
+    return{...item,lines,extraLines,fontSize,nameHeight,width:labelWidth,height:nameHeight+extraLines.length*(fontSize+1),
+      anchorBox:item.anchorBox||{x:item.x,y:item.y,width:item.nodeWidth||32,height:item.nodeHeight||32},priority:item.priority??item.level??0};
+  });
+  const placed=layoutNodeLabels(measured,bounds,reserved);
+  for(const item of measured){const box=placed.get(item.id);if(box)result.set(item.id,{...box,x:box.x-box.width/2,y:box.y-box.height/2,lines:item.lines,extraLines:item.extraLines,fontSize,nameHeight:item.nameHeight});}
   return result;
 }
 
-/** A shared orthographic scene. The graph stays on one plane; only the camera moves. */
+/** One perspective scene serves both the overview and local chapter cameras. */
 export function createFramework({heroHost,detailHost,onStageChange=()=>{},onNodeSelect=()=>{},onFlowChange=()=>{},renderer:rendererMode='auto'}={}){
  if(!heroHost||!detailHost)throw new Error('Framework view hosts are required');
  const state={lang:'zh',theme:'dark',reduced:false,free:false,route:'tailored',stage:0,progress:0,scrollLinked:false,selected:null,hover:null,run:null,runEvent:null,zoom:1,localProgress:null,started:performance.now(),flowElapsed:0,flowPlaying:true,flowFrame:sampleTeachingCycle(0),liveMode:false,liveElapsed:0,visible:true,runId:null,visited:new Set(),lastDataAt:'csv'};
@@ -210,16 +238,33 @@ export function createFramework({heroHost,detailHost,onStageChange=()=>{},onNode
   const geometry=new THREE.BufferGeometry();geometry.setAttribute('position',new THREE.Float32BufferAttribute(vertices,3));geometry.setIndex(indices);geometry.computeBoundingSphere();return geometry;
  }
  function arrowFractions(view,curve){
-  const ts=[];for(let i=1;i<80;i++)if(visiblePoint(view,curve.getPoint(i/80),.08))ts.push(i/80);if(!ts.length)return[];
+  const {points,distances,length}=curve.route,candidates=[];
+  for(let i=1;i<points.length;i++){
+   const size=distances[i]-distances[i-1];if(size<=1e-8)continue;
+   const t=(distances[i-1]+size*.5)/length;if(!visiblePoint(view,curve.getPoint(t),.08))continue;
+   const direction=points[i].map((value,axis)=>(value-points[i-1][axis])/size);
+   const aligned=neighbor=>{if(neighbor<1||neighbor>=points.length)return false;const extent=distances[neighbor]-distances[neighbor-1];return extent>1e-8&&direction.reduce((sum,value,axis)=>sum+value*(points[neighbor][axis]-points[neighbor-1][axis])/extent,0)>.999;};
+   candidates.push({t,straight:size>.055&&(aligned(i-1)||aligned(i+1))});
+  }
+  const preferred=candidates.filter(candidate=>candidate.straight),ts=(preferred.length?preferred:candidates).map(candidate=>candidate.t);if(!ts.length)return[];
   const first=ts[0],last=ts.at(-1),pixels=(last-first)*curve.route.length*view.rect.height/view.span;
-  return pixels>100?[ts[Math.floor((ts.length-1)*.3)],ts[Math.floor((ts.length-1)*.78)]]:[ts[Math.floor((ts.length-1)*.72)]];
+  return pixels>100?[ts[Math.round((ts.length-1)*.3)],ts[Math.round((ts.length-1)*.78)]]:[ts[Math.floor((ts.length-1)*.72)]];
  }
- function neighborsOf(ids){const set=new Set(ids);for(const e of routes())if(e.kind==='flow'&&(ids.includes(e.from)||ids.includes(e.to))){set.add(e.from);set.add(e.to);}return set;}
- function labelNodes(view){const focus=[...stageFocus(view)],allowed=view.framing.mode==='overview'?null:neighborsOf(focus);return baseNodes().filter(n=>view.visibleNodeIds.has(n.id)&&visiblePoint(view,view.positions.get(n.id),.15)&&(!allowed||allowed.has(n.id)));}
+ function labelNodes(view){return baseNodes().filter(n=>view.visibleNodeIds.has(n.id)&&visiblePoint(view,view.positions.get(n.id)));}
  function renderedRoutes(view){const focus=stageFocus(view),active=activeLinkIds(view);return routes().filter(e=>view.framing.mode==='overview'||e.kind==='flow'&&(view.visibleNodeIds.has(e.from)||view.visibleNodeIds.has(e.to))||focus.has(e.from)||focus.has(e.to)||active.has(e.id));}
+ // A line description belongs beside the local connection. The overview reads
+ // from the permanent node names and the moving query/data markers alone.
+ function captionRoutes(view){
+  if(view.framing.mode==='overview')return [];
+  const focus=new Set(view.framing.focusIds);
+  return routes().filter(edge=>focus.has(edge.from)&&focus.has(edge.to));
+ }
+ function nearLineCaption(box,item){
+  return box && Math.abs(box.x-item.x)<=Math.max(25,item.width*.35) && Math.abs(box.y-item.y)<=25;
+ }
  function edgeCaption(edge){const labels={query:['问题','Query'],classification:['问题类型','Type'],workflow:['建模工作流','Workflow'],model:['数学模型','Model'],codegen:['Python 程序','Python'],solver:['求解输出','Result']};return edge.kind==='flow'?labels[edge.from]?.[state.lang==='zh'?0:1]||'':tr(edge.label,state.lang);}
  function routes(){return activeEdges(state.route).filter(e=>BASE_IDS.has(e.from)&&BASE_IDS.has(e.to));}
- function stageFocus(view){return new Set(view.hero?baseNodes().map(n=>n.id):state.selected?[state.selected]:state.run?[state.run.nodeId]:SHOT_FOCUS[state.stage]||baseNodes().map(n=>n.id));}
+ function stageFocus(view){return new Set(view.framing.focusIds);}
  function activeLinkIds(view){
   const ids=new Set(),include=path=>{for(let i=1;i<path.length;i++)for(const edge of routes())if(edge.from===path[i-1]&&edge.to===path[i])ids.add(edge.id);};
   for(const packet of packetsFor(view))if(state.liveMode||packet.active)for(const path of packet.paths)include(path);
@@ -259,7 +304,15 @@ export function createFramework({heroHost,detailHost,onStageChange=()=>{},onNode
   const snapshot={streams,stepId:frame.stepId,index:frame.index,total:TEACHING_CYCLE.steps.length,label:frame.label,description:frame.description,payload:{query:frame.query,data:frame.data,reference:frame.reference},progress:frame.localProgress,cycleProgress:frame.progress,elapsedMs:state.flowElapsed,durationMs:TEACHING_CYCLE.durationMs,paused:!state.flowPlaying||state.reduced||state.liveMode||document.hidden||!state.visible,live:state.liveMode,waiting:state.liveMode&&!state.run,packets,requests:explicitRequests(views[0])};if(state.liveMode){snapshot.stepId=state.run?`live-${state.run.nodeId}`:'live-waiting';snapshot.label=state.run?NODE_BY_ID.get(state.run.nodeId)?.title:{zh:'等待 Demo 任务',en:'Waiting for a demo run'};snapshot.description=state.run?{zh:'显示当前任务的实际阶段事件。',en:'Showing actual stage events from the current task.'}:{zh:'在 Demo 中发送问题以开始运行。',en:'Send a question in the demo to begin.'};snapshot.payload={query:{id:'live-query',label:labelForKind('query',state.lang)},data:{id:'live-data',label:labelForKind('data',state.lang)}};}return snapshot;
  }
  function notifyFlow(force=false){const snapshot=flowSnapshot(),signature=[snapshot.stepId,snapshot.paused,snapshot.live,snapshot.waiting,state.run?.nodeId,state.run?.status,state.lang,snapshot.streams?.map(s=>s.stepId).join(',')].join('|');if(force||signature!==flowSignature){flowSignature=signature;onFlowChange(snapshot);}}
- function portAt(id,kind,positions,signal=false){const p=positions.get(id).clone();if(!signal){p.x+=kind==='data'?-.1:kind==='reference'?.08:.1;p.y+=kind==='reference'?.08:0;}p.z=.32;return p;}
+ function portAt(id,kind,positions,signal=false){
+  const p=positions.get(id).clone(),bounds=portAt.bounds||(portAt.bounds=routingFootprintsFor()),box=bounds.get(id);
+  const offset={x:signal?0:kind==='data'?-.1:kind==='reference'?.08:.1,y:!signal&&kind==='reference'?.08:0};
+  for(const [axis,min,max]of [['x','minX','maxX'],['y','minY','maxY']]){
+   const low=box?.[min]??-(box?.[axis==='x'?'width':'height']||1)/2,high=box?.[max]??(box?.[axis==='x'?'width':'height']||1)/2;
+   const padding=Math.min(.02,(high-low)*.15);p[axis]+=clamp(offset[axis],low+padding,high-padding);
+  }
+  p.z=.32;return p;
+ }
  function travelOf(packet,view,now){
   const phase=packet.stationary?1:packet.trackProgress??animationFraction(view,now),segments=[];
   for(const path of packet.paths){if(path.length===1)segments.push({path,from:path[0],to:path[0]});else for(let i=1;i<path.length;i++)segments.push({path,from:path[i-1],to:path[i]});}
@@ -290,9 +343,23 @@ export function createFramework({heroHost,detailHost,onStageChange=()=>{},onNode
  function cameraFrame(view,desired){
   const span=view.span,center={...desired.center},aspect=desired.aspect;
   const worldBounds={left:center.x-span*aspect/2,right:center.x+span*aspect/2,top:center.y+span/2,bottom:center.y-span/2};
-  const fps=footprintsFor(),visibleNodeIds=baseNodes().filter(node=>{const p=view.positions.get(node.id),fp=fps.get(node.id);return p.x+fp.width/2>worldBounds.left&&p.x-fp.width/2<worldBounds.right&&p.y+fp.height/2>worldBounds.bottom&&p.y-fp.height/2<worldBounds.top;}).map(n=>n.id);
+  const fps=footprintsFor();
   const projectedNodeBounds=Object.fromEntries([...fps].map(([id,fp])=>{
-   const p=worldPoint(view.positions.get(id)),points=[];for(const x of[fp.minX??-fp.width/2,fp.maxX??fp.width/2])for(const y of[fp.minY??-fp.height/2,fp.maxY??fp.height/2])for(const z of[fp.minZ??0,fp.maxZ??fp.depth??.8])points.push(new THREE.Vector3(p.x+x,p.y+y,p.z+z).project(view.camera));
+   const p=worldPoint(view.positions.get(id)),corners=[];
+   for(const x of[fp.minX??-fp.width/2,fp.maxX??fp.width/2])for(const y of[fp.minY??-fp.height/2,fp.maxY??fp.height/2])for(const z of[fp.minZ??0,fp.maxZ??fp.depth??.8]){
+    corners.push(new THREE.Vector3(p.x+x,p.y+y,p.z+z).applyMatrix4(view.camera.matrixWorldInverse));
+   }
+   // Clip the twelve box edges in camera space before projecting. Geometry
+   // behind the eye must never appear as a mirrored icon in a local shot.
+   const near=-view.camera.near,far=-view.camera.far;
+   const points=corners.filter(point=>point.z<=near&&point.z>=far);
+   for(let index=0;index<8;index++)for(const axis of[1,2,4]){
+    if(index&axis)continue;
+    const a=corners[index],b=corners[index|axis];
+    for(const plane of[near,far])if((a.z-plane)*(b.z-plane)<0)points.push(a.clone().lerp(b,(plane-a.z)/(b.z-a.z)));
+   }
+   if(!points.length)return [id,{worldWidth:fp.width,worldHeight:fp.height,left:-1,right:-1,top:-1,bottom:-1,x:-1,y:-1,width:0,height:0}];
+   for(const point of points)point.applyMatrix4(view.camera.projectionMatrix);
    const left=Math.min(...points.map(p=>(p.x+1)*view.rect.width/2)),right=Math.max(...points.map(p=>(p.x+1)*view.rect.width/2)),top=Math.min(...points.map(p=>(1-p.y)*view.rect.height/2)),bottom=Math.max(...points.map(p=>(1-p.y)*view.rect.height/2));
    return[id,{worldWidth:fp.width,worldHeight:fp.height,left,right,top,bottom,x:(left+right)/2,y:(top+bottom)/2,width:right-left,height:bottom-top}];
   }));
@@ -304,7 +371,7 @@ export function createFramework({heroHost,detailHost,onStageChange=()=>{},onNode
   const signature=JSON.stringify([destination.position,destination.target,destination.span,desired.aspect]);
   if(!view.initialized||state.reduced||destination.mode==='scroll'){view.flightPose=destination;view.flight=null;view.flightSignature=signature;}
   else if(state.free){const previous=view.flightPose||destination,ease=1-Math.exp(-24*dt);view.flight=null;view.flightSignature=signature;view.flightPose={...destination,position:previous.position.map((v,i)=>lerp(v,destination.position[i],ease)),target:previous.target.map((v,i)=>lerp(v,destination.target[i],ease)),span:lerp(previous.span,destination.span,ease)};}
-  else if(signature!==view.flightSignature){view.flight={from:view.flightPose||destination,to:destination,elapsed:0,duration:1.35};view.flightSignature=signature;}
+  else if(signature!==view.flightSignature){view.flight={from:view.flightPose||destination,to:destination,elapsed:0,duration:.36};view.flightSignature=signature;}
   if(view.flight){view.flight.elapsed+=dt;const progress=clamp(view.flight.elapsed/view.flight.duration);view.flightPose=sampleCameraFlight(view.flight.from,view.flight.to,progress);if(progress===1)view.flight=null;}
   const rig=view.flightPose;view.target.fromArray(rig.target);view.span=rig.span;
   const camera=view.camera;camera.aspect=desired.aspect;camera.fov=rig.fov;camera.position.fromArray(rig.position);camera.lookAt(...rig.target);camera.updateProjectionMatrix();camera.updateMatrixWorld();
@@ -354,21 +421,25 @@ export function createFramework({heroHost,detailHost,onStageChange=()=>{},onNode
  function inlineText(node){const tools=node.inlineTools||[];return tools.map(v=>typeof v==='string'?v:tr(v.title||v.label||v,state.lang)).filter(Boolean).join(' · ');}
  function layoutLabels(view,focus){
   const candidates=[],live=new Set(),rect=view.rect;
+  // Solve in host coordinates, then clip the fixed overlay to its visible part.
+  // Scrolling the host must translate names rather than reflow them at the viewport edge.
+  view.labelRoot.style.clipPath=`inset(${Math.max(0,rect.top)}px ${Math.max(0,innerWidth-rect.right)}px ${Math.max(0,innerHeight-rect.bottom)}px ${Math.max(0,rect.left)}px)`;
+  view.iconBoxes=labelNodes(view).map(n=>{const b=view.framing.projectedNodeBounds[n.id];return{x:rect.left+b.x,y:rect.top+b.y,width:b.width,height:b.height};}).filter(b=>Object.values(b).every(Number.isFinite));
   for(const node of labelNodes(view)){
-   const label=labelFor(view,node),mobile=rect.width<760,main=['query','classification','workflow','model','codegen','solver','solution'].includes(node.id),p=view.positions.get(node.id),box=view.framing.projectedNodeBounds[node.id],index=['query','classification','workflow','model','codegen','solver','solution'].indexOf(node.id),side=main?(index%2?-1:1):(p.y>=0?-1:1),point={x:rect.left+(side<0?box.left:box.right)+side*(mobile?68:83),y:rect.top+box.y};const name=tr(node.title,state.lang),tools=inlineText(node);
+   const label=labelFor(view,node),mobile=rect.width<760,main=['query','classification','workflow','model','codegen','solver','solution'].includes(node.id),p=view.positions.get(node.id),box=view.framing.projectedNodeBounds[node.id],index=['query','classification','workflow','model','codegen','solver','solution'].indexOf(node.id),side=main?(index%2?-1:1):(p.y>=0?-1:1),anchorBox={x:rect.left+box.x,y:rect.top+box.y,width:box.width,height:box.height};const name=tr(node.title,state.lang),tools=inlineText(node);
    const content=`<span>${escapeHTML(name)}</span>${tools?`<small>${escapeHTML(tools)}</small>`:''}`;if(label.innerHTML!==content)label.innerHTML=content;
    label.title=tr(node.description,state.lang);label.setAttribute('aria-label',`${name} — ${tr(node.description,state.lang)}`);label.setAttribute('aria-pressed',String(node.id===state.selected));label.classList.toggle('fw-label--selected',node.id===state.selected);label.classList.toggle('fw-label--dim',!view.hero&&!focus.has(node.id));label.classList.toggle('fw-label--run',node.id===state.run?.nodeId);label.dataset.runStatus=node.id===state.run?.nodeId?state.run.status:'';
-   label.hidden=false;const maxWidth=Math.max(70,Math.min(rect.width<760?(main?135:156):190,rect.width-20));label.style.maxWidth=`${maxWidth}px`;
-   const key=`${state.lang}|${view.hero?'hero':'detail'}|${rect.width<760?'narrow':'wide'}|${maxWidth}|${node.id}|${tools}`;
-   candidates.push({id:node.id,label,key,x:point.x,y:point.y});live.add(node.id);
+   label.hidden=false;const maxWidth=Math.max(70,Math.min(mobile?124:150,rect.width-16));label.style.maxWidth=`${maxWidth}px`;
+   const key=`text-v2|${state.lang}|${view.hero?'hero':'detail'}|${mobile?'narrow':'wide'}|${maxWidth}|${node.id}|${tools}`;
+   candidates.push({id:node.id,label,key,x:anchorBox.x,y:anchorBox.y,anchorBox,nodeAnchor:project(view,p),side,priority:node.id===state.selected?3:focus.has(node.id)?2:0});live.add(node.id);
   }
   for(const[id,label]of view.labels)if(!live.has(id))label.hidden=true;
   const measured=candidates.map(p=>({...p,...measureDOMLabel(p.label,view.labelMetrics,p.key)}));
-  const fps=footprintsFor();view.iconBoxes=baseNodes().filter(n=>view.visibleNodeIds.has(n.id)).map(n=>{const b=view.framing.projectedNodeBounds[n.id];return{x:rect.left+b.x,y:rect.top+b.y,width:b.width,height:b.height};});const placed=placeDOMLabels(measured,{left:Math.max(0,rect.left),right:Math.min(innerWidth,rect.right),top:Math.max(0,rect.top),bottom:Math.min(innerHeight,rect.bottom)},7,view.iconBoxes);view.captionBoxes=[...placed.values()];
-  for(const p of candidates){const box=placed.get(p.id);p.label.hidden=!box;if(box)p.label.style.transform=`translate(${box.x.toFixed(1)}px,${box.y.toFixed(1)}px) translate(-50%,-50%)`;}
-  const edgeItems=[];for(const edge of renderedRoutes(view).filter(e=>e.kind==='flow'||activeLinkIds(view).has(e.id))){const curve=curveFor(edge,view.positions),ts=arrowFractions(view,curve);if(!ts.length)continue;const p=curve.getPoint(ts.reduce((a,b)=>a+b,0)/ts.length);if(!visiblePoint(view,p,.15))continue;let label=view.edgeLabels.get(edge.id);if(!label){label=document.createElement('div');label.className='fw-edge-label';view.labelRoot.append(label);view.edgeLabels.set(edge.id,label);}label.textContent=edgeCaption(edge);label.dataset.kind=edgeColor(edge);const screen=project(view,p);edgeItems.push({id:edge.id,label,x:screen.x,y:screen.y-16,width:Math.min(150,[...label.textContent].reduce((a,c)=>a+(/[\u3400-\u9fff]/.test(c)?10:5.5),12)),height:24});}
-  const edgeBoxes=placeDOMLabels(edgeItems,{left:Math.max(0,rect.left),right:Math.min(innerWidth,rect.right),top:Math.max(0,rect.top),bottom:Math.min(innerHeight,rect.bottom)},4,[...view.iconBoxes,...view.captionBoxes]);
-  const visibleEdges=new Set();for(const item of edgeItems){const b=edgeBoxes.get(item.id);item.label.hidden=!b;if(b){visibleEdges.add(item.id);item.label.style.transform=`translate(${b.x.toFixed(1)}px,${b.y.toFixed(1)}px) translate(-50%,-50%)`;}}for(const[id,label]of view.edgeLabels)if(!visibleEdges.has(id))label.hidden=true;view.captionBoxes.push(...edgeBoxes.values());
+  const placed=layoutNodeLabels(measured,rect,view.iconBoxes);view.captionBoxes=[...placed.values()];
+  for(const p of candidates){const box=placed.get(p.id);p.label.hidden=!box;if(box){p.label.dataset.labelNode=p.id;p.label.dataset.labelAnchorX=p.nodeAnchor.x.toFixed(3);p.label.dataset.labelAnchorY=p.nodeAnchor.y.toFixed(3);p.label.style.transform=`translate(${box.x.toFixed(1)}px,${box.y.toFixed(1)}px) translate(-50%,-50%)`;}}
+  const edgeItems=[];for(const edge of captionRoutes(view)){const curve=curveFor(edge,view.positions),ts=arrowFractions(view,curve);if(!ts.length)continue;const p=curve.getPoint(ts.reduce((a,b)=>a+b,0)/ts.length);if(!visiblePoint(view,p,.15))continue;let label=view.edgeLabels.get(edge.id);if(!label){label=document.createElement('div');label.className='fw-edge-label';view.labelRoot.append(label);view.edgeLabels.set(edge.id,label);}label.textContent=edgeCaption(edge);label.dataset.kind=edgeColor(edge);const screen=project(view,p);edgeItems.push({id:edge.id,label,x:screen.x,y:screen.y-16,width:Math.min(150,[...label.textContent].reduce((a,c)=>a+(/[\u3400-\u9fff]/.test(c)?10:5.5),12)),height:24});}
+  const edgeBoxes=placeDOMLabels(edgeItems,rect,4,[...view.iconBoxes,...view.captionBoxes]);
+  const visibleEdges=new Set();for(const item of edgeItems){const b=edgeBoxes.get(item.id);item.label.hidden=!nearLineCaption(b,item);if(!item.label.hidden){visibleEdges.add(item.id);view.captionBoxes.push(b);item.label.style.transform=`translate(${b.x.toFixed(1)}px,${b.y.toFixed(1)}px) translate(-50%,-50%)`;}}for(const[id,label]of view.edgeLabels)if(!visibleEdges.has(id))label.hidden=true;
  }
  function chipText(packet){return state.liveMode?labelForKind(packet.kind,state.lang):({query:'Q',data:'D',reference:'R',artifact:'↗'}[packet.kind]||'')+(packet.taskIndex||1);}
  function layoutPackets(view,now){
@@ -381,7 +452,7 @@ export function createFramework({heroHost,detailHost,onStageChange=()=>{},onNode
 
   }
   for(const [i,requestTrack]of requestTravels(view,now).entries()){if(!visiblePoint(view,requestTrack.point,.05))continue;const key=`request-${requestTrack.kind}-${i}`;let element=view.packets.get(key);if(!element){element=document.createElement('div');element.className=`fw-request fw-request--${requestTrack.kind}`;element.setAttribute('aria-hidden','true');view.labelRoot.append(element);view.packets.set(key,element);}const p=project(view,requestTrack.point);element.dataset.stream=requestTrack.streamId||'live';element.dataset.streamId=requestTrack.streamId||'live';element.dataset.taskIndex=String(requestTrack.taskIndex||1);element.dataset.sourceX=p.x.toFixed(3);element.dataset.sourceY=p.y.toFixed(3);element.textContent=state.lang==='zh'?(requestTrack.role==='runtime-read'?'完整 CSV':requestTrack.kind==='data'?'读取数据':'检索示例'):(requestTrack.role==='runtime-read'?'Complete CSVs':requestTrack.kind==='data'?'Read data':'Retrieve');element.hidden=false;candidates.push({id:key,element,x:p.x,y:p.y-16,width:state.lang==='en'?96:70,height:24});live.add(key);}
-  const r=view.rect,placed=placeDOMLabels(candidates,{left:Math.max(0,r.left),right:Math.min(innerWidth,r.right),top:Math.max(0,r.top),bottom:Math.min(innerHeight,r.bottom)},5,[...(view.captionBoxes||[]),...(view.iconBoxes||[])]);
+  const placed=placeDOMLabels(candidates,view.rect,5,[...(view.captionBoxes||[]),...(view.iconBoxes||[])]);
   for(const p of candidates){const box=placed.get(p.id);p.element.hidden=!box;if(box)p.element.style.transform=`translate(${box.x.toFixed(1)}px,${box.y.toFixed(1)}px) translate(-50%,-50%)`;}
   for(const[key,element]of view.packets)if(!live.has(key))element.hidden=true;
  }
@@ -423,29 +494,32 @@ export function createFramework({heroHost,detailHost,onStageChange=()=>{},onNode
   const svgBounds={left:0,top:0,right:width,bottom:height};
   const visibleNodes=baseNodes().filter(n=>view.visibleNodeIds.has(n.id));
   const edgeMarkup=renderedRoutes(view).map(edge=>{const curve=curveFor(edge,positions),kind=edgeColor(edge),selected=active.has(edge.id),points=curve.route.points.map(p=>map(new THREE.Vector3(...p))).filter(p=>p.z>=-1&&p.z<=1&&Number.isFinite(p.x)&&Number.isFinite(p.y)),path=points.map((p,i)=>`${i?'L':'M'}${p.x.toFixed(2)} ${p.y.toFixed(2)}`).join(' ');
-   const arrows=arrowFractions(view,curve).map(t=>{const p=map(curve.getPoint(t)),d=curve.getTangent(t),next=map(curve.getPoint(Math.min(1,t+.003))),angle=Math.atan2(next.y-p.y,next.x-p.x)*180/Math.PI;return `<path class="fw-route-arrow" data-arrow-edge="${escapeHTML(edge.id)}" data-arrow-t="${t.toFixed(4)}" data-kind="${kind}" transform="translate(${p.x.toFixed(2)} ${p.y.toFixed(2)}) rotate(${angle.toFixed(2)})" d="M-4-3L4 0L-4 3Z"/>`;}).join('');
+   const arrows=arrowFractions(view,curve).map(t=>{const position=curve.getPoint(t),p=map(position),d=curve.getTangent(t),next=map(position.clone().addScaledVector(d,.001)),angle=Math.atan2(next.y-p.y,next.x-p.x)*180/Math.PI;return `<path class="fw-route-arrow" data-arrow-edge="${escapeHTML(edge.id)}" data-arrow-t="${t.toFixed(4)}" data-kind="${kind}" transform="translate(${p.x.toFixed(2)} ${p.y.toFixed(2)}) rotate(${angle.toFixed(2)})" d="M-4-3L4 0L-4 3Z"/>`;}).join('');
    return `<path class="fw-fallback-edge${selected?' fw-fallback-edge--active':''}" data-edge="${escapeHTML(edge.id)}" data-kind="${kind}" data-lane="${escapeHTML(curve.route.lane)}" data-route-points="${escapeHTML(JSON.stringify(points.map(p=>[Number(p.x.toFixed(3)),Number(p.y.toFixed(3))])))}"${edge.kind==='request'?' stroke-dasharray="7 5"':''} stroke-width="${flowStrokeWidth(selected)}" vector-effect="non-scaling-stroke" d="${path}"/>${arrows}`;
   }).join('');
-  const fontSize=mobile?14:13,labels=layoutFallbackLabels(labelNodes(view).map(node=>{const p=point(node.id),bounds=view.framing.projectedNodeBounds[node.id],main=['query','classification','workflow','model','codegen','solver','solution'].includes(node.id),index=['query','classification','workflow','model','codegen','solver','solution'].indexOf(node.id),side=main?(index%2?-1:1):(positions.get(node.id).y>=0?-1:1);return{id:node.id,text:tr(node.title,state.lang),kind:node.kind,level:0,x:p.x,y:p.y,nodeWidth:bounds.width,nodeHeight:bounds.height,maxWidth:mobile?130:175,preferredX:side<0?bounds.left-(mobile?145:190):bounds.right+14,preferredY:bounds.y-12};}),width,height,fontSize,svgBounds);
+  const fontSize=12,labelIconBoxes=labelNodes(view).map(node=>{const b=view.framing.projectedNodeBounds[node.id];return{x:b.x,y:b.y,width:b.width,height:b.height};}).filter(b=>Object.values(b).every(Number.isFinite));
+  const labels=layoutFallbackLabels(labelNodes(view).map(node=>{const p=point(node.id),bounds=view.framing.projectedNodeBounds[node.id],main=['query','classification','workflow','model','codegen','solver','solution'].includes(node.id),index=['query','classification','workflow','model','codegen','solver','solution'].indexOf(node.id),side=main?(index%2?-1:1):(positions.get(node.id).y>=0?-1:1);return{id:node.id,text:tr(node.title,state.lang),tools:inlineText(node),kind:node.kind,x:p.x,y:p.y,anchorBox:{x:bounds.x,y:bounds.y,width:bounds.width,height:bounds.height},side,priority:node.id===state.selected?3:focus.has(node.id)?2:0,maxWidth:mobile?124:150};}),width,height,fontSize,svgBounds,labelIconBoxes);
   const nodes=visibleNodes.map(node=>{
    const portAttrs=['query','data','reference'].map(kind=>{const port=map(portAt(node.id,kind,positions));return `data-${kind}-port-x="${port.x.toFixed(3)}" data-${kind}-port-y="${port.y.toFixed(3)}"`;}).join(' ');
    const p=point(node.id),canonical=positions.get(node.id),world=worldPoint(canonical),bounds=view.framing.projectedNodeBounds[node.id],label=labels.get(node.id),selected=node.id===state.selected,working=node.id===state.run?.nodeId,tools=inlineText(node),kind=nodeColor(node),iconScale=Math.min(bounds.width/82,bounds.height/88);
    const guideValue=guideProgress(node,view,now),guide=guideValue!==null;
-   const caption=label?`<rect class="fw-fallback-caption" x="${label.x}" y="${label.y}" width="${label.width}" height="${label.height}" rx="4"/><text class="fw-fallback-name" text-anchor="middle" style="font-size:${fontSize}px">${label.lines.map((line,i)=>`<tspan x="${label.x+label.width/2}" y="${label.y+fontSize+4+i*(fontSize+3)}">${escapeHTML(line)}</tspan>`).join('')}</text>${tools?`<text class="fw-fallback-tool" x="${label.x+label.width/2}" y="${label.y+label.height+12}" text-anchor="middle">${escapeHTML(tools)}</text>`:''}`:'';
+   const caption=label?`<g class="fw-fallback-caption" data-label-node="${node.id}" data-label-x="${label.x.toFixed(3)}" data-label-y="${label.y.toFixed(3)}" data-label-width="${label.width.toFixed(3)}" data-label-height="${label.height.toFixed(3)}" data-label-anchor-x="${p.x.toFixed(3)}" data-label-anchor-y="${p.y.toFixed(3)}"><text class="fw-fallback-name" text-anchor="middle" style="font-size:${fontSize}px">${label.lines.map((line,i)=>`<tspan x="${label.x+label.width/2}" y="${label.y+fontSize+2+i*(fontSize+2)}">${escapeHTML(line)}</tspan>`).join('')}</text>${label.extraLines.length?`<text class="fw-fallback-tool" text-anchor="middle">${label.extraLines.map((line,i)=>`<tspan x="${label.x+label.width/2}" y="${label.y+label.nameHeight+10+i*(fontSize+1)}">${escapeHTML(line)}</tspan>`).join('')}</text>`:''}</g>`:'';
    return `<g class="fw-fallback-node${selected?' fw-fallback-node--selected':''}${working?' fw-fallback-node--run':''}${guide?' fw-fallback-node--guide':''}" data-node="${node.id}" ${portAttrs} data-x="${p.x.toFixed(3)}" data-y="${p.y.toFixed(3)}" data-canonical-x="${canonical.x}" data-canonical-y="${canonical.y}" data-canonical-z="${canonical.z}" data-world-x="${world.x}" data-world-y="${world.y}" data-world-z="${world.z}" data-icon="${iconOf(node)}" data-object-width="${bounds.width.toFixed(3)}" data-object-height="${bounds.height.toFixed(3)}" data-station-owner="${STATIONS.find(station=>station.nodes.includes(node.id))?.id||node.id}" data-kind="${kind}" data-focused="${view.hero||focus.has(node.id)}" data-context="${desired.mode!=='overview'&&!focus.has(node.id)}" data-run-status="${working?state.run.status:''}" role="button" tabindex="${view.hero?-1:0}" aria-pressed="${selected}" aria-label="${escapeHTML(tr(node.title,state.lang))}"><title>${escapeHTML(tr(node.description,state.lang))}</title><g transform="translate(${p.x.toFixed(3)} ${p.y.toFixed(3)}) scale(${iconScale})"><g class="fw-fallback-depth" transform="translate(3 4)">${svgIcon(iconOf(node))}</g>${svgIcon(iconOf(node))}<path class="fw-fallback-selection" d="M-22 36H${guide?-22+44*Math.max(.08,guideValue):22}"/></g>${caption}</g>`;
   }).join('');
-  const edgeTextItems=renderedRoutes(view).filter(e=>e.kind==='flow'||active.has(e.id)).map(edge=>{const curve=curveFor(edge,positions),ts=arrowFractions(view,curve),t=ts.length?ts.reduce((a,b)=>a+b,0)/ts.length:.5,p=curve.getPoint(t);if(!visiblePoint(view,p,.15))return null;const pos=map(p),label=edgeCaption(edge);return{id:edge.id,edge,label,x:pos.x,y:pos.y-16,width:Math.min(150,[...label].reduce((a,c)=>a+(/[\u3400-\u9fff]/.test(c)?10:5.5),12)),height:24};}).filter(Boolean);
+  const edgeTextItems=captionRoutes(view).map(edge=>{const curve=curveFor(edge,positions),ts=arrowFractions(view,curve),t=ts.length?ts.reduce((a,b)=>a+b,0)/ts.length:.5,p=curve.getPoint(t);if(!visiblePoint(view,p,.15))return null;const pos=map(p),label=edgeCaption(edge);return{id:edge.id,edge,label,x:pos.x,y:pos.y-16,width:Math.min(150,[...label].reduce((a,c)=>a+(/[\u3400-\u9fff]/.test(c)?10:5.5),12)),height:24};}).filter(Boolean);
   const edgeTextBoxes=placeDOMLabels(edgeTextItems,svgBounds,4,[...labels.values()].map(p=>({x:p.x+p.width/2,y:p.y+p.height/2,width:p.width,height:p.height})).concat(visibleNodes.map(n=>({...point(n.id),width:view.framing.projectedNodeBounds[n.id].width,height:view.framing.projectedNodeBounds[n.id].height}))));
-  const edgeTextMarkup=edgeTextItems.map(item=>{const b=edgeTextBoxes.get(item.id);if(!b)return'';return `<g class="fw-route-caption" data-route-caption="${escapeHTML(item.id)}" data-kind="${edgeColor(item.edge)}" transform="translate(${(b.x-b.width/2).toFixed(2)} ${(b.y-b.height/2).toFixed(2)})"><rect width="${b.width}" height="${b.height}" rx="4"/><text x="${b.width/2}" y="16" text-anchor="middle">${escapeHTML(item.label)}</text></g>`;}).join('');
+  const edgeTextMarkup=edgeTextItems.map(item=>{const b=edgeTextBoxes.get(item.id);if(!nearLineCaption(b,item)){edgeTextBoxes.delete(item.id);return '';}return `<g class="fw-route-caption" data-route-caption="${escapeHTML(item.id)}" data-kind="${edgeColor(item.edge)}" transform="translate(${(b.x-b.width/2).toFixed(2)} ${(b.y-b.height/2).toFixed(2)})"><text x="${b.width/2}" y="16" text-anchor="middle">${escapeHTML(item.label)}</text></g>`;}).join('');
   const packetItems=[],packetReserved=[...labels.values()].map(p=>({x:p.x+p.width/2,y:p.y+p.height/2,width:p.width,height:p.height})).concat([...edgeTextBoxes.values()]);
   for(const n of visibleNodes){const p=point(n.id);const b=view.framing.projectedNodeBounds[n.id];packetReserved.push({...p,width:b.width,height:b.height});}
   for(const packet of packetsFor(view)){const travel=travelOf(packet,view,now);if(!travel||!visiblePoint(view,travel.point,.05))continue;const p=map(travel.point);packetItems.push({id:packet.id,packet,travel,source:p,x:p.x+22,y:p.y-29,width:state.run?92:52,height:28});}
   for(const [i,request]of requestTravels(view,now).entries()){if(!visiblePoint(view,request.point,.05))continue;const p=map(request.point);packetItems.push({id:`request-${request.kind}-${i}`,packet:request,request:true,source:p,x:p.x,y:p.y-17,width:state.lang==='en'?112:76,height:25});}
   const packetBoxes=placeDOMLabels(packetItems,svgBounds,5,packetReserved);
   const packetMarkup=packetItems.map(item=>{
-   const box=packetBoxes.get(item.id);if(!box)return'';const packet=item.packet,x=box.x-box.width/2,y=box.y-box.height/2;
-   if(item.request){const label=state.lang==='zh'?(packet.kind==='data'?'读取请求':'检索请求'):(packet.kind==='data'?'Data request':'Retrieval request');return `<g class="fw-fallback-request" data-request="${packet.kind}" data-stream="${packet.streamId||'live'}" data-stream-id="${packet.streamId||'live'}" data-task-index="${packet.taskIndex||1}" data-source-x="${item.source.x.toFixed(3)}" data-source-y="${item.source.y.toFixed(3)}" transform="translate(${x.toFixed(2)} ${y.toFixed(2)})"><rect width="${box.width}" height="${box.height}" rx="12"/><text text-anchor="middle" x="${box.width/2}" y="16">${escapeHTML(label)}</text></g>`;}
-   return `<g class="fw-fallback-packet" data-packet="${packet.kind}" data-stream="${packet.streamId||'live'}" data-stream-id="${packet.streamId||'live'}" data-task-index="${packet.taskIndex||1}" data-journey-id="${escapeHTML(packet.id)}" data-source-x="${item.source.x.toFixed(3)}" data-source-y="${item.source.y.toFixed(3)}" data-requesting="${Boolean(item.travel.request)||!state.liveMode&&explicitRequests(view).some(r=>r.kind===packet.kind&&r.streamId===packet.streamId)}" data-path="${escapeHTML(item.travel.path.join(','))}" data-paths="${escapeHTML(JSON.stringify(packet.paths))}" transform="translate(${x.toFixed(2)} ${y.toFixed(2)})"><title>${escapeHTML(tr(packet.label,state.lang))}</title><rect width="${box.width}" height="${box.height}" rx="5"/><path class="fw-packet-glyph" d="${packet.kind==='data'?'M8 9L14 5L20 9V18L14 22L8 18ZM8 9L14 13L20 9M14 13V22':'M14 5L22 13L14 22L6 13ZM9 13H19'}"/><text x="27" y="19" class="fw-packet-text">${escapeHTML(chipText(packet))}</text></g>`;
+   const color=PALETTES[state.theme][item.packet.kind]||PALETTES[state.theme].output;
+   const dot='<circle cx="'+item.source.x.toFixed(2)+'" cy="'+item.source.y.toFixed(2)+'" r="2.6" fill="#'+color.toString(16).padStart(6,'0')+'"/>';
+   const box=packetBoxes.get(item.id);if(!box)return dot;const packet=item.packet,x=box.x-box.width/2,y=box.y-box.height/2;
+   if(item.request){const label=state.lang==='zh'?(packet.kind==='data'?'读取请求':'检索请求'):(packet.kind==='data'?'Data request':'Retrieval request');return dot+`<g class="fw-fallback-request" data-request="${packet.kind}" data-stream="${packet.streamId||'live'}" data-stream-id="${packet.streamId||'live'}" data-task-index="${packet.taskIndex||1}" data-source-x="${item.source.x.toFixed(3)}" data-source-y="${item.source.y.toFixed(3)}" transform="translate(${x.toFixed(2)} ${y.toFixed(2)})"><rect width="${box.width}" height="${box.height}" rx="12"/><text text-anchor="middle" x="${box.width/2}" y="16">${escapeHTML(label)}</text></g>`;}
+   return dot+`<g class="fw-fallback-packet" data-packet="${packet.kind}" data-stream="${packet.streamId||'live'}" data-stream-id="${packet.streamId||'live'}" data-task-index="${packet.taskIndex||1}" data-journey-id="${escapeHTML(packet.id)}" data-source-x="${item.source.x.toFixed(3)}" data-source-y="${item.source.y.toFixed(3)}" data-requesting="${Boolean(item.travel.request)||!state.liveMode&&explicitRequests(view).some(r=>r.kind===packet.kind&&r.streamId===packet.streamId)}" data-path="${escapeHTML(item.travel.path.join(','))}" data-paths="${escapeHTML(JSON.stringify(packet.paths))}" transform="translate(${x.toFixed(2)} ${y.toFixed(2)})"><title>${escapeHTML(tr(packet.label,state.lang))}</title><rect width="${box.width}" height="${box.height}" rx="5"/><path class="fw-packet-glyph" d="${packet.kind==='data'?'M8 9L14 5L20 9V18L14 22L8 18ZM8 9L14 13L20 9M14 13V22':'M14 5L22 13L14 22L6 13ZM9 13H19'}"/><text x="27" y="19" class="fw-packet-text">${escapeHTML(chipText(packet))}</text></g>`;
   }).join('');
   const markers=['query','data','reference','output'].map(kind=>`<marker id="fw-arrow-${kind}-${suffix}" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M1 1L6 4L1 7" fill="none" stroke="var(--fw-${kind})" stroke-width="1.4"/></marker>`).join('');
   holder.dataset.theme=state.theme;holder.dataset.flowStep=state.liveMode?(state.run?`live-${state.run.nodeId}`:'live-waiting'):state.flowFrame.stepId;holder.dataset.live=String(state.liveMode);holder.innerHTML=`<svg viewBox="${(width-viewWidth)/2+panX} ${(height-viewHeight)/2+panY} ${viewWidth} ${viewHeight}" role="group" aria-label="${state.lang==='zh'?'LEAN 优化建模流程与数据流':'LEAN optimization workflow and data flow'}"><defs>${markers}</defs>${edgeMarkup}${nodes}${edgeTextMarkup}${packetMarkup}</svg>`;
@@ -455,7 +529,7 @@ export function createFramework({heroHost,detailHost,onStageChange=()=>{},onNode
  const fontsChanged=()=>{if(disposed)return;views.forEach(v=>v.labelMetrics.clear());requestFrame();};if(document.fonts){document.fonts.ready?.then(fontsChanged);document.fonts.addEventListener?.('loadingdone',fontsChanged);cleanup.push(()=>document.fonts.removeEventListener?.('loadingdone',fontsChanged));}
  const scroll=()=>requestFrame(),visibility=()=>{if(document.hidden){cancelAnimationFrame(raf);raf=0;last=0;}else requestFrame();};addEventListener('scroll',scroll,{passive:true});addEventListener('resize',requestFrame);document.addEventListener('visibilitychange',visibility);cleanup.push(()=>removeEventListener('scroll',scroll),()=>removeEventListener('resize',requestFrame),()=>document.removeEventListener('visibilitychange',visibility));
  function changeStage(index,notify=false){index=Math.round(clamp(Number(index)||0,0,STAGES.length-1));const changed=index!==state.stage;state.scrollLinked=false;state.stage=index;state.progress=index/Math.max(1,STAGES.length-1);state.selected=null;if(changed){views.forEach(v=>v.pan.set(0,0));}if(changed&&notify)onStageChange(index);requestFrame();}
- function selectNode(id){const node=NODE_BY_ID.get(id);if(!node||!BASE_IDS.has(id)||node.level!==0)return;changeStage(node.stage);state.selected=id;onStageChange(state.stage);onNodeSelect(id,node);requestFrame();}
+ function selectNode(id){const node=NODE_BY_ID.get(id);if(!node||!BASE_IDS.has(id)||node.level!==0)return;changeStage(chapterForNode(id,state.stage));state.selected=id;state.zoom=1;onStageChange(state.stage);onNodeSelect(id,node);requestFrame();}
  const api={
   setProgress(progress){if(state.selected||state.free||state.liveMode||state.reduced)return;const value=clamp(Number(progress)||0),index=Math.round(value*(STAGES.length-1));state.scrollLinked=true;state.progress=value;if(index!==state.stage){state.stage=index;onStageChange(index);}requestFrame();},
   setStage(index){changeStage(index);},selectNode,

@@ -53,21 +53,21 @@ const node = (id, kind, stage, title, description, position, mobile, extra = {})
 export const NODES = [
   node('query', 'input', 1, ['问题描述', 'Query'],
     ['说明优化目标、决策含义和业务约束，作为分类与建模的任务上下文。', 'Specifies the optimization objective, decisions, and business constraints as context for classification and formulation.'],
-    [-9, 0, .08], [0, 9, .08], {
+    [-6.6, 0, .08], [0, 6.6, .08], {
       icon: 'query', short: text('问题描述', 'Query'), payloadId: QUERY_ID,
       details: [text('优化目标、决策与约束。', 'The objective, decisions, and constraints.'), text('查询上下文贯穿工作流、建模和代码生成。', 'Query context is retained through workflow construction, formulation, and code generation.')],
       exampleDetails: [text('3 个供应点 → 4 个客户；决策为非负连续运量。', '3 suppliers → 4 customers; decisions are nonnegative continuous shipment quantities.')],
     }),
   node('classification', 'agent', 2, ['分类智能体', 'Classification agent'],
     ['结合查询与 FileQA 返回的参考示例识别问题结构，输出相应类型标签。', 'Identifies the problem structure from the query and FileQA references, returning the corresponding type label.'],
-    [-6, 0, .12], [0, 6, .12], {
+    [-4.4, 0, .12], [0, 4.4, .12], {
       icon: 'classification', short: text('分类', 'Classify'),
       inlineTools: [{id: 'fileqa', icon: 'references', title: text('FileQA', 'FileQA'), description: text('请求并接收带类型标签的参考问题。', 'Requests and receives labeled reference problems.')}],
       details: [text('FileQA 检索参考问题及其类型。', 'FileQA retrieves reference problems and their types.'), text('实例 CSV 在后续的数据访问阶段读取。', 'Instance CSVs are read in the subsequent data-access stage.')],
     }),
   node('workflow', 'agent', 3, ['工作流生成智能体', 'Workflow generation agent'],
     ['根据问题类型和相关示例组织数据访问、变量定义、目标与约束的建模步骤。', 'Uses the problem type and relevant demonstrations to organize data access, variable definitions, the objective, and constraints.'],
-    [-3, 0, .12], [0, 3, .12], {
+    [-2.2, 0, .12], [0, 2.2, .12], {
       icon: 'workflow', short: text('工作流', 'Workflow'),
       inlineTools: [{id: 'retriever', icon: 'references', title: text('示例检索', 'Example retrieval'), description: text('请求相关数学表述与代码示例。', 'Requests relevant formulations and code examples.')}],
       routes: [
@@ -86,38 +86,38 @@ export const NODES = [
     }),
   node('codegen', 'code', 5, ['代码生成', 'Code generation'],
     ['将模型与数据映射转为 Python / Gurobi 程序，读取本次任务的完整 CSV。', 'Translates the formulation and data mapping into a Python / Gurobi program that reads the task’s complete CSVs.'],
-    [3, 0, .08], [0, -3, .08], {
+    [2.2, 0, .08], [0, -2.2, .08], {
       icon: 'code', short: text('代码', 'Code'), group: 'execution',
       details: [text('按当前任务的实体标识读取系数。', 'Loads coefficients using the current task’s entity identifiers.'), text('创建变量、目标和约束，再调用求解器。', 'Creates variables, the objective, and constraints, then calls the solver.')],
     }),
   node('solver', 'solver', 5, ['Python / Gurobi', 'Python / Gurobi'],
     ['执行生成的模型，返回求解状态、目标值和可用的变量取值。', 'Executes the generated model and returns solver status, objective value, and available variable values.'],
-    [6, 0, .08], [0, -6, .08], {
+    [4.4, 0, .08], [0, -4.4, .08], {
       icon: 'solver', short: text('求解', 'Solve'), group: 'execution',
       details: [text('同一数据包在程序运行时提供完整数值。', 'The same data package supplies complete coefficients at runtime.'), text('求解状态与数学模型、代码一起保留。', 'Solver status is retained with the formulation and code.')],
     }),
   node('solution', 'output', 6, ['完整结果', 'Complete result'],
     ['汇集数学表述或抽象计划、生成代码、求解状态和可用的目标与变量值。', 'Collects the formulation or abstract plan, generated code, solver status, and available objective and variable values.'],
-    [9, 0, .08], [0, -9, .08], {
+    [6.6, 0, .08], [0, -6.6, .08], {
       icon: 'result', short: text('结果', 'Result'),
       details: [text('数学模型与 Python 程序。', 'The mathematical formulation and Python program.'), text('求解状态、目标值与决策变量取值。', 'Solver status, objective value, and decision-variable values.')],
     }),
   node('references', 'reference', 2, ['参考示例库', 'Reference examples'],
     ['为 FileQA、工作流和代码生成提供带标签的问题、数学表述与程序示例。', 'Provides labeled problems, formulations, and code examples for FileQA, workflow construction, and code generation.'],
-    [-4.5, 3.2, .08], [-3.3, 4.5, .08], {
+    [-3.3, 2.05, .08], [-2.05, 3.3, .08], {
       icon: 'references', short: text('参考示例', 'Examples'),
       details: [text('分类检索：问题描述与类型标签。', 'Classification retrieval: problem descriptions and type labels.'), text('建模与代码检索：示例表述及程序模式。', 'Formulation and code retrieval: example formulations and programming patterns.')],
     }),
   node('csv', 'data', 1, ['CSV 数据包', 'CSV data package'],
     ['提供当前任务的表格、实体标识与数值参数，供数据工具和求解程序读取。', 'Supplies the current task’s tables, entity identifiers, and numerical parameters for data tools and the solver program.'],
-    [-8, -2.8, .08], [3.3, 7.4, .08], {
+    [-6.25, -2, .08], [2, 6.25, .08], {
       icon: 'csv', short: text('CSV 数据', 'CSV data'), payloadId: DATA_ID,
       details: [text('当前查询对应的数据表与参数。', 'Data tables and parameters associated with the current query.'), text('在模型生成及程序运行时读取。', 'Read during formulation and program execution.')],
       exampleDetails: [text('customer_demand.csv：4 个客户的需求。', 'customer_demand.csv: demand for 4 customers.'), text('supply_capacity.csv：3 个供应点的容量。', 'supply_capacity.csv: capacity for 3 suppliers.'), text('transportation_costs.csv：3 × 4 成本矩阵。', 'transportation_costs.csv: a 3 × 4 cost matrix.')],
     }),
   node('csvqa', 'tool', 4, ['CSVQA 数据访问', 'CSVQA data access'],
     ['按当前查询读取所需表格、标识与系数，将记录返回模型生成智能体。', 'Reads required tables, identifiers, and coefficients according to the current query, then returns records to the model-generation agent.'],
-    [.6, -1.7, .08], [2.8, -.5, .08], {
+    [.15, -1.6, .08], [1.6, -.15, .08], {
       icon: 'data-access', short: text('CSVQA', 'CSVQA'),
       details: [text('请求：当前查询需要的表格、字段与数据范围。', 'Request: the tables, fields, and data scope required by the current query.'), text('返回：保留源标识和记录顺序的数据。', 'Return: data preserving source identifiers and record order.')],
       exampleDetails: [text('读取客户需求、供应能力和运输成本。', 'Read customer demand, supply capacity, and transportation costs.')],

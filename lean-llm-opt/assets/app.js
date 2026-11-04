@@ -1,5 +1,5 @@
-import {createFramework} from './framework-3d.js?v=visitor-local-20261103-1';
-import {STAGES,NODE_BY_ID,JOURNEY_EXAMPLE,routeFromRunValue} from './framework-topology.js?v=visitor-local-20261103-1';
+import {createFramework} from './framework-3d.js?v=local-partitions-20261104-1';
+import {STAGES,NODE_BY_ID,JOURNEY_EXAMPLE,routeFromRunValue} from './framework-topology.js?v=local-partitions-20261104-1';
 const root = document.documentElement;
 const isStaticDeployment = root.dataset.deployment === 'static';
 const $ = (selector, scope = document) => scope.querySelector(selector);
@@ -163,16 +163,19 @@ function selectStage(index,scroll=false){
   state.stage=index;state.node=null;state.free=false;leaveLiveFollow();
   if(scrollDriven&&selectedNode)modelView?.back();
   modelView?.setFree(false);
-  if(!scrollDriven)modelView?.setStage(index);
+  modelView?.setStage(index);
   renderStageDetail();
   $('#follow-run').setAttribute('aria-pressed','false');
-  if(scrollDriven){const track=$('#arch-track'),top=track.getBoundingClientRect().top+scrollY;window.scrollTo({top:top+(track.offsetHeight-innerHeight)*index/6,behavior:'smooth'});}
+  if(scrollDriven){const track=$('#arch-track'),top=track.getBoundingClientRect().top+scrollY;const progress=index/(STAGES.length-1);window.scrollTo({top:top+(track.offsetHeight-innerHeight)*progress,behavior:'instant'});modelView?.setProgress(progress);}
   requestFrame();
 }
 $('#arch-controls').addEventListener('click',event=>{const button=event.target.closest('[data-stage]');if(button)selectStage(Number(button.dataset.stage),true);});
 $('#arch-controls').addEventListener('keydown',event=>{const current=Number(event.target.closest('[data-stage]')?.dataset.stage);if(!Number.isInteger(current))return;let next;if(event.key==='ArrowRight')next=(current+1)%7;else if(event.key==='ArrowLeft')next=(current+6)%7;else if(event.key==='Home')next=0;else if(event.key==='End')next=6;else return;event.preventDefault();selectStage(next,true);$(`#arch-controls [data-stage="${next}"]`).focus();});
 $('#graph-zoom-out').addEventListener('click',()=>modelView?.zoomBy(1/1.15));
-$('#graph-zoom-in').addEventListener('click',()=>modelView?.zoomBy(1.15));
+$('#graph-zoom-in').addEventListener('click',()=>{
+  if(state.stage===0&&!state.node&&!state.free&&!state.follow)selectStage(1,true);
+  else modelView?.zoomBy(1.15);
+});
 $('#graph-play').addEventListener('click',()=>{state.flowPlaying=!state.flowPlaying;modelView?.setFlowPlaying(state.flowPlaying);renderFlowStatus();});
 $('#graph-replay').addEventListener('click',()=>{state.flowPlaying=true;modelView?.restartFlow();modelView?.setFlowPlaying(true);renderFlowStatus();});
 $('#graph-reset').addEventListener('click',()=>{modelView?.resetCamera();selectStage(0,true);});
@@ -489,7 +492,7 @@ autoplayVisibilityObserver.observe($('#replay'));autoplayVisibilityObserver.obse
 const revealObserver=new IntersectionObserver(entries=>entries.forEach(entry=>{if(entry.isIntersecting){entry.target.classList.remove('waiting');revealObserver.unobserve(entry.target);}}),{threshold:.08});
 $$('.reveal').forEach(el=>{if(el.getBoundingClientRect().top>innerHeight&&!state.reduced)el.classList.add('waiting');revealObserver.observe(el);});
 translateStatic();renderArchitecture();
-modelView=createFramework({heroHost:$('#hero-framework'),detailHost:$('#framework-stage'),renderer:new URLSearchParams(location.search).get('renderer')==='svg'?'svg':'auto',onFlowChange(frame){renderFlowStatus(frame);},onStageChange(index,meta){state.stage=index;state.node=null;if(meta?.runState?.nodeId)liveTrace.nodeId=meta.runState.nodeId;if(meta?.route){state.route=meta.route;$$('[data-route]').forEach(el=>el.setAttribute('aria-pressed',String(el.dataset.route===state.route)));}renderStageDetail();},onNodeSelect(id){state.node=id;if(id){pageScrollIntentUntil=0;state.free=false;leaveLiveFollow();modelView?.setFree(false);const box=$('#architecture').getBoundingClientRect();if(box.top>innerHeight*.5||box.bottom<innerHeight*.5)$('#architecture').scrollIntoView({behavior:state.reduced?'instant':'smooth'});}renderStageDetail();}});
+modelView=createFramework({heroHost:$('#hero-framework'),detailHost:$('#framework-stage'),renderer:new URLSearchParams(location.search).get('renderer')==='svg'?'svg':'auto',onFlowChange(frame){renderFlowStatus(frame);},onStageChange(index,meta){state.stage=index;state.node=null;if(meta?.runState?.nodeId)liveTrace.nodeId=meta.runState.nodeId;if(meta?.route){state.route=meta.route;$$('[data-route]').forEach(el=>el.setAttribute('aria-pressed',String(el.dataset.route===state.route)));}renderStageDetail();},onNodeSelect(id){state.node=id;if(id){pageScrollIntentUntil=0;state.free=false;leaveLiveFollow();modelView?.setFree(false);const box=$('#architecture').getBoundingClientRect();if(box.top>innerHeight*.5||box.bottom<innerHeight*.5)$('#architecture').scrollIntoView({behavior:'instant',block:'start'});}renderStageDetail();}});
 modelView.setLanguage(state.lang);modelView.setTheme(state.theme);modelView.setReduced(state.reduced);syncDemoLinks();requestFrame();
 try {
   [research,caseData]=await Promise.all(['data/research.json','data/case.json'].map(async path=>{const response=await fetch(new URL(`../${path}`,import.meta.url));if(!response.ok)throw new Error(`${path}: ${response.status}`);return response.json();}));

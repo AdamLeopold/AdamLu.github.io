@@ -1,15 +1,15 @@
 /** Abstract role components; scene, labels, camera, and flow belong to the renderer. */
 const PROFILE_DEFINITIONS={
-  query:{name:'abstract-message-capsule',width:2.65,height:2.75},
-  classification:{name:'abstract-classification-prism-fork',width:3.15,height:3.0},
-  workflow:{name:'abstract-workflow-orbit-graph',width:3.05,height:3.1},
-  model:{name:'abstract-constraint-lattice',width:3.1,height:3.05},
-  code:{name:'abstract-code-bracket-strands',width:3.2,height:3.05},
-  solver:{name:'abstract-solver-concentric-core',width:3.05,height:3.15},
-  result:{name:'abstract-output-convergence',width:3.15,height:3.0},
-  references:{name:'abstract-reference-knowledge-rings',width:2.9,height:3.2},
-  csv:{name:'abstract-csv-matrix-voxels',width:2.8,height:2.65},
-  'data-access':{name:'abstract-data-access-slice',width:2.6,height:2.7},
+  query:{name:'abstract-message-capsule',width:1.578919,height:1.753539,depth:.977127,minZ:-.201041,maxZ:.776086},
+  classification:{name:'abstract-classification-prism-fork',width:2.225872,height:2.217729,depth:.924818,minZ:.006468,maxZ:.931286},
+  workflow:{name:'abstract-workflow-orbit-graph',width:1.823339,height:1.705673,depth:1.218606,minZ:-.115400,maxZ:1.103206},
+  model:{name:'abstract-constraint-lattice',width:2.007175,height:1.803326,depth:1.674586,minZ:-.181911,maxZ:1.492675},
+  code:{name:'abstract-code-bracket-strands',width:1.771733,height:1.497540,depth:1.252062,minZ:-.187382,maxZ:1.064680},
+  solver:{name:'abstract-solver-concentric-core',width:1.703148,height:1.649045,depth:1.227570,minZ:-.204379,maxZ:1.023191},
+  result:{name:'abstract-output-convergence',width:1.747198,height:1.321519,depth:.955460,minZ:-.028126,maxZ:.927334},
+  references:{name:'abstract-reference-knowledge-rings',width:1.687884,height:1.505251,depth:1.410507,minZ:-.298535,maxZ:1.111972},
+  csv:{name:'abstract-csv-matrix-voxels',width:1.240486,height:1.228740,depth:1.037534,minZ:-.229878,maxZ:.807656},
+  'data-access':{name:'abstract-data-access-slice',width:1.241482,height:1.115504,depth:.913719,minZ:-.077561,maxZ:.836158},
 };
 const aliases={codegen:'code',solution:'result',csvqa:'data-access'};
 export const OBJECT_PROFILES=Object.freeze(Object.fromEntries([

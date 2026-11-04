@@ -23,11 +23,12 @@ function boundsFor(footprint = {}) {
 }
 
 /** Inputs remain canonical; local mesh bounds stay upright in world XYZ. */
-export function computeDepthCameraPose({center, span, aspect = 1, stage = 0, selected = null,
+export function computeDepthCameraPose({center, span, aspect = 1, stage = 0, selected = null, mode,
   hero = false, zoom = 1, positions = new Map(), footprints = new Map(), focusIds = [], routePoints = []} = {}) {
   const entries = positions instanceof Map ? [...positions] : Object.entries(positions || {});
-  const allIds = entries.map(([id]) => id), overview = hero || !selected && stage === 0;
-  const requested = overview ? allIds : selected && get(positions, selected) ? [selected] : focusIds.filter(id => get(positions, id));
+  const allIds = entries.map(([id]) => id), overview = hero || (mode ? mode === 'overview' : !selected && stage === 0);
+  const localIds = focusIds.filter(id => get(positions, id));
+  const requested = overview ? allIds : localIds.length ? localIds : selected && get(positions, selected) ? [selected] : [];
   const ids = requested.length ? requested : allIds, points = [], anchors = [];
   let planLeft = Infinity, planRight = -Infinity, planBottom = Infinity, planTop = -Infinity;
   for (const id of ids) {
@@ -56,7 +57,7 @@ export function computeDepthCameraPose({center, span, aspect = 1, stage = 0, sel
       const trunk = entries.filter(([id]) => ['query', 'classification', 'workflow', 'model', 'codegen', 'solver', 'solution'].includes(id));
       if (trunk.length) target[0] = trunk.reduce((sum, [, position]) => sum + toDepthPoint(position)[0], 0) / trunk.length;
     }
-    if (!overview && selected && anchors.length) target = [...anchors[0]];
+    if (!overview && selected && anchors.length === 1) target = [...anchors[0]];
     target[1] += overview ? .10 : .20;
     if (overview) target[2] += Math.min(1.3, (high[2] - low[2]) * .055);
     // Existing framing supplies the canonical pan delta, independently of zoom.
@@ -75,9 +76,10 @@ export function computeDepthCameraPose({center, span, aspect = 1, stage = 0, sel
     fitRadius = Math.max(fitRadius, Math.abs(dot(offset, right)) / tanH - depth,
       Math.abs(dot(offset, up)) / tanV - depth, .5 - depth);
   }
-  const minSpan = overview ? 7 : mobile ? 7 : 5.9;
+  const minSpan = overview ? 7 : mobile ? 4.8 : 4.1;
   const fallbackSpan = points.length ? minSpan : Math.max(minSpan, number(span, minSpan));
-  const radius = Math.max(fitRadius * 1.10, fallbackSpan / (2 * tanV)) / (hero ? 1 : clamp(number(zoom, 1), .7, 1.6));
+  const fitMargin = overview ? 1.10 : 1.30;
+  const radius = Math.max(fitRadius * fitMargin, fallbackSpan / (2 * tanV)) / (hero ? 1 : clamp(number(zoom, 1), .7, 1.6));
   return {position: target.map((value, axis) => value + outward[axis] * radius), target,
     span: 2 * radius * tanV, fov, yaw, pitch};
 }

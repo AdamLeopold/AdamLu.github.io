@@ -1,4 +1,4 @@
-/** Smooth, obstacle-aware routes shared by lines, arrows, and payloads. */
+/** Compact straight/rounded routes shared by lines, arrows, and payloads. */
 const finite = (value, fallback = 0) => Number.isFinite(Number(value)) ? Number(value) : fallback;
 const clamp = (value, min, max) => Math.max(min, Math.min(max, value));
 const distance = (a, b) => Math.hypot(...a.map((value, index) => value - b[index]));
@@ -52,7 +52,7 @@ function intersects(a, b, box, padding = 0) {
 }
 
 /** Visibility-grid fallback for footprints wider than their normal station. */
-function detour(start, end, boxes, preferred, padding) {
+function detour(start, end, boxes, preferred, padding, endpoints) {
   const xs = new Set([start[0], end[0], ...preferred.map(point => point[0])]);
   const ys = new Set([start[1], end[1], ...preferred.map(point => point[1])]);
   for (const box of boxes) {xs.add(box.minU - padding); xs.add(box.maxU + padding); ys.add(box.minV - padding); ys.add(box.maxV + padding);}
@@ -62,7 +62,7 @@ function detour(start, end, boxes, preferred, padding) {
   for (let row = 0; row < rows; row++) for (let col = 0; col < columns; col++) points.push([x[col], y[row]]);
   const indexOf = point => y.findIndex(value => near(value, point[1])) * columns + x.findIndex(value => near(value, point[0]));
   const first = indexOf(start), last = indexOf(end), costs = Array(size).fill(Infinity), previous = Array(size).fill(-1), used = new Set();
-  const clear = (a, b) => boxes.every(box => !intersects(a, b, box, padding));
+  const clear = (a, b) => boxes.every(box => !intersects(a, b, box, endpoints.has(box.id) ? 0 : padding));
   costs[first] = 0;
   for (let count = 0; count < size; count++) {
     let at = -1;
@@ -101,27 +101,6 @@ function rounded(points, radius, spacing) {
   line(output.at(-1), points.at(-1)); return output;
 }
 
-function cubic(points, spacing) {
-  const length = points.slice(1).reduce((sum, point, index) => sum + distance(points[index], point), 0);
-  const steps = Math.max(18, Math.ceil(length / spacing * 1.4)), result = [];
-  for (let index = 0; index <= steps; index++) {
-    const t = index / steps, s = 1 - t;
-    result.push(points[0].map((value, axis) => s ** 3 * value + 3 * s ** 2 * t * points[1][axis] + 3 * s * t ** 2 * points[2][axis] + t ** 3 * points[3][axis]));
-  }
-  return result;
-}
-
-/** Two cubics meet with one shared tangent at the branch's dedicated lane. */
-function arch(source, target, apex, axis, spacing) {
-  const start = source.point, end = target.point, direction = Math.sign(end[axis] - start[axis]) || 1;
-  const reach = (point, normal) => Math.max(.035, (apex[0] - point[0]) * normal[0] * .82 + (apex[1] - point[1]) * normal[1] * .82);
-  const startControl = start.map((value, index) => value + source.normal[index] * reach(start, source.normal));
-  const endControl = end.map((value, index) => value + target.normal[index] * reach(end, target.normal));
-  const handle = Math.max(.025, Math.min(Math.abs(apex[axis] - start[axis]), Math.abs(end[axis] - apex[axis])) * .55);
-  const before = [...apex], after = [...apex]; before[axis] -= direction * handle; after[axis] += direction * handle;
-  return [...cubic([start, startControl, before, apex], spacing), ...cubic([apex, after, endControl, end], spacing).slice(1)];
-}
-
 function crossesCurveSegment(a, b, box, padding) {
   let enter = 0, leave = 1;
   const min = [box.minU - padding + 1e-7, box.minV - padding + 1e-7], max = [box.maxU + padding - 1e-7, box.maxV + padding - 1e-7];
@@ -142,21 +121,21 @@ function clearsIcons(points, boxes, edge, padding) {
 
 /** Positions and footprints are readonly Maps (or plain objects). No Three/DOM dependency. */
 export function computeFlowRoute(edge, positions, footprints = new Map(), options = {}) {
-  const mobile = Boolean(options.mobile), z = finite(options.z, .22), clearance = Math.max(.06, finite(options.clearance, .18));
-  const radius = Math.max(.01, finite(options.cornerRadius, .15)), spacing = Math.max(.03, finite(options.spacing, .16));
+  const mobile = Boolean(options.mobile), z = finite(options.z, .22), clearance = Math.max(.06, finite(options.clearance, .14));
+  const radius = Math.max(.01, finite(options.cornerRadius, .10)), spacing = Math.max(.03, finite(options.spacing, .14));
   const boxes = boxesFor(positions, footprints, mobile), from = boxes.get(edge.from), to = boxes.get(edge.to);
   if (!from || !to || edge.from === edge.to) throw new TypeError('A route requires distinct known module endpoints');
   const main = MAIN.map(id => boxes.get(id)).filter(Boolean), all = [...boxes.values()];
   const rear = Math.max(...main.map(box => box.maxV)) + clearance;
   const front = Math.min(...all.map(box => box.minV)) - clearance;
-  let source, target, middle = [], lane, axis = 0, apex, routeClearance = clearance, routeRadius = radius;
+  let source, target, middle = [], lane, routeClearance = clearance, routeRadius = radius;
+  const trunk = MAIN.includes(edge.from) && MAIN.includes(edge.to) && edge.kind === 'flow';
   const request = edge.kind === 'request';
-  if (MAIN.includes(edge.from) && MAIN.includes(edge.to) && edge.kind === 'flow') {
+  if (trunk) {
     const offset = edge.route === 'tailored' ? -.065 : edge.route === 'agnostic' ? .065 : 0;
     source = port(from, 'right', offset); target = port(to, 'left', offset); lane = `trunk${edge.route ? ':' + edge.route : ''}`;
     const centerU = (source.point[0] + target.point[0]) / 2;
     middle = [[centerU, source.point[1]], [centerU, target.point[1]]];
-    apex = [centerU, (source.point[1] + target.point[1]) / 2 + (edge.route === 'tailored' ? -.045 : .045)];
   } else if (edge.from === 'references' || edge.to === 'references') {
     const owner = edge.from === 'references' ? edge.to : edge.from, archive = boxes.get('references');
     const ownerBox = boxes.get(owner), towardArchive = Math.sign(archive.u - ownerBox.u) || 1;
@@ -166,14 +145,12 @@ export function computeFlowRoute(edge, positions, footprints = new Map(), option
     const bus = Math.max(rear + (request ? .12 : .43), ownerPort.point[1] + clearance + radius + (request ? .05 : .29));
     lane = request ? 'reference:request' : 'reference:return';
     middle = [[source.point[0], bus], [target.point[0], bus]];
-    apex = [(source.point[0] + target.point[0]) / 2, bus];
   } else if ((edge.from === 'model' && edge.to === 'csvqa') || (edge.from === 'csvqa' && edge.to === 'model')) {
     const model = boxes.get('model'), reader = boxes.get('csvqa'), gap = model.minV - reader.maxV;
     if (gap > clearance * .7) {
       const modelPort = port(model, 'front', request ? -.20 : .20), readerPort = port(reader, 'rear', request ? -.20 : .20);
       source = edge.from === 'model' ? modelPort : readerPort; target = edge.to === 'model' ? modelPort : readerPort;
       const bus = reader.maxV + gap * (request ? .65 : .35); middle = [[source.point[0], bus], [target.point[0], bus]];
-      apex = [(source.point[0] + target.point[0]) / 2, bus];
     } else {
       source = port(from, 'right', -.18); target = port(to, 'right', .18);
       const right = Math.max(model.maxU, reader.maxU), next = main.filter(box => box.minU > right).sort((a, b) => a.minU - b.minU)[0];
@@ -182,47 +159,47 @@ export function computeFlowRoute(edge, positions, footprints = new Map(), option
       routeRadius = Math.min(radius, routeClearance * .65);
       const bus = right + routeClearance + routeRadius + (request ? .015 : Math.min(.22, corridor * .38));
       middle = [[bus, source.point[1]], [bus, target.point[1]]];
-      apex = [bus, (source.point[1] + target.point[1]) / 2]; axis = 1;
     }
     lane = request ? 'csvqa:request' : 'csvqa:return';
   } else if ((edge.from === 'csvqa' && edge.to === 'csv') || (edge.from === 'csv' && edge.to === 'csvqa')) {
     source = port(from, 'front', -.18); target = port(to, 'front', .18);
     const bus = front - (request ? .24 : .50); middle = [[source.point[0], bus], [target.point[0], bus]];
-    apex = [(source.point[0] + target.point[0]) / 2, bus];
     lane = request ? 'data:request' : 'data:return';
   } else if (edge.kind === 'runtime') {
     source = port(from, 'front', -.32); target = port(to, 'front', .30);
     const bus = front - .64; middle = [[source.point[0], bus], [target.point[0], bus]]; lane = 'runtime:full-csv';
-    apex = [(source.point[0] + target.point[0]) / 2, bus];
   } else if (edge.kind === 'artifact') {
     const rearward = edge.from === 'model', side = rearward ? 'rear' : 'front';
     source = port(from, side, rearward ? .32 : -.30); target = port(to, side, rearward ? -.28 : -.10);
     const bus = rearward ? rear + 1.0 : front - .94; middle = [[source.point[0], bus], [target.point[0], bus]];
     lane = rearward ? 'artifact:formulation' : 'artifact:code';
-    apex = [(source.point[0] + target.point[0]) / 2, bus];
   } else {
     source = port(from, 'right', -.22); target = port(to, 'front', -.25);
     const bus = Math.max(from.maxU, to.maxU) + clearance;
     middle = [[bus, source.point[1]], [bus, target.point[1] - clearance], [target.point[0], target.point[1] - clearance]];
     lane = 'data:field-mapping';
-    apex = [bus, (source.point[1] + target.point[1]) / 2]; axis = 1;
   }
-  const escape = p => p.point.map((value, axis) => value + p.normal[axis] * (routeClearance + routeRadius));
-  const first = escape(source), last = escape(target);
+  const escape = (p, toward) => {
+    const available = toward?.reduce((sum, value, axis) => sum + (value - p.point[axis]) * p.normal[axis], 0);
+    const extent = available > .025 ? Math.min(routeClearance + routeRadius, available) : routeClearance + routeRadius;
+    return p.point.map((value, axis) => value + p.normal[axis] * extent);
+  };
+  const first = escape(source, middle[0]), last = escape(target, middle.at(-1)), endpoints = new Set([edge.from, edge.to]);
   let center = simplify([first, ...middle, last]);
   // Join every waypoint orthogonally, including any escape-to-bus adjustment.
   center = simplify(center.flatMap((point, index) => index && !near(center[index - 1][0], point[0]) && !near(center[index - 1][1], point[1]) ? [[point[0], center[index - 1][1]], point] : [point]));
   const padding = routeClearance + routeRadius * .6;
-  if (center.some((point, index) => index && all.some(box => intersects(center[index - 1], point, box, padding)))) center = detour(first, last, all, middle, padding);
+  if (center.some((point, index) => index && all.some(box => intersects(center[index - 1], point, box, endpoints.has(box.id) ? 0 : padding)))) center = detour(first, last, all, middle, padding, endpoints);
   const controls = simplify([source.point, ...center, target.point]);
-  let samples = arch(source, target, apex, axis, spacing), shape = 'bezier';
+  let samples = rounded(trunk ? [source.point, target.point] : controls, routeRadius, spacing), shape = trunk ? 'straight' : 'rounded-orthogonal';
   const guard = Math.min(.035, routeClearance * .4);
   if (!clearsIcons(samples, all, edge, guard)) {
-    shape = 'curved-corridor';
-    for (const smoothing of [.85, .60, .40, .25, routeRadius]) {
-      samples = rounded(controls, Math.max(routeRadius, smoothing), spacing);
+    shape = 'rounded-orthogonal';
+    for (const factor of [.7, .4, .1]) {
+      samples = rounded(controls, Math.max(.005, routeRadius * factor), spacing);
       if (clearsIcons(samples, all, edge, guard)) break;
     }
+    if (!clearsIcons(samples, all, edge, guard)) throw new Error('A route must stay outside unrelated modules');
   }
   const points = samples.map(point => world(point, mobile, z));
   const distances = [0]; for (let index = 1; index < points.length; index++) distances.push(distances.at(-1) + distance(points[index - 1], points[index]));

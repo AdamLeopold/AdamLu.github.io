@@ -13,3 +13,51 @@
 .fw-fallback-edge{fill:none;stroke-width:1.1;stroke-linecap:round;stroke-linejoin:round;opacity:.8;vector-effect:non-scaling-stroke}.fw-fallback-edge--active{stroke-width:1.6;opacity:1}.fw-fallback-edge[data-kind="query"]{stroke:var(--fw-query)}.fw-fallback-edge[data-kind="data"]{stroke:var(--fw-data)}.fw-fallback-edge[data-kind="reference"]{stroke:var(--fw-reference)}.fw-fallback-edge[data-kind="output"]{stroke:var(--fw-output)}.fw-route-arrow{fill:var(--fw-query)}.fw-route-arrow[data-kind="data"]{fill:var(--fw-data)}.fw-route-arrow[data-kind="reference"]{fill:var(--fw-reference)}.fw-route-arrow[data-kind="output"]{fill:var(--fw-output)}.fw-route-caption rect{fill:var(--fw-background);fill-opacity:.96;stroke:var(--fw-line);stroke-width:.6}.fw-route-caption text{fill:var(--fw-ink);font:500 10px Inter,"PingFang SC",sans-serif}.fw-edge-label{position:absolute;left:0;top:0;pointer-events:none;white-space:nowrap;border:1px solid rgba(155,196,225,.28);border-radius:4px;background:rgba(11,24,37,.94);padding:3px 6px;color:#cce2f2;font:500 10px/17px Inter,"PingFang SC",sans-serif}.fw-edge-label[data-kind="data"]{color:#8cdec7}.fw-edge-label[data-kind="reference"]{color:#d4bbed}.fw-edge-label[data-kind="output"]{color:#e4cf9f}.fw-edge-label[hidden]{display:none!important}.fw-label-layer[data-theme="light"] .fw-edge-label{background:rgba(247,250,252,.97);border-color:#a5b8c6;color:#254f70}.fw-label-layer[data-theme="light"] .fw-edge-label[data-kind="data"]{color:#176e5b}.fw-label-layer[data-theme="light"] .fw-edge-label[data-kind="reference"]{color:#6e4c99}.fw-label-layer[data-theme="light"] .fw-edge-label[data-kind="output"]{color:#7e5d1f}
 
 .fw-packet[data-stream="secondary"],.fw-request[data-stream="secondary"]{border-style:dashed}.fw-fallback-packet[data-stream="secondary"]>rect,.fw-fallback-request[data-stream="secondary"]>rect{stroke-dasharray:3 2}.fw-abstract-object{stroke-linejoin:round;stroke-linecap:round}
+
+/* Persistent, unframed names stay legible without covering the diagram. */
+.fw-label,
+.fw-label:hover,
+.fw-label--selected,
+.fw-label--run,
+.fw-label-layer[data-theme="light"] .fw-label,
+.fw-label-layer[data-theme="light"] .fw-label:hover,
+.fw-label-layer[data-theme="light"] .fw-label--selected {
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  padding: 2px 3px;
+  font-size: 12px;
+  line-height: 1.3;
+  text-shadow: 0 1px 3px #07101c, 0 0 7px rgba(7,16,28,.9);
+}
+.fw-label--agent,
+.fw-view-labels--hero .fw-label,
+.fw-view-labels--hero .fw-label--agent {font-size:12px;font-weight:500}
+.fw-label small {font-size:10px;line-height:1.3;margin-top:2px;white-space:normal;overflow-wrap:anywhere}
+.fw-label--selected,.fw-label--run {font-weight:600}
+.fw-label:focus-visible {outline:none;text-decoration:underline;text-underline-offset:3px}
+.fw-label-layer[data-theme="light"] .fw-label {text-shadow:0 1px 2px #fff,0 0 6px rgba(255,255,255,.95)}
+.fw-fallback-caption {fill:none;stroke:none}
+.fw-fallback-name,.fw-fallback-tool,.fw-route-caption text {
+  paint-order:stroke fill;
+  stroke:var(--fw-background);
+  stroke-width:2.5px;
+  stroke-linejoin:round;
+}
+.fw-fallback-name {font-size:12px;font-weight:500}
+.fw-fallback-tool {font-size:10px}
+.fw-fallback-node:focus .fw-fallback-caption {stroke:none}
+.fw-fallback-node:focus-visible .fw-fallback-name {text-decoration:underline;text-underline-offset:3px}
+.fw-fallback-node[data-context="true"] {opacity:1}
+.fw-fallback-node[data-context="true"]>g:not(.fw-fallback-caption) {opacity:.52}
+.fw-edge-label,
+.fw-label-layer[data-theme="light"] .fw-edge-label {background:transparent;border:0;border-radius:0;box-shadow:none;padding:1px 3px;font-size:10px;text-shadow:0 1px 3px #07101c,0 0 6px rgba(7,16,28,.9)}
+.fw-label-layer[data-theme="light"] .fw-edge-label {text-shadow:0 1px 2px #fff,0 0 5px rgba(255,255,255,.95)}
+
+/* Moving identities share the quiet typography of the node annotations. */
+.fw-label-layer .fw-packet,.fw-label-layer .fw-request,
+.fw-label-layer[data-theme="light"] .fw-packet,.fw-label-layer[data-theme="light"] .fw-request {
+  background:transparent;border:0;box-shadow:none;
+}
+.fw-fallback-packet>rect,.fw-fallback-request>rect {display:none}
