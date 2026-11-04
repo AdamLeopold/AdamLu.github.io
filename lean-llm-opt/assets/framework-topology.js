@@ -104,20 +104,20 @@ export const NODES = [
     }),
   node('references', 'reference', 2, ['参考示例库', 'Reference examples'],
     ['为 FileQA、工作流和代码生成提供带标签的问题、数学表述与程序示例。', 'Provides labeled problems, formulations, and code examples for FileQA, workflow construction, and code generation.'],
-    [-3.3, 2.05, .08], [-2.05, 3.3, .08], {
+    [-3.3, 2.85, .08], [-2.85, 3.3, .08], {
       icon: 'references', short: text('参考示例', 'Examples'),
       details: [text('分类检索：问题描述与类型标签。', 'Classification retrieval: problem descriptions and type labels.'), text('建模与代码检索：示例表述及程序模式。', 'Formulation and code retrieval: example formulations and programming patterns.')],
     }),
   node('csv', 'data', 1, ['CSV 数据包', 'CSV data package'],
     ['提供当前任务的表格、实体标识与数值参数，供数据工具和求解程序读取。', 'Supplies the current task’s tables, entity identifiers, and numerical parameters for data tools and the solver program.'],
-    [-6.25, -2, .08], [2, 6.25, .08], {
+    [-5.5, -2.9, .08], [2.9, 5.5, .08], {
       icon: 'csv', short: text('CSV 数据', 'CSV data'), payloadId: DATA_ID,
       details: [text('当前查询对应的数据表与参数。', 'Data tables and parameters associated with the current query.'), text('在模型生成及程序运行时读取。', 'Read during formulation and program execution.')],
       exampleDetails: [text('customer_demand.csv：4 个客户的需求。', 'customer_demand.csv: demand for 4 customers.'), text('supply_capacity.csv：3 个供应点的容量。', 'supply_capacity.csv: capacity for 3 suppliers.'), text('transportation_costs.csv：3 × 4 成本矩阵。', 'transportation_costs.csv: a 3 × 4 cost matrix.')],
     }),
   node('csvqa', 'tool', 4, ['CSVQA 数据访问', 'CSVQA data access'],
     ['按当前查询读取所需表格、标识与系数，将记录返回模型生成智能体。', 'Reads required tables, identifiers, and coefficients according to the current query, then returns records to the model-generation agent.'],
-    [.15, -1.6, .08], [1.6, -.15, .08], {
+    [1.05, -2.9, .08], [2.9, -1.05, .08], {
       icon: 'data-access', short: text('CSVQA', 'CSVQA'),
       details: [text('请求：当前查询需要的表格、字段与数据范围。', 'Request: the tables, fields, and data scope required by the current query.'), text('返回：保留源标识和记录顺序的数据。', 'Return: data preserving source identifiers and record order.')],
       exampleDetails: [text('读取客户需求、供应能力和运输成本。', 'Read customer demand, supply capacity, and transportation costs.')],

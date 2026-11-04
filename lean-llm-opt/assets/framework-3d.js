@@ -1,10 +1,10 @@
 import * as THREE from './vendor/three/three.module.js';
 import {buildFrameworkObject,svgFrameworkObject,OBJECT_PROFILES} from './framework-objects.js?v=local-partitions-20261104-1';
 import {computeFlowRoute,sampleFlowRoute} from './framework-routes.js?v=local-partitions-20261104-1';
-import {toDepthPoint,toDepthDirection,computeDepthCameraPose} from './framework-depth.js?v=local-partitions-20261104-1';
-export {toDepthPoint,toDepthDirection} from './framework-depth.js?v=local-partitions-20261104-1';
-import * as topology from './framework-topology.js?v=local-partitions-20261104-1';
-export {TOPOLOGY,STAGES,TEACHING_CYCLE,sampleTeachingCycle,sampleTeachingFlows} from './framework-topology.js?v=local-partitions-20261104-1';
+import {toDepthPoint,toDepthDirection,computeDepthCameraPose} from './framework-depth.js?v=facing-nodes-20261104-1';
+export {toDepthPoint,toDepthDirection} from './framework-depth.js?v=facing-nodes-20261104-1';
+import * as topology from './framework-topology.js?v=vertical-side-20261104-1';
+export {TOPOLOGY,STAGES,TEACHING_CYCLE,sampleTeachingCycle,sampleTeachingFlows} from './framework-topology.js?v=vertical-side-20261104-1';
 const {TOPOLOGY,STAGES,NODE_BY_ID,activeEdges,resolveRunEvent,TEACHING_CYCLE,sampleTeachingCycle,sampleTeachingFlows}=topology;
 export const STATIONS=TOPOLOGY.groups||[];
 const clamp=(n,a=0,b=1)=>Math.max(a,Math.min(b,n));
@@ -20,6 +20,7 @@ const FLOW_IDS={query:topology.JOURNEY_EXAMPLE?.query?.id||'example-query',data:
 const labelForKind=(kind,lang)=>({query:{zh:'问题描述',en:'Query'},data:{zh:'CSV 数据',en:'CSV data'},reference:{zh:'参考示例',en:'Reference'},artifact:{zh:'求解产物',en:'Output'}}[kind]?.[lang]||'');
 // Frame the two endpoints of the operation, including the tool or record it uses.
 const SHOT_FOCUS=[null,['query','csv'],['classification','references'],['workflow','references'],['model','csvqa'],['codegen','solver'],['solver','solution']];
+const SHOT_CONTEXT=[null,['query','classification','workflow','csv'],['query','classification','workflow','references'],['classification','workflow','model','references'],['workflow','model','codegen','csvqa'],['model','codegen','solver','solution'],['codegen','solver','solution']];
 function chapterForNode(id, currentStage){
  return SHOT_FOCUS[currentStage]?.includes(id) ? currentStage : NODE_BY_ID.get(id)?.stage;
 }
@@ -27,28 +28,28 @@ export const OBJECT_SCALE=.64;
 export const flowStrokeWidth=active=>active?1.6:1.1;
 export const flowWorldWidth=(pixelWidth,depth,viewportHeight,fov=42)=>pixelWidth*2*Math.max(.1,depth)*Math.tan(fov*Math.PI/360)/Math.max(1,viewportHeight);
 export const scaledFootprint=(fp,scale=OBJECT_SCALE)=>Object.fromEntries(Object.entries(fp).map(([k,v])=>[k,['width','height','depth','minX','maxX','minY','maxY','minZ','maxZ'].includes(k)?v*scale:v]));
-export function depthRoutingFootprint(fp){const minZ=fp.minZ??-.35,maxZ=fp.maxZ??.65,minX=fp.minX??-fp.width/2,maxX=fp.maxX??fp.width/2;return{width:(maxZ-minZ)/1.2,height:maxX-minX,minX:minZ/1.2,maxX:maxZ/1.2,minY:-maxX,maxY:-minX};}
+export function depthRoutingFootprint(fp){const minY=fp.minY??-fp.height/2,maxY=fp.maxY??fp.height/2,minX=fp.minX??-fp.width/2,maxX=fp.maxX??fp.width/2;return{width:maxY-minY,height:maxX-minX,minX:-maxY,maxX:-minY,minY:-maxX,maxY:-minX};}
 class FlowCurve extends THREE.Curve{
  constructor(route){super();this.route=route;}
  getPoint(t,target=new THREE.Vector3()){return target.fromArray(sampleFlowRoute(this.route,t).point);}
  getTangent(t,target=new THREE.Vector3()){return target.fromArray(sampleFlowRoute(this.route,t).tangent).normalize();}
 }
 
-/** Fit the chosen station itself, rather than nudging a whole-system camera. */
+/** Keep the selected operation within a broad, connected semantic neighborhood. */
 export function computeFraming({positions,footprints=new Map(),stage=0,selected=null,hero=false,runNode=null,aspect=1,zoom=1,pan={x:0,y:0},routePoints=[]}){
  const full=hero||(!selected&&!runNode&&stage===0);
  const chapter=selected?chapterForNode(selected,stage):stage;
  const requested=full?[...positions.keys()]:runNode?[runNode]:SHOT_FOCUS[chapter]||[selected];
- const focusIds=requested.filter(id=>positions.has(id)),ids=focusIds.length?focusIds:[...positions.keys()];
+ const focusIds=requested.filter(id=>positions.has(id)),context=[...new Set([...(full?[...positions.keys()]:SHOT_CONTEXT[chapter]||requested),...(runNode?[runNode]:[])])].filter(id=>positions.has(id)),ids=context.length?context:focusIds.length?focusIds:[...positions.keys()];
  let left=Infinity,right=-Infinity,top=-Infinity,bottom=Infinity;
  for(const id of ids){const p=positions.get(id),fp=footprints.get(id)||{width:2.9,height:2.8};left=Math.min(left,p.x+(fp.minX??-fp.width/2));right=Math.max(right,p.x+(fp.maxX??fp.width/2));top=Math.max(top,p.y+(fp.maxY??fp.height/2));bottom=Math.min(bottom,p.y+(fp.minY??-fp.height/2));}
  if(full)for(const p of routePoints){left=Math.min(left,p[0]);right=Math.max(right,p[0]);top=Math.max(top,p[1]);bottom=Math.min(bottom,p[1]);}
  const ratio=Math.max(.2,Number(aspect)||1),padding=full?1.4:1.2;
- let span=Math.max(top-bottom+padding,(right-left+padding)/ratio,full?6:ratio<1?8:5.2)/(hero?1:clamp(zoom,.7,1.6));
+ let span=Math.max(right-left+padding,(top-bottom+padding)/ratio,full?6:ratio<1?8:7)/(hero?1:clamp(zoom,.7,1.6));
  const center={x:(left+right)/2+(hero?0:pan.x||0),y:(top+bottom)/2+(hero?0:pan.y||0)};
- const worldBounds={left:center.x-span*ratio/2,right:center.x+span*ratio/2,top:center.y+span/2,bottom:center.y-span/2};
+ const worldBounds={left:center.x-span/2,right:center.x+span/2,top:center.y+span*ratio/2,bottom:center.y-span*ratio/2};
  const visibleNodeIds=[...positions].filter(([id,p])=>{const fp=footprints.get(id)||{width:2.9,height:2.8};return p.x+fp.width/2>worldBounds.left&&p.x-fp.width/2<worldBounds.right&&p.y+fp.height/2>worldBounds.bottom&&p.y-fp.height/2<worldBounds.top;}).map(([id])=>id);
- return{center,span,aspect:ratio,worldBounds,focusIds:ids,visibleNodeIds,mode:full?'overview':selected?'module':'step'};
+ return{center,span,aspect:ratio,worldBounds,focusIds:focusIds.length?focusIds:ids,contextIds:ids,visibleNodeIds,mode:full?'overview':selected?'module':'step'};
 }
 
 export function computeCameraPose(options){return computeDepthCameraPose(options);}
@@ -63,15 +64,16 @@ export function sampleScrollCamera(poses,progress){
 
 export function sampleCameraFlight(from,to,progress,{reduced=false}={}){
  if(reduced)return{...to,position:[...to.position],target:[...to.target]};
- const t=clamp(progress),u=t*t*(3-2*t),wave=Math.sin(Math.PI*u),dx=to.position[0]-from.position[0],dy=to.position[1]-from.position[1],length=Math.hypot(dx,dy)||1;
- const arc=Math.min(1.7,Math.max(.2,Math.abs(to.span-from.span)*.045+Math.hypot(dx,dy)*.07));
- const position=from.position.map((v,i)=>lerp(v,to.position[i],u));
- position[0]+=-dy/length*arc*wave;position[1]+=dx/length*arc*wave;position[2]+=arc*.5*wave;
- return{...to,position,target:from.target.map((v,i)=>lerp(v,to.target[i],u)),span:lerp(from.span,to.span,u)};
+ const t=clamp(progress),u=t*t*(3-2*t),wave=Math.sin(Math.PI*u),direction=pose=>pose.position.map((value,index)=>value-pose.target[index]);
+ const a=direction(from),b=direction(to),radiusA=Math.hypot(...a),radiusB=Math.hypot(...b);
+ const yaw=lerp(Math.atan2(a[0],a[2]),Math.atan2(b[0],b[2]),u),pitch=lerp(Math.asin(a[1]/Math.max(.001,radiusA)),Math.asin(b[1]/Math.max(.001,radiusB)),u);
+ const radius=lerp(radiusA,radiusB,u)+Math.min(1,Math.abs(radiusB-radiusA)*.04+.22)*wave,target=from.target.map((value,index)=>lerp(value,to.target[index],u));
+ const outward=[Math.sin(yaw)*Math.cos(pitch),Math.sin(pitch),Math.cos(yaw)*Math.cos(pitch)],position=target.map((value,index)=>value+outward[index]*radius),fov=lerp(from.fov||42,to.fov||42,u);
+ return{...to,position,target,span:2*radius*Math.tan(fov*Math.PI/360),fov,yaw,pitch};
 }
 
 // Fixed physical scale, calibrated at the centre of the desktop overview.
-const PLATE_UNIT = 0.033;
+const PLATE_UNIT = 0.022;
 export const PLATE_FONT = 'Arial, "PingFang SC", "Microsoft YaHei", sans-serif';
 let measureContext;
 const plateMetrics = new Map();
@@ -96,18 +98,59 @@ export function measureNameplateText(name, tools = '') {
   return result;
 }
 
-export function computeNameplateGeometry(position, footprint, nameWidth, toolWidth = 0, hasTool = false) {
-  const [x, y, z] = toDepthPoint(position);
+const nodeQuaternion = value => value?.isQuaternion ? value : new THREE.Quaternion(...(Array.isArray(value)?value:[value?.x||0,value?.y||0,value?.z||0,value?.w??1]));
+const nodeVector = value => Array.isArray(value) ? new THREE.Vector3(...value) : new THREE.Vector3(value?.x||0,value?.y||0,value?.z||0);
+export function transformNodeDirection(direction, quaternion = [0,0,0,1]) {
+  return nodeVector(direction).applyQuaternion(nodeQuaternion(quaternion)).toArray();
+}
+export function transformNodePoint(position, localPoint, quaternion = [0,0,0,1]) {
+  return nodeVector(localPoint).applyQuaternion(nodeQuaternion(quaternion)).add(new THREE.Vector3(...toDepthPoint(position))).toArray();
+}
+
+export function computeNameplateGeometry(position, footprint, nameWidth, toolWidth = 0, hasTool = false, quaternion = [0,0,0,1]) {
   const right = footprint.maxX ?? footprint.width / 2;
   const midHeight = ((footprint.minY ?? -footprint.height / 2) + (footprint.maxY ?? footprint.height / 2)) / 2;
-  const front = footprint.maxZ ?? (footprint.depth ?? 0) / 2;
+  const rear = footprint.minZ ?? -(footprint.depth ?? 0) / 2;
+  const localAnchor = [right + 0.10, midHeight + 6 * PLATE_UNIT, rear - 0.02];
+  const width = (Math.max(1, nameWidth, hasTool ? toolWidth : 0) + 2) * PLATE_UNIT, height = (hasTool ? 28 : 15) * PLATE_UNIT;
+  const corners = [[0,0],[width,0],[width,height],[0,height]].map(([x,y])=>transformNodePoint(position,[localAnchor[0]+x,localAnchor[1]-y,localAnchor[2]],quaternion));
   return {
-    anchor: [x + right + 0.10, y + midHeight + 6 * PLATE_UNIT, z + front + 0.02],
-    width: (Math.max(1, nameWidth, hasTool ? toolWidth : 0) + 2) * PLATE_UNIT,
-    height: (hasTool ? 28 : 15) * PLATE_UNIT,
+    anchor: corners[0], localAnchor, corners, quaternion: nodeQuaternion(quaternion).toArray(), width, height,
     nameSize: 12 * PLATE_UNIT, toolSize: 10 * PLATE_UNIT, lineStep: 14 * PLATE_UNIT,
     nameBaseline: 11 * PLATE_UNIT, toolBaseline: 25 * PLATE_UNIT,
   };
+}
+
+// The routing plane stores vertical progress as x and lateral position as y.
+function facingRoutePoint(node, point, quaternion) {
+  const center = toDepthPoint(node);
+  const local = toDepthPoint(point).map((value, axis) => value - center[axis]);
+  const [x, y, z] = transformNodePoint(node, local, quaternion);
+  return [-y, -x, z];
+}
+
+// Rotate the short approach to either port along with its icon. The trunk and
+// intermediate bends stay in the routing plane as the two cameras move.
+export function attachFacingPorts(route, from, to, quaternion) {
+  const reach = Math.min(0.65, route.length / 2);
+  if (!reach) return route;
+  const points = route.points.map((point, index) => {
+    const distance = route.distances[index];
+    const nearest = Math.min(distance, route.length - distance);
+    if (nearest >= reach) return point;
+    const node = distance <= route.length / 2 ? from : to;
+    const rotated = facingRoutePoint(node, point, quaternion);
+    const t = 1 - nearest / reach;
+    const weight = t * t * (3 - 2 * t);
+    return point.map((value, axis) => lerp(value, rotated[axis], weight));
+  });
+  const distances = [0];
+  for (let i = 1; i < points.length; i++) {
+    const previous = points[i - 1];
+    const [dx, dy, dz] = points[i].map((value, axis) => value - previous[axis]);
+    distances.push(distances[i - 1] + Math.hypot(dx, dy, dz));
+  }
+  return {...route, points, fromPort:points[0], toPort:points.at(-1), distances, length:distances.at(-1)};
 }
 
 /** Clamp horizontally before searching vertical slots using measured boxes. */
@@ -186,7 +229,7 @@ export function createFramework({heroHost,detailHost,onStageChange=()=>{},onNode
   const item=buildFrameworkObject(node,{THREE,palette:PALETTES.dark,helpers:{slab,box,bar,polyline,sheet,bodyShape}});
   item.group.scale.multiplyScalar(OBJECT_SCALE);item.footprint=scaledFootprint(item.footprint);
   const hit=new THREE.Mesh(new THREE.BoxGeometry(2.6,2.8,2.2),new THREE.MeshBasicMaterial({visible:false}));hit.userData.nodeId=node.id;item.group.add(hit);hitTargets.push(hit);
-  graph.add(item.group);meshes.set(node.id,item);
+  item.frame=new THREE.Group();item.frame.userData.nodeId=node.id;item.frame.userData.nodeFrame=true;item.frame.add(item.group);graph.add(item.frame);meshes.set(node.id,item);
  }
  function updateNameplates(view){
   if(!scene||fallback)return;
@@ -211,23 +254,23 @@ export function createFramework({heroHost,detailHost,onStageChange=()=>{},onNode
     if(!entry){
      const group=new THREE.Group(),material=new THREE.MeshBasicMaterial({map,transparent:true,depthTest:true,depthWrite:false,alphaTest:.04,side:THREE.DoubleSide,toneMapped:false});
      const mesh=new THREE.Mesh(new THREE.PlaneGeometry(geometry.width,geometry.height),material);mesh.userData.nodeId=node.id;mesh.userData.nameplate=true;group.add(mesh);hitTargets.push(mesh);
-     const underline=new THREE.Line(new THREE.BufferGeometry(),new THREE.LineBasicMaterial({color:palette[nodeColor(node)],transparent:true,depthTest:true,depthWrite:false}));underline.visible=false;group.add(underline);group.userData.nodeId=node.id;group.userData.nameplate=true;graph.add(group);
+     const underline=new THREE.Line(new THREE.BufferGeometry(),new THREE.LineBasicMaterial({color:palette[nodeColor(node)],transparent:true,depthTest:true,depthWrite:false}));underline.visible=false;group.add(underline);group.userData.nodeId=node.id;group.userData.nameplate=true;meshes.get(node.id).frame.add(group);
      entry={node,group,mesh,underline,map};nameplates.set(node.id,entry);
     }else{
      if(textChanged){entry.map.dispose();entry.map=map;entry.mesh.material.map=map;entry.mesh.material.needsUpdate=true;}
      if(entry.geometry.width!==geometry.width||entry.geometry.height!==geometry.height){entry.mesh.geometry.dispose();entry.mesh.geometry=new THREE.PlaneGeometry(geometry.width,geometry.height);}
     }
-    entry.group.position.fromArray(geometry.anchor);entry.mesh.position.set(geometry.width/2,-geometry.height/2,0);
+    entry.group.position.fromArray(geometry.localAnchor);entry.mesh.position.set(geometry.width/2,-geometry.height/2,0);
     if(underlineChanged){entry.underline.geometry.dispose();entry.underline.geometry=new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(0,-geometry.nameBaseline-.025,.003),new THREE.Vector3(metrics.nameWidth*geometry.nameSize/12,-geometry.nameBaseline-.025,.003)]);}
-    entry.geometry=geometry;entry.group.userData.nameplateGeometry=geometry;entry.nameWidth=metrics.nameWidth;entry.textSignature=textSignature;entry.layoutSignature=layoutSignature;
+    entry.geometry=geometry;entry.nameWidth=metrics.nameWidth;entry.toolWidth=metrics.toolWidth;entry.textSignature=textSignature;entry.layoutSignature=layoutSignature;
    }
+   entry.geometry=computeNameplateGeometry(position,footprint,entry.nameWidth,entry.toolWidth,Boolean(tools),view.camera.quaternion);entry.group.userData.nameplateGeometry=entry.geometry;
    entry.group.visible=true;entry.underline.material.color.setHex(palette[nodeColor(node)]);
    entry.underline.visible=node.id===state.selected||node.id===state.hover||views.some(current=>current.labels.get(node.id)===document.activeElement);
   }
  }
  function nameplateIntersects(view,geometry,matrix,visible){
-  const [x,y,z]=geometry.anchor;
-  let polygon=[[x,y],[x+geometry.width,y],[x+geometry.width,y-geometry.height],[x,y-geometry.height]].map(([px,py])=>new THREE.Vector4(px,py,z,1).applyMatrix4(matrix));
+  let polygon=geometry.corners.map(([x,y,z])=>new THREE.Vector4(x,y,z,1).applyMatrix4(matrix));
   const left=visible.left/view.rect.width*2-1,right=visible.right/view.rect.width*2-1,top=1-visible.top/view.rect.height*2,bottom=1-visible.bottom/view.rect.height*2;
   for(const distance of [point=>point.x-left*point.w,point=>right*point.w-point.x,point=>point.y-bottom*point.w,point=>top*point.w-point.y,point=>point.z+point.w,point=>point.w-point.z]){
    const clipped=[];for(let i=0;i<polygon.length;i++){const a=polygon[i],b=polygon[(i+1)%polygon.length],da=distance(a),db=distance(b);if(da>=0)clipped.push(a);if((da>=0)!==(db>=0))clipped.push(a.clone().lerp(b,da/(da-db)));}polygon=clipped;if(polygon.length<3)return false;
@@ -251,14 +294,34 @@ export function createFramework({heroHost,detailHost,onStageChange=()=>{},onNode
  const worldPoint=p=>new THREE.Vector3(...toDepthPoint(p));
  const worldDirection=p=>new THREE.Vector3(...toDepthDirection(p)).normalize();
  const routeCache=new Map();
- function curveFor(edge,positions){
-  const mobile=Math.abs(positions.get('query').y-positions.get('solution').y)>1,key=`${mobile?'m':'d'}|${edge.id}`;
-  if(!routeCache.has(key))routeCache.set(key,new FlowCurve(computeFlowRoute(edge,positions,routingFootprintsFor(),{mobile,z:.32})));
-  return routeCache.get(key);
+ function curveFor(edge, positions, view) {
+  const mobile = Math.abs(positions.get('query').y - positions.get('solution').y) > 1;
+  const key = `${mobile ? 'm' : 'd'}|${edge.id}`;
+  if (!routeCache.has(key)) {
+    routeCache.set(key, new FlowCurve(computeFlowRoute(edge, positions, routingFootprintsFor(), {mobile, z:.32})));
+  }
+  const base = routeCache.get(key);
+  if (!view) return base;
+  const orientation = view.camera.quaternion;
+  if (!view.routeOrientation?.equals(orientation)) {
+    view.routeOrientation = orientation.clone();
+    view.facingRoutes = new Map();
+  }
+  if (!view.facingRoutes.has(key)) {
+    const route = attachFacingPorts(base.route, positions.get(edge.from), positions.get(edge.to), orientation);
+    view.facingRoutes.set(key, new FlowCurve(route));
+  }
+  return view.facingRoutes.get(key);
  }
- const worldRouteCache=new Map();
- function worldCurveFor(edge,positions){
-  const source=curveFor(edge,positions);if(!worldRouteCache.has(source)){const points=source.route.points.map(toDepthPoint),distances=[0];for(let i=1;i<points.length;i++)distances.push(distances.at(-1)+Math.hypot(...points[i].map((v,k)=>v-points[i-1][k])));worldRouteCache.set(source,new FlowCurve({...source.route,points,distances,length:distances.at(-1)}));}return worldRouteCache.get(source);
+ const worldRouteCache = new WeakMap();
+ function worldCurveFor(edge, positions, view) {
+  const source = curveFor(edge, positions, view);
+  if (!worldRouteCache.has(source)) {
+    // The vertical coordinate transform is rigid, so lengths and fractions
+    // match the canonical curve sampled by arrows and packets.
+    worldRouteCache.set(source,new FlowCurve({...source.route,points:source.route.points.map(toDepthPoint)}));
+  }
+  return worldRouteCache.get(source);
  }
  function ribbonGeometry(curve,pixelWidth,dashWorld,viewDirection,camera,viewportHeight){
   const points=curve.route.points,vertices=[],indices=[];
@@ -332,22 +395,22 @@ export function createFramework({heroHost,detailHost,onStageChange=()=>{},onNode
   const snapshot={streams,stepId:frame.stepId,index:frame.index,total:TEACHING_CYCLE.steps.length,label:frame.label,description:frame.description,payload:{query:frame.query,data:frame.data,reference:frame.reference},progress:frame.localProgress,cycleProgress:frame.progress,elapsedMs:state.flowElapsed,durationMs:TEACHING_CYCLE.durationMs,paused:!state.flowPlaying||state.reduced||state.liveMode||document.hidden||!state.visible,live:state.liveMode,waiting:state.liveMode&&!state.run,packets,requests:explicitRequests(views[0])};if(state.liveMode){snapshot.stepId=state.run?`live-${state.run.nodeId}`:'live-waiting';snapshot.label=state.run?NODE_BY_ID.get(state.run.nodeId)?.title:{zh:'等待 Demo 任务',en:'Waiting for a demo run'};snapshot.description=state.run?{zh:'显示当前任务的实际阶段事件。',en:'Showing actual stage events from the current task.'}:{zh:'在 Demo 中发送问题以开始运行。',en:'Send a question in the demo to begin.'};snapshot.payload={query:{id:'live-query',label:labelForKind('query',state.lang)},data:{id:'live-data',label:labelForKind('data',state.lang)}};}return snapshot;
  }
  function notifyFlow(force=false){const snapshot=flowSnapshot(),signature=[snapshot.stepId,snapshot.paused,snapshot.live,snapshot.waiting,state.run?.nodeId,state.run?.status,state.lang,snapshot.streams?.map(s=>s.stepId).join(',')].join('|');if(force||signature!==flowSignature){flowSignature=signature;onFlowChange(snapshot);}}
- function portAt(id,kind,positions,signal=false){
+ function portAt(id,kind,positions,signal=false,view){
   const p=positions.get(id).clone(),bounds=portAt.bounds||(portAt.bounds=routingFootprintsFor()),box=bounds.get(id);
   const offset={x:signal?0:kind==='data'?-.1:kind==='reference'?.08:.1,y:!signal&&kind==='reference'?.08:0};
   for(const [axis,min,max]of [['x','minX','maxX'],['y','minY','maxY']]){
    const low=box?.[min]??-(box?.[axis==='x'?'width':'height']||1)/2,high=box?.[max]??(box?.[axis==='x'?'width':'height']||1)/2;
    const padding=Math.min(.02,(high-low)*.15);p[axis]+=clamp(offset[axis],low+padding,high-padding);
   }
-  p.z=.32;return p;
+  p.z=.32;return view ? p.fromArray(facingRoutePoint(positions.get(id), p, view.camera.quaternion)) : p;
  }
  function travelOf(packet,view,now){
   const phase=packet.stationary?1:packet.trackProgress??animationFraction(view,now),segments=[];
   for(const path of packet.paths){if(path.length===1)segments.push({path,from:path[0],to:path[0]});else for(let i=1;i<path.length;i++)segments.push({path,from:path[i-1],to:path[i]});}
   const t=phase*segments.length,index=Math.min(segments.length-1,Math.floor(t)),segment=segments[index],u=phase===1?1:t-index;if(!segment)return null;
-  const edge=routes().find(e=>e.from===segment.from&&e.to===segment.to),from=portAt(segment.from,packet.kind,view.positions,packet.signal),to=portAt(segment.to,packet.kind,view.positions,packet.signal),base=edge?curveFor(edge,view.positions):null;
+  const edge=routes().find(e=>e.from===segment.from&&e.to===segment.to),from=portAt(segment.from,packet.kind,view.positions,packet.signal,view),to=portAt(segment.to,packet.kind,view.positions,packet.signal,view),base=edge?curveFor(edge,view.positions,view):null;
   const points=base?[from.toArray(),...base.route.points,to.toArray()]:[to.toArray(),to.toArray()],sample=sampleFlowRoute({points},u),moving=new THREE.Vector3(...sample.point),direction=new THREE.Vector3(...sample.tangent);
-  const request=Boolean(state.liveMode&&!packet.signal&&edge?.kind==='request'&&['data','reference'].includes(packet.kind)),point=request?portAt(packet.kind==='data'?'csv':'references',packet.kind,view.positions):moving;
+  const request=Boolean(state.liveMode&&!packet.signal&&edge?.kind==='request'&&['data','reference'].includes(packet.kind)),point=request?portAt(packet.kind==='data'?'csv':'references',packet.kind,view.positions,false,view):moving;
   return{point,semanticPoint:point.clone(),direction,request:request?moving:null,path:segment.path,phase};
  }
  function requestTravels(view,now){
@@ -359,23 +422,31 @@ export function createFramework({heroHost,detailHost,onStageChange=()=>{},onNode
  function footprintsFor(){return new Map(baseNodes().map(node=>{const profile=OBJECT_PROFILES[node.id]||OBJECT_PROFILES[iconOf(node)]||{width:2.9,height:2.8};return[node.id,meshes.get(node.id)?.footprint||scaledFootprint({...profile,depth:profile.depth??1.4,minZ:profile.minZ??-.18,maxZ:profile.maxZ??1.22})];}));}
  function routingFootprintsFor(){return new Map([...footprintsFor()].map(([id,fp])=>[id,depthRoutingFootprint(fp)]));}
  function framingFor(view,overrides={}){return computeFraming({positions:view.positions||positionsFor(view),footprints:routingFootprintsFor(),stage:state.stage,selected:state.selected,hero:view.hero,runNode:state.liveMode?state.run?.nodeId:null,aspect:view.rect.width/view.rect.height,zoom:state.zoom,pan:view.pan,routePoints:routes().flatMap(e=>curveFor(e,view.positions).route.points),...overrides});}
+ function nameplateFitPoints(view,ids,footprints){
+  return ids.flatMap(id=>{
+   const node=NODE_BY_ID.get(id),position=view.positions.get(id),footprint=footprints.get(id);if(!node||!position||!footprint)return [];
+   const metrics=['zh','en'].map(lang=>measureNameplateText(tr(node.title,lang),inlineText(node,lang)));
+   const geometry=computeNameplateGeometry(position,footprint,Math.max(...metrics.map(value=>value.nameWidth)),Math.max(...metrics.map(value=>value.toolWidth)),metrics.some(value=>value.toolWidth>0)),[x,y,z]=geometry.localAnchor;
+   return [[x,y,z],[x+geometry.width,y,z],[x+geometry.width,y-geometry.height,z],[x,y-geometry.height,z]].map(point=>({position,point}));
+  });
+ }
  function cameraDestination(view,desired){
-  const footprints=footprintsFor(),routePoints=routes().flatMap(e=>curveFor(e,view.positions).route.points),options={positions:view.positions,footprints,routePoints,zoom:state.zoom,selected:state.selected,hero:view.hero,stage:state.stage};
+  const footprints=footprintsFor(),options=frame=>{const context=new Set(frame.contextIds);return{positions:view.positions,footprints,routePoints:routes().filter(edge=>frame.mode==='overview'||!['artifact','runtime'].includes(edge.kind)&&context.has(edge.from)&&context.has(edge.to)).flatMap(edge=>curveFor(edge,view.positions).route.points),nodeFitPoints:nameplateFitPoints(view,frame.contextIds,footprints),zoom:state.zoom,selected:state.selected,hero:view.hero,stage:state.stage};};
   if(!view.hero&&state.scrollLinked&&!state.selected&&!state.free&&!state.liveMode&&!state.reduced){
-   const key=`${view.rect.width}|${view.rect.height}|${state.zoom}|${state.route}`;
-   if(view.scrollPoseKey!==key){view.scrollPoseKey=key;view.scrollPoses=STAGES.map((_,stage)=>{const framing=framingFor(view,{stage,selected:null,runNode:null,pan:{x:0,y:0}});return computeCameraPose({...framing,...options,stage,selected:null,hero:false});});}
+   const key=`${view.rect.width}|${view.rect.height}|${state.zoom}|${state.route}|${nameplateRevision}`;
+   if(view.scrollPoseKey!==key){view.scrollPoseKey=key;view.scrollPoses=STAGES.map((_,stage)=>{const framing=framingFor(view,{stage,selected:null,runNode:null,pan:{x:0,y:0}});return computeCameraPose({...framing,...options(framing),stage,selected:null,hero:false});});}
    return sampleScrollCamera(view.scrollPoses,state.progress);
   }
-  return computeCameraPose({...desired,...options});
+  return computeCameraPose({...desired,...options(desired)});
  }
  function cameraFrame(view,desired){
   const span=view.span,center={...desired.center},aspect=desired.aspect;
-  const worldBounds={left:center.x-span*aspect/2,right:center.x+span*aspect/2,top:center.y+span/2,bottom:center.y-span/2};
+  const worldBounds={left:center.x-span/2,right:center.x+span/2,top:center.y+span*aspect/2,bottom:center.y-span*aspect/2};
   const fps=footprintsFor();
   const projectedNodeBounds=Object.fromEntries([...fps].map(([id,fp])=>{
-   const p=worldPoint(view.positions.get(id)),corners=[];
+   const position=view.positions.get(id),corners=[];
    for(const x of[fp.minX??-fp.width/2,fp.maxX??fp.width/2])for(const y of[fp.minY??-fp.height/2,fp.maxY??fp.height/2])for(const z of[fp.minZ??0,fp.maxZ??fp.depth??.8]){
-    corners.push(new THREE.Vector3(p.x+x,p.y+y,p.z+z).applyMatrix4(view.camera.matrixWorldInverse));
+    corners.push(new THREE.Vector3(...transformNodePoint(position,[x,y,z],view.camera.quaternion)).applyMatrix4(view.camera.matrixWorldInverse));
    }
    // Clip the twelve box edges in camera space before projecting. Geometry
    // behind the eye must never appear as a mirrored icon in a local shot.
@@ -419,7 +490,7 @@ export function createFramework({heroHost,detailHost,onStageChange=()=>{},onNode
  function pose(view,dt,now){
   fit(view,dt);const focus=stageFocus(view),active=activeLinkIds(view),palette=PALETTES[state.theme],mobile=view.rect.width<760;
   for(const item of meshes.values()){
-   const {node,group,material,faceInk,ink,selection,progress,ledMaterial,shell,parts}=item;group.visible=view.visibleNodeIds.has(node.id);group.position.copy(worldPoint(view.positions.get(node.id)));const contextOpacity=view.framing.mode==='overview'||focus.has(node.id)?1:.52;group.traverse(o=>{for(const m of(Array.isArray(o.material)?o.material:[o.material])){if(!m||m.visible===false)continue;if(!m.transparent){m.transparent=true;m.needsUpdate=true;}m.userData.baseOpacity??=m.opacity;m.opacity=m.userData.baseOpacity*contextOpacity;}});const keyboardFocused=views.some(current=>current.labels.get(node.id)===document.activeElement),selected=node.id===state.selected,run=node.id===state.run?.nodeId,guide=guideProgress(node,view,now),processing=guide!==null;
+   const {node,frame,group,material,faceInk,ink,selection,progress,ledMaterial,shell,parts}=item;frame.visible=true;frame.position.copy(worldPoint(view.positions.get(node.id)));frame.quaternion.copy(view.camera.quaternion);group.visible=view.visibleNodeIds.has(node.id);group.position.set(0,0,0);const contextOpacity=view.framing.mode==='overview'||focus.has(node.id)?1:.52;group.traverse(o=>{for(const m of(Array.isArray(o.material)?o.material:[o.material])){if(!m||m.visible===false)continue;if(!m.transparent){m.transparent=true;m.needsUpdate=true;}m.userData.baseOpacity??=m.opacity;m.opacity=m.userData.baseOpacity*contextOpacity;}});const keyboardFocused=views.some(current=>current.labels.get(node.id)===document.activeElement),selected=node.id===state.selected,run=node.id===state.run?.nodeId,guide=guideProgress(node,view,now),processing=guide!==null;
    const color=run&&state.run.status==='failed'?0xd56c7d:palette[nodeColor(node)];material.color.setHex(color);material.emissive.setHex(color);material.emissiveIntensity=processing?.18:.025;material.opacity=contextOpacity;shell.color.setHex(state.theme==='dark'?0x7da2bf:0xe9f2fa);faceInk.color.setHex(0x25455e);ink.color.setHex(palette.ink);
    selection.material.color.setHex(palette[nodeColor(node)]);selection.material.opacity=selected||keyboardFocused?1:!view.hero&&focus.has(node.id)?.7:0;
    progress.material.color.setHex(palette[nodeColor(node)]);progress.material.opacity=processing?.95:0;progress.scale.x=Math.max(.04,guide??0);progress.position.x=-(1-progress.scale.x)*.59;
@@ -430,10 +501,10 @@ export function createFramework({heroHost,detailHost,onStageChange=()=>{},onNode
   const drawn=new Set(renderedRoutes(view).map(e=>e.id));
   for(const entry of links.values()){
    const edge=entry.edge,show=drawn.has(edge.id);entry.line.visible=show;entry.arrows.forEach(a=>a.visible=false);if(!show)continue;
-   const curve=worldCurveFor(edge,view.positions),isActive=active.has(edge.id),color=palette[edgeColor(edge)],width=flowStrokeWidth(isActive),direction=view.camera.getWorldDirection(new THREE.Vector3()),key=`${mobile?'m':'d'}|${width}|${view.rect.height}|${view.camera.fov}|${view.camera.position.toArray().map(v=>v.toFixed(5)).join(',')}|${direction.toArray().map(v=>v.toFixed(5)).join(',')}`;
+   const curve=worldCurveFor(edge,view.positions,view),isActive=active.has(edge.id),color=palette[edgeColor(edge)],width=flowStrokeWidth(isActive),direction=view.camera.getWorldDirection(new THREE.Vector3()),key=`${mobile?'m':'d'}|${width}|${view.rect.height}|${view.camera.fov}|${view.camera.position.toArray().map(v=>v.toFixed(5)).join(',')}|${direction.toArray().map(v=>v.toFixed(5)).join(',')}`;
    const slot=`${view.hero?'hero':'detail'}|${mobile?'m':'d'}`;let layout=entry.layouts.get(slot);if(!layout||layout.key!==key){layout?.geometry.dispose();layout={key,geometry:ribbonGeometry(curve,width,edge.kind==='request'?view.span/view.rect.height*9:0,direction,view.camera,view.rect.height)};entry.layouts.set(slot,layout);}if(!entry.line.geometry.attributes.position)entry.line.geometry.dispose();entry.line.geometry=layout.geometry;
    entry.material.color.setHex(color);entry.material.opacity=isActive?1:edge.kind==='flow'?.92:.78;
-   arrowFractions(view,curveFor(edge,view.positions)).forEach((t,i)=>{const arrow=entry.arrows[i];arrow.visible=true;arrow.position.copy(worldPoint(curveFor(edge,view.positions).getPoint(t)));arrow.material.color.setHex(color);arrow.material.opacity=isActive?1:.9;arrow.scale.setScalar(view.span/view.rect.height*3.5/.065);arrow.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),worldDirection(curveFor(edge,view.positions).getTangent(t)));});
+   arrowFractions(view,curveFor(edge,view.positions,view)).forEach((t,i)=>{const arrow=entry.arrows[i];arrow.visible=true;arrow.position.copy(worldPoint(curveFor(edge,view.positions,view).getPoint(t)));arrow.material.color.setHex(color);arrow.material.opacity=isActive?1:.9;arrow.scale.setScalar(view.span/view.rect.height*3.5/.065);arrow.quaternion.setFromUnitVectors(new THREE.Vector3(0,1,0),worldDirection(curveFor(edge,view.positions,view).getTangent(t)));});
   }
   const packets=packetsFor(view);for(const item of moving.values()){
    const packet=packets.find(p=>p.kind===item.kind&&(state.liveMode?item.streamId==='primary':p.streamId===item.streamId));item.group.visible=Boolean(packet);if(!packet)continue;
@@ -448,7 +519,7 @@ export function createFramework({heroHost,detailHost,onStageChange=()=>{},onNode
   label.dataset.nameplateControl='true';label.addEventListener('focus',requestFrame);label.addEventListener('blur',requestFrame);label.addEventListener('click',()=>selectNode(node.id));view.labelRoot.append(label);view.labels.set(node.id,label);return label;
  }
  function project(view,p){const q=worldPoint(p).project(view.camera);return{x:view.rect.left+(q.x+1)*view.rect.width/2,y:view.rect.top+(1-q.y)*view.rect.height/2,z:q.z};}
- function inlineText(node){const tools=node.inlineTools||[];return tools.map(v=>typeof v==='string'?v:tr(v.title||v.label||v,state.lang)).filter(Boolean).join(' · ');}
+ function inlineText(node,lang=state.lang){const tools=node.inlineTools||[];return tools.map(v=>typeof v==='string'?v:tr(v.title||v.label||v,lang)).filter(Boolean).join(' · ');}
  function layoutLabels(view,focus){
   const live=new Set(),rect=view.rect;
   const visible={left:Math.max(0,-rect.left),right:Math.min(rect.width,innerWidth-rect.left),top:Math.max(0,-rect.top),bottom:Math.min(rect.height,innerHeight-rect.top)};
@@ -465,7 +536,7 @@ export function createFramework({heroHost,detailHost,onStageChange=()=>{},onNode
   }
   for(const[id,label]of view.labels)if(!live.has(id))label.hidden=true;
   view.captionBoxes=[];
-  const edgeItems=[];for(const edge of captionRoutes(view)){const curve=curveFor(edge,view.positions),ts=arrowFractions(view,curve);if(!ts.length)continue;const p=curve.getPoint(ts.reduce((a,b)=>a+b,0)/ts.length);if(!visiblePoint(view,p,.15))continue;let label=view.edgeLabels.get(edge.id);if(!label){label=document.createElement('div');label.className='fw-edge-label';view.labelRoot.append(label);view.edgeLabels.set(edge.id,label);}label.textContent=edgeCaption(edge);label.dataset.kind=edgeColor(edge);const screen=project(view,p);edgeItems.push({id:edge.id,label,x:screen.x,y:screen.y-16,width:Math.min(150,[...label.textContent].reduce((a,c)=>a+(/[\u3400-\u9fff]/.test(c)?10:5.5),12)),height:24});}
+  const edgeItems=[];for(const edge of captionRoutes(view)){const curve=curveFor(edge,view.positions,view),ts=arrowFractions(view,curve);if(!ts.length)continue;const p=curve.getPoint(ts.reduce((a,b)=>a+b,0)/ts.length);if(!visiblePoint(view,p,.15))continue;let label=view.edgeLabels.get(edge.id);if(!label){label=document.createElement('div');label.className='fw-edge-label';view.labelRoot.append(label);view.edgeLabels.set(edge.id,label);}label.textContent=edgeCaption(edge);label.dataset.kind=edgeColor(edge);const screen=project(view,p);edgeItems.push({id:edge.id,label,x:screen.x,y:screen.y-16,width:Math.min(150,[...label.textContent].reduce((a,c)=>a+(/[\u3400-\u9fff]/.test(c)?10:5.5),12)),height:24});}
   const edgeBoxes=placeDOMLabels(edgeItems,rect,4,[...view.iconBoxes,...view.captionBoxes]);
   const visibleEdges=new Set();for(const item of edgeItems){const b=edgeBoxes.get(item.id);item.label.hidden=!nearLineCaption(b,item);if(!item.label.hidden){visibleEdges.add(item.id);view.captionBoxes.push(b);item.label.style.transform=`translate(${b.x.toFixed(1)}px,${b.y.toFixed(1)}px) translate(-50%,-50%)`;}}for(const[id,label]of view.edgeLabels)if(!visibleEdges.has(id))label.hidden=true;
  }
@@ -502,7 +573,7 @@ export function createFramework({heroHost,detailHost,onStageChange=()=>{},onNode
  function pick(view,event){if(fallback||!view.rect||event.target.closest?.('.fw-label'))return null;pose(view,0,performance.now());const r=view.rect;pointer.set((event.clientX-r.left)/r.width*2-1,-(event.clientY-r.top)/r.height*2+1);raycaster.setFromCamera(pointer,view.camera);return raycaster.intersectObjects(hitTargets.filter(hit=>hit.userData.nameplate?hit.visible&&hit.parent?.visible!==false:view.visibleNodeIds.has(hit.userData.nodeId)),false)[0]?.object.userData.nodeId||null;}
  for(const view of views){let drag=null;
   const down=e=>{if(view.hero||!state.free)return;drag={x:e.clientX,y:e.clientY,moved:0};view.host.setPointerCapture?.(e.pointerId);};
-  const move=e=>{if(drag){const dx=e.clientX-drag.x,dy=e.clientY-drag.y;drag.moved+=Math.abs(dx)+Math.abs(dy);view.pan.y=clamp(view.pan.y+dx/view.rect.height*view.span,-5,5);view.pan.x=clamp(view.pan.x-dy/view.rect.height*view.span/1.2,-5,5);drag.x=e.clientX;drag.y=e.clientY;requestFrame();return;}const hit=pick(view,e);if(hit!==state.hover){state.hover=hit;view.host.classList.toggle('fw-host--hover',Boolean(hit));requestFrame();}};
+  const move=e=>{if(drag){const dx=e.clientX-drag.x,dy=e.clientY-drag.y;drag.moved+=Math.abs(dx)+Math.abs(dy);view.pan.y=clamp(view.pan.y+dx/view.rect.height*view.span,-5,5);view.pan.x=clamp(view.pan.x-dy/view.rect.height*view.span,-5,5);drag.x=e.clientX;drag.y=e.clientY;requestFrame();return;}const hit=pick(view,e);if(hit!==state.hover){state.hover=hit;view.host.classList.toggle('fw-host--hover',Boolean(hit));requestFrame();}};
   const up=e=>{const moved=drag?.moved||0;drag=null;if(moved>5)return;const id=pick(view,e);if(id)selectNode(id);};const leave=()=>{drag=null;state.hover=null;view.host.classList.remove('fw-host--hover');requestFrame();};
   for(const[name,fn]of[['pointerdown',down],['pointermove',move],['pointerup',up],['pointerleave',leave],['pointercancel',leave]]){view.host.addEventListener(name,fn);cleanup.push(()=>view.host.removeEventListener(name,fn));}
  }
@@ -521,24 +592,25 @@ export function createFramework({heroHost,detailHost,onStageChange=()=>{},onNode
   const focus=stageFocus(view),active=activeLinkIds(view),suffix=view.hero?'h':'d';
   const svgBounds={left:0,top:0,right:width,bottom:height};
   const visibleNodes=baseNodes().filter(n=>view.visibleNodeIds.has(n.id));
-  const edgeMarkup=renderedRoutes(view).map(edge=>{const curve=curveFor(edge,positions),kind=edgeColor(edge),selected=active.has(edge.id),points=curve.route.points.map(p=>map(new THREE.Vector3(...p))).filter(p=>p.z>=-1&&p.z<=1&&Number.isFinite(p.x)&&Number.isFinite(p.y)),path=points.map((p,i)=>`${i?'L':'M'}${p.x.toFixed(2)} ${p.y.toFixed(2)}`).join(' ');
+  const edgeMarkup=renderedRoutes(view).map(edge=>{const curve=curveFor(edge,positions,view),kind=edgeColor(edge),selected=active.has(edge.id),points=curve.route.points.map(p=>map(new THREE.Vector3(...p))).filter(p=>p.z>=-1&&p.z<=1&&Number.isFinite(p.x)&&Number.isFinite(p.y)),path=points.map((p,i)=>`${i?'L':'M'}${p.x.toFixed(2)} ${p.y.toFixed(2)}`).join(' ');
    const arrows=arrowFractions(view,curve).map(t=>{const position=curve.getPoint(t),p=map(position),d=curve.getTangent(t),next=map(position.clone().addScaledVector(d,.001)),angle=Math.atan2(next.y-p.y,next.x-p.x)*180/Math.PI;return `<path class="fw-route-arrow" data-arrow-edge="${escapeHTML(edge.id)}" data-arrow-t="${t.toFixed(4)}" data-kind="${kind}" transform="translate(${p.x.toFixed(2)} ${p.y.toFixed(2)}) rotate(${angle.toFixed(2)})" d="M-4-3L4 0L-4 3Z"/>`;}).join('');
    return `<path class="fw-fallback-edge${selected?' fw-fallback-edge--active':''}" data-edge="${escapeHTML(edge.id)}" data-kind="${kind}" data-lane="${escapeHTML(curve.route.lane)}" data-route-points="${escapeHTML(JSON.stringify(points.map(p=>[Number(p.x.toFixed(3)),Number(p.y.toFixed(3))])))}"${edge.kind==='request'?' stroke-dasharray="7 5"':''} stroke-width="${flowStrokeWidth(selected)}" vector-effect="non-scaling-stroke" d="${path}"/>${arrows}`;
   }).join('');
-  const labels=new Map(),platePixels=100,footprints=footprintsFor();
+  const labels=new Map(),platePixels=100,footprints=footprintsFor(),billboardQuaternion=view.camera.quaternion.toArray();
   const projectWorld=point=>{const q=new THREE.Vector3(...point).project(view.camera);return{x:(q.x+1)*width/2,y:(1-q.y)*height/2,z:q.z};};
   const clipPolygon=(polygon,distance)=>{
    const clipped=[];for(let index=0;index<polygon.length;index++){const a=polygon[index],b=polygon[(index+1)%polygon.length],da=distance(a),db=distance(b);if(da>=0)clipped.push(a);if((da>=0)!==(db>=0))clipped.push(a.map((value,axis)=>value+(b[axis]-value)*da/(da-db)));}return clipped;
   };
   for(const node of baseNodes()){
-   const name=tr(node.title,state.lang),tools=inlineText(node),metrics=measureNameplateText(name,tools),geometry=computeNameplateGeometry(positions.get(node.id),footprints.get(node.id),metrics.nameWidth,metrics.toolWidth,Boolean(tools)),anchor=geometry.anchor;
-   const worldCorners=[[0,0],[geometry.width,0],[geometry.width,geometry.height],[0,geometry.height]].map(([x,y])=>[anchor[0]+x,anchor[1]-y,anchor[2]]);
+   const name=tr(node.title,state.lang),tools=inlineText(node),metrics=measureNameplateText(name,tools),geometry=computeNameplateGeometry(positions.get(node.id),footprints.get(node.id),metrics.nameWidth,metrics.toolWidth,Boolean(tools),billboardQuaternion),anchor=geometry.anchor;
+   const worldCorners=geometry.corners;
    let clipped=worldCorners.map(p=>new THREE.Vector3(...p).applyMatrix4(view.camera.matrixWorldInverse).toArray());
    clipped=clipPolygon(clipped,p=>-view.camera.near-p[2]);clipped=clipPolygon(clipped,p=>p[2]+view.camera.far);if(clipped.length<3)continue;
    const projected=clipped.map(p=>{const q=new THREE.Vector3(...p).applyMatrix4(view.camera.projectionMatrix);return[(q.x+1)*width/2,(1-q.y)*height/2];});
    let visible=projected;for(const distance of[p=>p[0],p=>width-p[0],p=>p[1],p=>height-p[1]])visible=clipPolygon(visible,distance);
    const visibleArea=Math.abs(visible.reduce((area,p,index)=>{const next=visible[(index+1)%visible.length];return area+p[0]*next[1]-next[0]*p[1];},0))/2;if(visible.length<3||visibleArea<.01)continue;
-   const origin=projectWorld(anchor),right=projectWorld([anchor[0]+1,anchor[1],anchor[2]]),down=projectWorld([anchor[0],anchor[1]-1,anchor[2]]),matrix=[(right.x-origin.x)/platePixels,(right.y-origin.y)/platePixels,(down.x-origin.x)/platePixels,(down.y-origin.y)/platePixels,origin.x,origin.y];
+   const rightDirection=transformNodeDirection([1,0,0],billboardQuaternion),downDirection=transformNodeDirection([0,-1,0],billboardQuaternion);
+   const origin=projectWorld(anchor),right=projectWorld(anchor.map((value,axis)=>value+rightDirection[axis])),down=projectWorld(anchor.map((value,axis)=>value+downDirection[axis])),matrix=[(right.x-origin.x)/platePixels,(right.y-origin.y)/platePixels,(down.x-origin.x)/platePixels,(down.y-origin.y)/platePixels,origin.x,origin.y];
    if(!matrix.every(Number.isFinite))continue;
    const corners=[[0,0],[geometry.width,0],[geometry.width,geometry.height],[0,geometry.height]].map(([x,y])=>[origin.x+x*(right.x-origin.x)+y*(down.x-origin.x),origin.y+x*(right.y-origin.y)+y*(down.y-origin.y)]);
    const x=Math.min(...corners.map(p=>p[0])),y=Math.min(...corners.map(p=>p[1])),plateWidth=Math.max(...corners.map(p=>p[0]))-x,plateHeight=Math.max(...corners.map(p=>p[1]))-y;
@@ -549,14 +621,14 @@ export function createFramework({heroHost,detailHost,onStageChange=()=>{},onNode
   // Painter order approximates the same far-to-near depth occlusion as WebGL.
   const nodeEntries=baseNodes().filter(node=>view.visibleNodeIds.has(node.id)||labels.has(node.id)).map(node=>({node,depth:worldPoint(positions.get(node.id)).applyMatrix4(view.camera.matrixWorldInverse).z})).sort((a,b)=>a.depth-b.depth);
   const nodes=nodeEntries.map(({node,depth})=>{
-   const portAttrs=['query','data','reference'].map(kind=>{const port=map(portAt(node.id,kind,positions));return `data-${kind}-port-x="${port.x.toFixed(3)}" data-${kind}-port-y="${port.y.toFixed(3)}"`;}).join(' ');
+   const portAttrs=['query','data','reference'].map(kind=>{const port=map(portAt(node.id,kind,positions,false,view));return `data-${kind}-port-x="${port.x.toFixed(3)}" data-${kind}-port-y="${port.y.toFixed(3)}"`;}).join(' ');
    const p=point(node.id),canonical=positions.get(node.id),world=worldPoint(canonical),bounds=view.framing.projectedNodeBounds[node.id],label=labels.get(node.id),selected=node.id===state.selected,working=node.id===state.run?.nodeId,kind=nodeColor(node),iconScale=Math.min(bounds.width/82,bounds.height/88);
    const guideValue=guideProgress(node,view,now),guide=guideValue!==null;
-   const clipId=`fw-nameplate-clip-${suffix}-${node.id}`,caption=label?`${label.depthClipped?`<defs><clipPath id="${clipId}" clipPathUnits="userSpaceOnUse"><polygon points="${label.projected.map(p=>p.map(v=>v.toFixed(4)).join(',')).join(' ')}"/></clipPath></defs>`:''}<g class="fw-fallback-caption fw-nameplate" data-label-node="${node.id}" data-label-x="${label.x.toFixed(3)}" data-label-y="${label.y.toFixed(3)}" data-label-width="${label.width.toFixed(3)}" data-label-height="${label.height.toFixed(3)}" data-label-anchor-x="${label.origin.x.toFixed(3)}" data-label-anchor-y="${label.origin.y.toFixed(3)}" data-nameplate-anchor="${escapeHTML(JSON.stringify(label.geometry.anchor))}" data-nameplate-world-corners="${escapeHTML(JSON.stringify(label.worldCorners))}" data-nameplate-matrix="${escapeHTML(JSON.stringify(label.matrix))}" data-nameplate-node="${node.id}" data-nameplate-corners="${escapeHTML(JSON.stringify(label.worldCorners))}" data-nameplate-projected-corners="${escapeHTML(JSON.stringify(label.projected))}" data-nameplate-width="${label.geometry.width}" data-nameplate-height="${label.geometry.height}" data-nameplate-name-size="${label.geometry.nameSize}" data-nameplate-tool-size="${label.geometry.toolSize}" data-nameplate-line-step="${label.geometry.lineStep}" data-nameplate-name-baseline="${label.geometry.nameBaseline}" data-nameplate-tool-baseline="${label.geometry.toolBaseline}" data-nameplate-pixels="${platePixels}"${label.depthClipped?` clip-path="url(#${clipId})"`:''}><g transform="matrix(${label.matrix.map(v=>v.toFixed(8)).join(' ')})"><rect class="fw-nameplate-hit" width="${label.geometry.width*platePixels}" height="${label.geometry.height*platePixels}"/><text class="fw-fallback-name" x="0" y="${label.geometry.nameBaseline*platePixels}" text-anchor="start" textLength="${label.metrics.nameWidth*label.geometry.nameSize/12*platePixels}" lengthAdjust="spacingAndGlyphs" style="font-size:${label.geometry.nameSize*platePixels}px;font-family:${escapeHTML(PLATE_FONT)};font-weight:500">${escapeHTML(label.name)}</text>${label.tools?`<text class="fw-fallback-tool" x="0" y="${label.geometry.toolBaseline*platePixels}" text-anchor="start" textLength="${label.metrics.toolWidth*label.geometry.toolSize/10*platePixels}" lengthAdjust="spacingAndGlyphs" style="font-size:${label.geometry.toolSize*platePixels}px;font-family:${escapeHTML(PLATE_FONT)};font-weight:400">${escapeHTML(label.tools)}</text>`:''}</g></g>`:'';
+   const clipId=`fw-nameplate-clip-${suffix}-${node.id}`,caption=label?`${label.depthClipped?`<defs><clipPath id="${clipId}" clipPathUnits="userSpaceOnUse"><polygon points="${label.projected.map(p=>p.map(v=>v.toFixed(4)).join(',')).join(' ')}"/></clipPath></defs>`:''}<g class="fw-fallback-caption fw-nameplate" data-label-node="${node.id}" data-label-x="${label.x.toFixed(3)}" data-label-y="${label.y.toFixed(3)}" data-label-width="${label.width.toFixed(3)}" data-label-height="${label.height.toFixed(3)}" data-label-anchor-x="${label.origin.x.toFixed(3)}" data-label-anchor-y="${label.origin.y.toFixed(3)}" data-nameplate-anchor="${escapeHTML(JSON.stringify(label.geometry.anchor))}" data-nameplate-world-corners="${escapeHTML(JSON.stringify(label.worldCorners))}" data-nameplate-matrix="${escapeHTML(JSON.stringify(label.matrix))}" data-nameplate-node="${node.id}" data-nameplate-local-anchor="${escapeHTML(JSON.stringify(label.geometry.localAnchor))}" data-nameplate-quaternion="${escapeHTML(JSON.stringify(label.geometry.quaternion))}" data-nameplate-corners="${escapeHTML(JSON.stringify(label.worldCorners))}" data-nameplate-projected-corners="${escapeHTML(JSON.stringify(label.projected))}" data-nameplate-width="${label.geometry.width}" data-nameplate-height="${label.geometry.height}" data-nameplate-name-size="${label.geometry.nameSize}" data-nameplate-tool-size="${label.geometry.toolSize}" data-nameplate-line-step="${label.geometry.lineStep}" data-nameplate-name-baseline="${label.geometry.nameBaseline}" data-nameplate-tool-baseline="${label.geometry.toolBaseline}" data-nameplate-pixels="${platePixels}"${label.depthClipped?` clip-path="url(#${clipId})"`:''}><g transform="matrix(${label.matrix.map(v=>v.toFixed(8)).join(' ')})"><rect class="fw-nameplate-hit" width="${label.geometry.width*platePixels}" height="${label.geometry.height*platePixels}"/><text class="fw-fallback-name" x="0" y="${label.geometry.nameBaseline*platePixels}" text-anchor="start" textLength="${label.metrics.nameWidth*label.geometry.nameSize/12*platePixels}" lengthAdjust="spacingAndGlyphs" style="font-size:${label.geometry.nameSize*platePixels}px;font-family:${escapeHTML(PLATE_FONT)};font-weight:500">${escapeHTML(label.name)}</text>${label.tools?`<text class="fw-fallback-tool" x="0" y="${label.geometry.toolBaseline*platePixels}" text-anchor="start" textLength="${label.metrics.toolWidth*label.geometry.toolSize/10*platePixels}" lengthAdjust="spacingAndGlyphs" style="font-size:${label.geometry.toolSize*platePixels}px;font-family:${escapeHTML(PLATE_FONT)};font-weight:400">${escapeHTML(label.tools)}</text>`:''}</g></g>`:'';
    const icon=view.visibleNodeIds.has(node.id)?`<g transform="translate(${p.x.toFixed(3)} ${p.y.toFixed(3)}) scale(${iconScale})"><g class="fw-fallback-depth" transform="translate(3 4)">${svgIcon(iconOf(node))}</g>${svgIcon(iconOf(node))}<path class="fw-fallback-selection" d="M-22 36H${guide?-22+44*Math.max(.08,guideValue):22}"/></g>`:'';
-   return `<g class="fw-fallback-node${selected?' fw-fallback-node--selected':''}${working?' fw-fallback-node--run':''}${guide?' fw-fallback-node--guide':''}" data-node="${node.id}" ${portAttrs} data-x="${p.x.toFixed(3)}" data-y="${p.y.toFixed(3)}" data-canonical-x="${canonical.x}" data-canonical-y="${canonical.y}" data-canonical-z="${canonical.z}" data-world-x="${world.x}" data-world-y="${world.y}" data-world-z="${world.z}" data-icon="${iconOf(node)}" data-icon-visible="${Boolean(icon)}" data-nameplate-visible="${Boolean(label)}" data-camera-depth="${depth}" data-object-width="${bounds.width.toFixed(3)}" data-object-height="${bounds.height.toFixed(3)}" data-station-owner="${STATIONS.find(station=>station.nodes.includes(node.id))?.id||node.id}" data-kind="${kind}" data-focused="${view.hero||focus.has(node.id)}" data-context="${desired.mode!=='overview'&&!focus.has(node.id)}" data-run-status="${working?state.run.status:''}" role="button" tabindex="${view.hero?-1:0}" aria-pressed="${selected}" aria-label="${escapeHTML(tr(node.title,state.lang))}"><title>${escapeHTML(tr(node.description,state.lang))}</title>${icon}${caption}</g>`;
+   return `<g class="fw-fallback-node${selected?' fw-fallback-node--selected':''}${working?' fw-fallback-node--run':''}${guide?' fw-fallback-node--guide':''}" data-node="${node.id}" data-node-quaternion="${escapeHTML(JSON.stringify(billboardQuaternion))}" ${portAttrs} data-x="${p.x.toFixed(3)}" data-y="${p.y.toFixed(3)}" data-canonical-x="${canonical.x}" data-canonical-y="${canonical.y}" data-canonical-z="${canonical.z}" data-world-x="${world.x}" data-world-y="${world.y}" data-world-z="${world.z}" data-icon="${iconOf(node)}" data-icon-visible="${Boolean(icon)}" data-nameplate-visible="${Boolean(label)}" data-camera-depth="${depth}" data-object-width="${bounds.width.toFixed(3)}" data-object-height="${bounds.height.toFixed(3)}" data-station-owner="${STATIONS.find(station=>station.nodes.includes(node.id))?.id||node.id}" data-kind="${kind}" data-focused="${view.hero||focus.has(node.id)}" data-context="${desired.mode!=='overview'&&!focus.has(node.id)}" data-run-status="${working?state.run.status:''}" role="button" tabindex="${view.hero?-1:0}" aria-pressed="${selected}" aria-label="${escapeHTML(tr(node.title,state.lang))}"><title>${escapeHTML(tr(node.description,state.lang))}</title>${icon}${caption}</g>`;
   }).join('');
-  const edgeTextItems=captionRoutes(view).map(edge=>{const curve=curveFor(edge,positions),ts=arrowFractions(view,curve),t=ts.length?ts.reduce((a,b)=>a+b,0)/ts.length:.5,p=curve.getPoint(t);if(!visiblePoint(view,p,.15))return null;const pos=map(p),label=edgeCaption(edge);return{id:edge.id,edge,label,x:pos.x,y:pos.y-16,width:Math.min(150,[...label].reduce((a,c)=>a+(/[\u3400-\u9fff]/.test(c)?10:5.5),12)),height:24};}).filter(Boolean);
+  const edgeTextItems=captionRoutes(view).map(edge=>{const curve=curveFor(edge,positions,view),ts=arrowFractions(view,curve),t=ts.length?ts.reduce((a,b)=>a+b,0)/ts.length:.5,p=curve.getPoint(t);if(!visiblePoint(view,p,.15))return null;const pos=map(p),label=edgeCaption(edge);return{id:edge.id,edge,label,x:pos.x,y:pos.y-16,width:Math.min(150,[...label].reduce((a,c)=>a+(/[\u3400-\u9fff]/.test(c)?10:5.5),12)),height:24};}).filter(Boolean);
   const edgeTextBoxes=placeDOMLabels(edgeTextItems,svgBounds,4,[...labels.values()].map(p=>({x:p.x+p.width/2,y:p.y+p.height/2,width:p.width,height:p.height})).concat(visibleNodes.map(n=>({...point(n.id),width:view.framing.projectedNodeBounds[n.id].width,height:view.framing.projectedNodeBounds[n.id].height}))));
   const edgeTextMarkup=edgeTextItems.map(item=>{const b=edgeTextBoxes.get(item.id);if(!nearLineCaption(b,item)){edgeTextBoxes.delete(item.id);return '';}return `<g class="fw-route-caption" data-route-caption="${escapeHTML(item.id)}" data-kind="${edgeColor(item.edge)}" transform="translate(${(b.x-b.width/2).toFixed(2)} ${(b.y-b.height/2).toFixed(2)})"><text x="${b.width/2}" y="16" text-anchor="middle">${escapeHTML(item.label)}</text></g>`;}).join('');
   const packetItems=[],packetReserved=[...labels.values()].map(p=>({x:p.x+p.width/2,y:p.y+p.height/2,width:p.width,height:p.height})).concat([...edgeTextBoxes.values()]);

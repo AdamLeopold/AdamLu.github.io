@@ -1,5 +1,5 @@
-import {createFramework} from './framework-3d.js?v=fixed-right-20261104-1';
-import {STAGES,NODE_BY_ID,JOURNEY_EXAMPLE,routeFromRunValue} from './framework-topology.js?v=local-partitions-20261104-1';
+import {createFramework} from './framework-3d.js?v=facing-nodes-20261104-1';
+import {STAGES,NODE_BY_ID,JOURNEY_EXAMPLE,routeFromRunValue} from './framework-topology.js?v=vertical-side-20261104-1';
 const root = document.documentElement;
 const isStaticDeployment = root.dataset.deployment === 'static';
 const $ = (selector, scope = document) => scope.querySelector(selector);
@@ -20,6 +20,15 @@ const clamp = (value, min = 0, max = 1) => Math.max(min, Math.min(max, value));
 const storage = (key, value) => { try { localStorage.setItem(`lean-${key}`, value); } catch (_) {} };
 let research, caseData, replayTimer = null, studyTimer = null, replayVisible = false, studyVisible = false, toastTimer, frameId = 0, modelView, flowFrame, lastRunEvent, liveTrace={files:[],objective:null,status:null,runId:null,route:null};
 const AUTOPLAY_DELAY = 10000;
+// Follow the available space until the visitor chooses a card state.
+const statusCard = $('#flow-live-status');
+const fullStatus = matchMedia('(min-width: 761px) and (min-height: 680px)');
+statusCard.open = fullStatus.matches;
+const fitStatusCard = event => { statusCard.open = event.matches; };
+fullStatus.addEventListener('change', fitStatusCard);
+statusCard.querySelector('summary').addEventListener('click', () => {
+  fullStatus.removeEventListener('change', fitStatusCard);
+}, {once:true});
 
 const stages = STAGES;
 const shortStages = [['总览','Overview'],['输入','Inputs'],['分类检索','Classify'],['工作流','Workflow'],['读数建模','Formulate'],['代码求解','Solve'],['结果','Results']];

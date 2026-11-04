@@ -22,8 +22,8 @@
   </script>
   <link rel="stylesheet" href="assets/style.css?v=presentation-20261104-1">
   <link rel="stylesheet" href="assets/framework-3d.css?v=fixed-right-20261104-1">
-  <link rel="stylesheet" href="assets/redesign.css?v=presentation-20261104-1">
-  <script type="module" src="assets/app.js?v=fixed-right-20261104-1"></script>
+  <link rel="stylesheet" href="assets/redesign.css?v=vertical-side-20261104-1">
+  <script type="module" src="assets/app.js?v=facing-nodes-20261104-1"></script>
 </head>
 <body>
   <a class="skip-link" href="#main" data-zh="跳转到正文" data-en="Skip to content">跳转到正文</a>
@@ -65,7 +65,10 @@
     <section id="architecture" class="architecture architecture-graph">
       <div class="arch-track" id="arch-track"><div class="arch-pin"><div class="wrap">
         <div class="arch-heading"><div><p class="section-index">01 / QUERY + DATA FLOW</p><h2 data-zh="从查询与数据到求解结果。" data-en="From query and data to a solution.">从查询与数据到求解结果。</h2></div><div class="graph-toolbar"><button id="graph-play" type="button" aria-pressed="true">暂停演示</button><button id="graph-replay" type="button" data-zh="重播流程" data-en="Replay flow">重播流程</button><button id="graph-free" type="button" aria-pressed="false" data-zh="平移查看" data-en="Pan view">平移查看</button><button id="graph-zoom-out" type="button" data-zh-title="缩小" data-en-title="Zoom out">−</button><button id="graph-zoom-in" type="button" data-zh-title="放大" data-en-title="Zoom in">＋</button><button hidden disabled aria-hidden="true" tabindex="-1" id="follow-run" type="button" aria-pressed="false" data-zh="跟随 Demo" data-en="Follow demo">跟随 Demo</button><button id="graph-reset" type="button" data-zh="回到全图" data-en="Full view">回到全图</button></div></div>
-        <div class="arch-body"><div class="graph-stage-wrap"><div class="flow-live-status" id="flow-live-status"><div class="flow-live-heading"><span class="flow-indicator" aria-hidden="true"></span><span id="flow-mode-label">流程演示</span><span id="flow-count" class="mono"></span></div><p id="flow-live-label">查询、检索与数据访问</p><p id="flow-live-description">两组输入依次经过分类、建模和求解。</p><div id="flow-streams" class="flow-streams"></div></div><div id="framework-stage" class="framework-host detail-framework" aria-label="可交互三维框架" data-zh-aria="可交互三维框架" data-en-aria="Interactive 3D framework"></div><div class="graph-stage-caption"><span id="graph-mode">步骤聚焦</span><span class="flow-key" data-zh="输入在远处，结果在近处 · 虚线表示请求" data-en="Inputs at the back, results at the front · dashes mark requests">输入在远处，结果在近处 · 虚线表示请求</span><span id="graph-route" class="route-badge">TP · 类型定制工作流</span></div></div><aside class="arch-detail" id="arch-detail" aria-live="polite"></aside></div>
+        <div class="arch-body"><div class="graph-stage-wrap"><details class="flow-live-status" id="flow-live-status">
+          <summary><span class="flow-live-heading"><span class="flow-indicator" aria-hidden="true"></span><span id="flow-mode-label">流程演示</span><span id="flow-count" class="mono"></span></span><span id="flow-live-label">查询、检索与数据访问</span></summary>
+          <div class="flow-live-body"><p id="flow-live-description">两组输入依次经过分类、建模和求解。</p><div id="flow-streams" class="flow-streams"></div></div>
+        </details><div id="framework-stage" class="framework-host detail-framework" aria-label="可交互三维框架" data-zh-aria="可交互三维框架" data-en-aria="Interactive 3D framework"></div><div class="graph-stage-caption"><span id="graph-mode">步骤聚焦</span><span class="flow-key" data-zh="从上到下阅读 · 虚线表示请求" data-en="Read from top to bottom · dashed lines indicate requests">从上到下阅读 · 虚线表示请求</span><span id="graph-route" class="route-badge">TP · 类型定制工作流</span></div></div><aside class="arch-detail" id="arch-detail" aria-live="polite"></aside></div>
         <div class="arch-controls" id="arch-controls" role="group" aria-label="架构阶段" data-zh-aria="架构阶段" data-en-aria="Architecture stages"></div>
       </div></div></div>
     </section>
