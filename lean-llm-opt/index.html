@@ -23,7 +23,9 @@
   <link rel="stylesheet" href="assets/style.css?v=presentation-20261104-1">
   <link rel="stylesheet" href="assets/framework-3d.css?v=fixed-right-20261104-1">
   <link rel="stylesheet" href="assets/redesign.css?v=vertical-side-20261104-1">
-  <script type="module" src="assets/app.js?v=small-labels-20261104-1"></script>
+  <link rel="stylesheet" href="assets/paper-figure.css?v=paper-figure-20261105-1">
+  <script type="module" src="assets/app.js?v=paper-figure-20261105-1"></script>
+  <script type="module" src="assets/paper-figure.js?v=paper-figure-20261105-1"></script>
 </head>
 <body>
   <a class="skip-link" href="#main" data-zh="跳转到正文" data-en="Skip to content">跳转到正文</a>
@@ -46,12 +48,21 @@
   </header>
 
   <main id="main">
-    <section id="home" class="hero hero-graph">
+    <section id="home" class="hero hero-graph hero-paper">
       <div class="graph-hero-head wrap">
         <div><p class="eyebrow"><i class="live-dot"></i><span data-zh="大语言模型驱动的优化建模" data-en="LANGUAGE MODELS FOR OPTIMIZATION MODELING">大语言模型驱动的优化建模</span></p><h1>LEAN<span>–</span>LLM<span>–</span>OPT<span class="title-period">.</span></h1></div>
         <div class="graph-hero-intro"><p data-zh="LEAN-LLM-OPT 将问题描述和表格数据转化为数学模型与求解程序。" data-en="LEAN-LLM-OPT turns problem descriptions and tabular data into optimization models and solver programs.">LEAN-LLM-OPT 将问题描述和表格数据转化为数学模型与求解程序。</p><div><a class="text-link" href="#architecture" data-zh="查看建模流程 ↘" data-en="Explore the workflow ↘">查看建模流程 ↘</a><a class="text-link" href="demo/" data-demo-link target="_blank" rel="noopener" data-zh="打开 Demo ↗" data-en="Open demo ↗">打开 Demo ↗</a></div></div>
       </div>
-      <div class="graph-hero-model wrap"><div class="graph-caption"><span>01 / FRAMEWORK · TRANSPORTATION EXAMPLE</span><span data-zh="同一流程 · 两组输入" data-en="ONE WORKFLOW · TWO INPUTS">同一流程 · 两组输入</span></div><div id="hero-framework" class="framework-host hero-framework" data-zh-aria="LEAN-LLM-OPT 完整三维架构图" data-en-aria="Complete LEAN-LLM-OPT 3D architecture" aria-label="LEAN-LLM-OPT 完整三维架构图"></div><div class="hero-flow-caption"><span class="flow-indicator" aria-hidden="true"></span><span id="hero-flow-label">运输规划流程演示</span></div><div class="graph-legend"><span class="legend-flow" data-zh="查询与建模产物" data-en="Query + formulation">查询与建模产物</span><span class="legend-reference" data-zh="参考检索" data-en="Reference retrieval">参考检索</span><span class="legend-data" data-zh="CSV 数据" data-en="CSV data">CSV 数据</span><span class="legend-runtime" data-zh="产物汇集" data-en="Artifacts">产物汇集</span></div></div>
+      <figure id="paper-figure" class="paper-figure wrap" aria-labelledby="paper-caption">
+        <figcaption id="paper-caption" class="paper-caption"><span class="paper-number">FIGURE 3</span><span class="paper-caption-title" data-zh="LEAN-LLM-OPT 方法框架" data-en="The LEAN-LLM-OPT framework">LEAN-LLM-OPT 方法框架</span><a class="paper-source" href="https://arxiv.org/pdf/2601.09635v3#page=12" target="_blank" rel="noopener" data-zh="arXiv v3 · 第 12 页 ↗" data-en="arXiv v3 · p. 12 ↗">arXiv v3 · 第 12 页 ↗</a></figcaption>
+        <div class="paper-toolbar" role="group" aria-label="论文图查看控件" data-zh-aria="论文图查看控件" data-en-aria="Paper figure controls">
+          <div class="paper-view-controls" role="group" aria-label="视角" data-zh-aria="视角" data-en-aria="View"><button type="button" data-paper-view="spatial" aria-pressed="true" aria-controls="paper-viewport" data-zh="空间视图" data-en="Spatial">空间视图</button><button type="button" data-paper-view="front" aria-pressed="false" aria-controls="paper-viewport" data-zh="正视图" data-en="Front">正视图</button></div>
+          <div class="paper-focus-controls" role="group" aria-label="查看局部" data-zh-aria="查看局部" data-en-aria="Inspect a section"><button type="button" data-paper-focus="agents" aria-controls="paper-viewport" data-zh="智能体" data-en="Agents">智能体</button><button type="button" data-paper-focus="routes" aria-controls="paper-viewport" data-zh="工作流" data-en="Workflows">工作流</button></div>
+          <div class="paper-zoom-controls" role="group" aria-label="缩放" data-zh-aria="缩放" data-en-aria="Zoom"><button type="button" data-paper-action="zoom-out" aria-controls="paper-viewport" aria-label="缩小" data-zh-title="缩小" data-en-title="Zoom out" title="缩小">−</button><button type="button" data-paper-action="zoom-in" aria-controls="paper-viewport" aria-label="放大" data-zh-title="放大" data-en-title="Zoom in" title="放大">＋</button><button type="button" data-paper-action="reset" aria-controls="paper-viewport" data-zh="复位" data-en="Reset">复位</button></div>
+        </div>
+        <div id="paper-viewport" class="paper-viewport" tabindex="0" role="img" aria-label="论文图 3。用户上传问题和数据，经分类、工作流生成和模型生成智能体得到数学模型与代码。下方放大图展示类型定制与通用工作流。" data-zh-aria="论文图 3。用户上传问题和数据，经分类、工作流生成和模型生成智能体得到数学模型与代码。下方放大图展示类型定制与通用工作流。" data-en-aria="Paper Figure 3. Uploaded problems and datasets pass through classification, workflow generation and model generation to produce a formulation and code. The inset shows type-tailored and type-agnostic workflows."><img class="paper-fallback" src="assets/paper-figure/figure3.webp" alt="Figure 3: the LEAN-LLM-OPT framework." lang="en" width="1582" height="1632" draggable="false" decoding="async" fetchpriority="high"></div>
+        <div class="paper-figure-footer"><a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="license noopener">Liang et al. · CC BY-NC-SA 4.0</a><span data-zh="拖动旋转 · 放大后拖动平移" data-en="Drag to rotate · Zoom in to pan">拖动旋转 · 放大后拖动平移</span><a href="assets/paper-figure/figure3.webp" target="_blank" rel="noopener" data-zh="查看原图 ↗" data-en="Open original ↗">查看原图 ↗</a></div>
+      </figure>
       <div class="hero-bottom wrap"><a href="#architecture" class="scroll-invitation"><i></i><span data-zh="滚动缩放与移动视角" data-en="SCROLL TO ZOOM AND MOVE THE VIEW">滚动缩放与移动视角</span></a><a href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=5329027" target="_blank" rel="noopener" class="mono" data-zh="研究论文 ↗" data-en="READ THE PAPER ↗">研究论文 ↗</a></div>
     </section>
 

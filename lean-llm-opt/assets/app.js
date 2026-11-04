@@ -1,4 +1,4 @@
-import {createFramework} from './framework-3d.js?v=small-labels-20261104-1';
+import {createFramework} from './framework-3d.js?v=paper-figure-20261105-1';
 import {STAGES,NODE_BY_ID,JOURNEY_EXAMPLE,routeFromRunValue} from './framework-topology.js?v=vertical-side-20261104-1';
 const root = document.documentElement;
 const isStaticDeployment = root.dataset.deployment === 'static';
@@ -89,12 +89,10 @@ function renderFlowStatus(frame=flowFrame){
   const description=live?t('与独立 Demo 页的阶段事件同步。','Synchronized with stage events from the standalone demo.'):local(flowFrame?.description)||t('查询识别、参考检索、数据访问与程序求解依次展开。','Query classification, reference retrieval, data access, and solving run in sequence.');
   $('#flow-live-label').textContent=label;
   $('#flow-live-description').textContent=description;
-  $('#hero-flow-label').textContent=live?`${t('实时任务','Live run')} · ${label}`:label;
   $('#flow-mode-label').textContent=live?t('Demo 实时进度','LIVE DEMO PROGRESS'):state.reduced?t('流程演示 · 静态','WORKFLOW DEMO · STATIC'):paused?t('流程演示 · 暂停','WORKFLOW DEMO · PAUSED'):t('流程演示','WORKFLOW DEMO');
   const streams=flowFrame?.streams||[];$('#flow-streams').hidden=live;$('#flow-streams').innerHTML=streams.map(f=>`<span data-stream="${esc(f.streamId)}"><b>Q${f.taskIndex} / D${f.taskIndex}</b><span>${esc(local(f.label))}</span></span>`).join('');
   $('#flow-count').textContent=!live&&flowFrame?.total?`${String(flowFrame.index+1).padStart(2,'0')} / ${String(flowFrame.total).padStart(2,'0')}`:'';
   $('#flow-live-status').dataset.paused=String(paused&&!live);
-  $('.hero-flow-caption').dataset.paused=String(paused&&!live);
   $('#graph-play').textContent=state.reduced?t('静态视图','Static view'):state.flowPlaying?t('暂停演示','Pause animation'):t('播放演示','Play animation');
   $('#graph-play').setAttribute('aria-pressed',String(state.flowPlaying&&!state.reduced));
   $('#graph-play').disabled=state.reduced||live;
@@ -501,7 +499,7 @@ autoplayVisibilityObserver.observe($('#replay'));autoplayVisibilityObserver.obse
 const revealObserver=new IntersectionObserver(entries=>entries.forEach(entry=>{if(entry.isIntersecting){entry.target.classList.remove('waiting');revealObserver.unobserve(entry.target);}}),{threshold:.08});
 $$('.reveal').forEach(el=>{if(el.getBoundingClientRect().top>innerHeight&&!state.reduced)el.classList.add('waiting');revealObserver.observe(el);});
 translateStatic();renderArchitecture();
-modelView=createFramework({heroHost:$('#hero-framework'),detailHost:$('#framework-stage'),renderer:new URLSearchParams(location.search).get('renderer')==='svg'?'svg':'auto',onFlowChange(frame){renderFlowStatus(frame);},onStageChange(index,meta){state.stage=index;state.node=null;if(meta?.runState?.nodeId)liveTrace.nodeId=meta.runState.nodeId;if(meta?.route){state.route=meta.route;$$('[data-route]').forEach(el=>el.setAttribute('aria-pressed',String(el.dataset.route===state.route)));}renderStageDetail();},onNodeSelect(id){state.node=id;if(id){pageScrollIntentUntil=0;state.free=false;leaveLiveFollow();modelView?.setFree(false);const box=$('#architecture').getBoundingClientRect();if(box.top>innerHeight*.5||box.bottom<innerHeight*.5)$('#architecture').scrollIntoView({behavior:'instant',block:'start'});}renderStageDetail();}});
+modelView=createFramework({detailHost:$('#framework-stage'),renderer:new URLSearchParams(location.search).get('renderer')==='svg'?'svg':'auto',onFlowChange(frame){renderFlowStatus(frame);},onStageChange(index,meta){state.stage=index;state.node=null;if(meta?.runState?.nodeId)liveTrace.nodeId=meta.runState.nodeId;if(meta?.route){state.route=meta.route;$$('[data-route]').forEach(el=>el.setAttribute('aria-pressed',String(el.dataset.route===state.route)));}renderStageDetail();},onNodeSelect(id){state.node=id;if(id){pageScrollIntentUntil=0;state.free=false;leaveLiveFollow();modelView?.setFree(false);const box=$('#architecture').getBoundingClientRect();if(box.top>innerHeight*.5||box.bottom<innerHeight*.5)$('#architecture').scrollIntoView({behavior:'instant',block:'start'});}renderStageDetail();}});
 modelView.setLanguage(state.lang);modelView.setTheme(state.theme);modelView.setReduced(state.reduced);syncDemoLinks();requestFrame();
 try {
   [research,caseData]=await Promise.all(['data/research.json','data/case.json'].map(async path=>{const response=await fetch(new URL(`../${path}`,import.meta.url));if(!response.ok)throw new Error(`${path}: ${response.status}`);return response.json();}));

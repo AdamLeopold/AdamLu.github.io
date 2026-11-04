@@ -1,0 +1,134 @@
+/* The paper viewer is independent of the interactive architecture below. */
+#home.hero-paper {
+  height: auto;
+  min-height: 0;
+  max-height: none;
+  padding-top: 112px;
+  overflow: visible;
+  background: radial-gradient(ellipse at 48% 42%, var(--glow), transparent 68%);
+}
+#home.hero-paper .graph-hero-head {flex: none; padding-bottom: 36px}
+#home.hero-paper .hero-bottom {position: static; flex: none; height: 76px; margin-top: 12px}
+.paper-figure {
+  --paper-height: clamp(600px, 78svh, 860px);
+  position: relative;
+  width: min(834px, calc(var(--paper-height) * .9693627451), calc(100% - 104px));
+  min-width: 0;
+  margin-block: 0;
+  color: var(--fg);
+}
+.paper-caption {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  min-height: 41px;
+  padding: 0 2px 12px;
+  border-bottom: 1px solid var(--line);
+  font-size: 12px;
+  line-height: 1.6;
+}
+.paper-number {color: var(--accent); font: 10px/1.6 var(--mono); letter-spacing: .08em; white-space: nowrap}
+.paper-caption-title {font-weight: 500}
+.paper-source {margin-left: auto; color: var(--muted); font-size: 10px; text-align: right}
+.paper-source:hover {color: var(--fg)}
+.paper-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px 16px;
+  padding-block: 13px;
+}
+.paper-view-controls, .paper-zoom-controls, .paper-focus-controls {display: flex; align-items: center; gap: 4px}
+.paper-view-controls {padding: 3px; border: 1px solid var(--line); border-radius: 7px; background: var(--surface-soft)}
+.paper-toolbar button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 36px;
+  min-height: 36px;
+  padding: 7px 12px;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--muted);
+  font: 500 11px/1.4 var(--font);
+  white-space: nowrap;
+}
+.paper-toolbar button:hover {color: var(--fg); background: var(--surface)}
+.paper-toolbar button[aria-pressed="true"] {background: var(--surface); color: var(--fg); border-color: var(--line)}
+.paper-toolbar button:focus-visible {position: relative; z-index: 2; outline: 2px solid var(--accent); outline-offset: 2px}
+.paper-zoom-controls button {border-color: var(--line)}
+.paper-zoom-controls [data-paper-action="zoom-in"], .paper-zoom-controls [data-paper-action="zoom-out"] {padding-inline: 10px; font: 400 20px/1 var(--font)}
+.paper-toolbar button:disabled {cursor: default; opacity: .45}
+.paper-viewport {
+  --paper-x: 0px;
+  --paper-y: 0px;
+  --paper-scale: 1;
+  position: relative;
+  width: 100%;
+  height: var(--paper-height);
+  overflow: hidden;
+  isolation: isolate;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--bg-raised);
+  background: color-mix(in srgb, var(--bg-raised) 78%, transparent);
+  touch-action: pan-y;
+  cursor: grab;
+}
+.paper-viewport[data-zoomed="true"] {touch-action: none; cursor: grab}
+.paper-viewport[data-dragging="true"] {cursor: grabbing}
+.paper-viewport:focus-visible {outline: 2px solid var(--accent); outline-offset: 4px}
+.paper-fallback {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  object-fit: contain;
+  object-position: center;
+  transform: translate(var(--paper-x), var(--paper-y)) scale(var(--paper-scale));
+  transform-origin: center;
+  user-select: none;
+  -webkit-user-drag: none;
+  pointer-events: none;
+}
+.paper-viewport canvas {z-index:1; pointer-events:none; position: absolute; inset: 0; display: block; width: 100%; height: 100%; max-width: none; opacity: 1}
+.paper-figure.is-webgl .paper-fallback {visibility: hidden}
+.paper-figure-footer {display: flex; justify-content: space-between; gap: 16px; margin: 11px 2px 0; color: var(--dim); font: 10px/1.6 var(--font)}
+.paper-figure-footer a {color: var(--muted); white-space: nowrap}
+.paper-figure-footer a:hover {color: var(--fg)}
+:root[data-theme="light"] .paper-viewport {background: #eaf0f5}
+@media (max-width: 1000px) {
+  #home.hero-paper {padding-top: 98px}
+  #home.hero-paper .graph-hero-head {padding-bottom: 29px}
+  .paper-figure {--paper-height: clamp(600px, 80svh, 860px); width: min(834px, calc(var(--paper-height) * .9693627451), calc(100% - 48px))}
+}
+@media (max-width: 760px) {
+  #home.hero-paper {padding-top: 98px}
+  #home.hero-paper .graph-hero-head {padding-bottom: 27px}
+  #home.hero-paper .hero-bottom {height: 68px; margin-top: 8px}
+  #home.hero-paper .paper-figure {width: 100%; margin-inline: 0}
+  .paper-caption {gap: 10px; padding: 0 16px 11px; min-height: 48px; align-items: center}
+  .paper-number {font-size: 9px}
+  .paper-caption-title {font-size: 11px; white-space: nowrap}
+  .paper-source {max-width: 160px; font-size: 9px; line-height: 1.5}
+  .paper-toolbar {padding: 12px 14px; gap: 9px; justify-content: center}
+  .paper-toolbar button {min-height: 40px; padding-inline: 10px; font-size: 11px}
+  .paper-zoom-controls {gap: 5px}
+  .paper-zoom-controls button {min-width: 40px}
+  .paper-viewport {height: calc(100svh - 136px); min-height: 500px; max-height: 860px; border-inline: 0; border-radius: 0}
+  .paper-view-controls {margin-right: auto}
+  .paper-focus-controls {order: 3; width: 100%; justify-content: center; gap: 10px}
+  .paper-focus-controls button {padding-block: 5px; min-height: 34px; border-color: var(--line); font-size: 10px}
+  .paper-figure-footer {margin-inline: 16px; font-size: 10px}
+}
+@media (max-width: 370px) {
+  .paper-caption {gap: 8px}
+  .paper-caption-title {font-size: 10px}
+  .paper-source {max-width: 137px; font-size: 8px}
+  .paper-toolbar {padding-inline: 10px}
+  .paper-toolbar button {padding-inline: 9px}
+}

@@ -175,16 +175,16 @@ export function placeDOMLabels(items,bounds,gap=7,reserved=[]){
   return result;
 }
 
-/** One perspective scene serves both the overview and local chapter cameras. */
+/** The detail scene can also serve an optional overview viewport. */
 export function createFramework({heroHost,detailHost,onStageChange=()=>{},onNodeSelect=()=>{},onFlowChange=()=>{},renderer:rendererMode='auto'}={}){
- if(!heroHost||!detailHost)throw new Error('Framework view hosts are required');
+ if(!detailHost)throw new Error('The detail framework host is required');
  const state={lang:'zh',theme:'dark',reduced:false,free:false,route:'tailored',stage:0,progress:0,scrollLinked:false,selected:null,hover:null,run:null,runEvent:null,zoom:1,localProgress:null,started:performance.now(),flowElapsed:0,flowPlaying:true,flowFrame:sampleTeachingCycle(0),liveMode:false,liveElapsed:0,visible:true,runId:null,visited:new Set(),lastDataAt:'csv'};
  let disposed=false,fallback=rendererMode==='svg',raf=0,last=0,quality=1.5,slowFrames=0,flowSignature='';
  const cleanup=[],meshes=new Map(),links=new Map(),hitTargets=[],nameplates=new Map();let nameplateRevision=0;
  const system=document.createElement('div');system.className='fw-system';system.setAttribute('aria-hidden','true');
  const canvas=document.createElement('canvas');canvas.className='fw-canvas';system.append(canvas);document.body.append(system);
  const labelLayer=document.createElement('div');labelLayer.className='fw-label-layer';document.body.append(labelLayer);
- const views=[{host:heroHost,hero:true},{host:detailHost,hero:false}].map(v=>({...v,labels:new Map(),packets:new Map(),edgeLabels:new Map(),target:new THREE.Vector3(),pan:new THREE.Vector2(),camera:new THREE.PerspectiveCamera(42,1,.1,240),span:24,initialized:false,flight:null,flightPose:null}));
+ const views=[...(heroHost?[{host:heroHost,hero:true}]:[]),{host:detailHost,hero:false}].map(v=>({...v,labels:new Map(),packets:new Map(),edgeLabels:new Map(),target:new THREE.Vector3(),pan:new THREE.Vector2(),camera:new THREE.PerspectiveCamera(42,1,.1,240),span:24,initialized:false,flight:null,flightPose:null}));
  for(const v of views){v.host.classList.add('fw-host');v.host.removeAttribute('aria-hidden');v.labelRoot=document.createElement('div');v.labelRoot.className=`fw-view-labels${v.hero?' fw-view-labels--hero':''}`;labelLayer.append(v.labelRoot);}
  let renderer,scene;
  const graph=new THREE.Group(),raycaster=new THREE.Raycaster(),pointer=new THREE.Vector2();
@@ -663,7 +663,7 @@ export function createFramework({heroHost,detailHost,onStageChange=()=>{},onNode
   setRunState(event){if(!event){state.run=null;state.runEvent=null;state.liveElapsed=0;state.visited.clear();state.runId=null;state.lastDataAt='csv';notifyFlow();requestFrame();return;}const runId=event.run_id||event.runId,newRunId=Boolean(runId&&runId!==state.runId);if(newRunId||event.stage==='run'&&['started','queued'].includes(event.type)){state.visited.clear();state.lastDataAt='csv';if(runId)state.runId=runId;}const mapped=resolveRunEvent(event,state.run||{route:state.route});if(!mapped)return;const changed=newRunId||mapped.stage!==state.stage||mapped.nodeId!==state.run?.nodeId||mapped.route&&mapped.route!==state.route;if(mapped.route)state.route=mapped.route;if(mapped.nodeId!==state.run?.nodeId||mapped.status==='running'&&state.run?.status!=='running')state.liveElapsed=0;state.run=mapped;state.runEvent=event;state.liveMode=true;state.visited.add(mapped.nodeId);if(['csvqa','model','codegen','solver'].includes(mapped.nodeId))state.lastDataAt=mapped.nodeId==='codegen'?'model':mapped.nodeId;if(event.payload?.result?.execution)state.visited.add('solver');if(changed){state.stage=clamp(mapped.stage,0,STAGES.length-1);state.progress=state.stage/Math.max(1,STAGES.length-1);state.selected=null;onStageChange(state.stage,{route:state.route,runState:mapped});}notifyFlow();requestFrame();},
   setFlowPlaying(value){value=Boolean(value);if(value===state.flowPlaying)return;state.flowPlaying=value;last=0;notifyFlow(true);requestFrame();},
   getFlowState(){return flowSnapshot();},
-  getCameraState(name='detail'){const view=views[name==='hero'?0:1];view.rect=rectFor(view.host);view.positions=positionsFor(view);const frame=view.framing||framingFor(view);return JSON.parse(JSON.stringify(frame));},
+  getCameraState(name='detail'){const view=views.find(view=>view.hero===(name==='hero'));if(!view)return null;view.rect=rectFor(view.host);view.positions=positionsFor(view);const frame=view.framing||framingFor(view);return JSON.parse(JSON.stringify(frame));},
   restartFlow(){state.flowElapsed=0;state.flowFrame=sampleTeachingCycle(0);state.flowPlaying=true;last=0;notifyFlow(true);requestFrame();},
   seekFlow(progress){state.flowElapsed=clamp(Number(progress)||0)*Math.max(0,TEACHING_CYCLE.durationMs-.001);state.flowFrame=sampleTeachingCycle(state.flowElapsed);last=0;notifyFlow(true);requestFrame();},
   setLiveMode(value){value=Boolean(value);if(value===state.liveMode)return;state.liveMode=value;if(state.liveMode)state.scrollLinked=false;if(!state.liveMode){state.run=null;state.runEvent=null;state.liveElapsed=0;state.visited.clear();state.runId=null;state.lastDataAt='csv';}last=0;notifyFlow(true);requestFrame();},
