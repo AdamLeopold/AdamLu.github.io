@@ -55,6 +55,18 @@
 .fw-label-layer[data-theme="light"] .fw-edge-label {background:transparent;border:0;border-radius:0;box-shadow:none;padding:1px 3px;font-size:10px;text-shadow:0 1px 3px #07101c,0 0 6px rgba(7,16,28,.9)}
 .fw-label-layer[data-theme="light"] .fw-edge-label {text-shadow:0 1px 2px #fff,0 0 5px rgba(255,255,255,.95)}
 
+/* SVG nameplates use the same world-space type metrics as the 3D text plane. */
+.fw-nameplate .fw-fallback-name,.fw-nameplate .fw-fallback-tool {
+  stroke:none;
+  paint-order:normal;
+  white-space:pre;
+  font-family:Arial,"PingFang SC","Microsoft YaHei",sans-serif;
+  font-weight:500;
+}
+.fw-nameplate .fw-nameplate-hit {fill:transparent;stroke:none;pointer-events:all}
+.fw-nameplate .fw-fallback-tool {font-weight:400}
+.fw-fallback-node:focus-visible .fw-nameplate .fw-fallback-name {text-decoration:underline;text-decoration-thickness:1.5px;text-underline-offset:3px}
+
 /* Moving identities share the quiet typography of the node annotations. */
 .fw-label-layer .fw-packet,.fw-label-layer .fw-request,
 .fw-label-layer[data-theme="light"] .fw-packet,.fw-label-layer[data-theme="light"] .fw-request {

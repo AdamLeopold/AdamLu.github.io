@@ -2,11 +2,11 @@
   "format": "lean-llm-opt-static-v1",
   "deployment": "static",
   "demo": "visitor-local-handoff",
-  "builtAt": "2026-11-04T06:44:42.074Z",
+  "builtAt": "2026-11-04T08:47:20.788Z",
   "runtimeFileCount": 96,
   "fileCount": 98,
-  "payloadBytes": 4644140,
-  "totalBytes": 4660207,
+  "payloadBytes": 4650842,
+  "totalBytes": 4666909,
   "hashAlgorithm": "sha256",
   "files": {
     ".nojekyll": {
@@ -14,20 +14,20 @@
       "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     },
     "assets/app.js": {
-      "bytes": 59314,
-      "sha256": "7f2c2d14a47c334e58f4f42d9af135f7b0c3cf98410200d4f2c1942e3edd61d7"
+      "bytes": 59309,
+      "sha256": "babeca09a1b7497d9dfa013550845132271e40876ff89af92a90e63d2b9a947d"
     },
     "assets/favicon.svg": {
       "bytes": 250,
       "sha256": "14c83a5ebc0d55dfcac765b16dd621cef32fbf51ae5260e5362d6706ca44889e"
     },
     "assets/framework-3d.css": {
-      "bytes": 14211,
-      "sha256": "e396067479a3c660626a98280790cb42f2c1a3457348dfe3980a2f6fed0ae9a5"
+      "bytes": 14782,
+      "sha256": "e40b7533d9495844983cd4cb21ba9fc5eeb38c39674cb16e6ab290d846ef1e29"
     },
     "assets/framework-3d.js": {
-      "bytes": 78258,
-      "sha256": "6be9e2d129afe816bb98e8b6cf1469b595dd27b822cb96a76ab6bf27bb1b6eb2"
+      "bytes": 84404,
+      "sha256": "899292226b0e33fad7c3fb356251715c09493d20e3c52740a1e5b3b310931f29"
     },
     "assets/framework-depth.js": {
       "bytes": 5597,
@@ -394,8 +394,8 @@
       "sha256": "31562417bd0e0d53f85c15298c210702a6342cef2e42d4769a3931e9e97d7ef6"
     },
     "index.html": {
-      "bytes": 22651,
-      "sha256": "3d860cbd44a8b19f9dcd2f671dceec14c0cb5b03036ef89a9a32c2729ab72853"
+      "bytes": 22641,
+      "sha256": "3aeefc47404714283b67ecd2d365cd887f374c2bae24d36861d7613386818703"
     }
   }
 }
