@@ -2,11 +2,11 @@
   "format": "lean-llm-opt-static-v1",
   "deployment": "static",
   "demo": "visitor-local-handoff",
-  "builtAt": "2026-11-04T12:26:32.807Z",
+  "builtAt": "2026-11-04T15:49:25.141Z",
   "runtimeFileCount": 96,
   "fileCount": 98,
-  "payloadBytes": 4658616,
-  "totalBytes": 4674683,
+  "payloadBytes": 4658650,
+  "totalBytes": 4674717,
   "hashAlgorithm": "sha256",
   "files": {
     ".nojekyll": {
@@ -15,7 +15,7 @@
     },
     "assets/app.js": {
       "bytes": 59804,
-      "sha256": "8718d101c4265efb42a4acfa40f9533635809199fb7455200aa7f921a359caa3"
+      "sha256": "05e65f689a9d3c008bb228d09c5a18f48fe6532b7cb63ec7ff35af0251935fb9"
     },
     "assets/favicon.svg": {
       "bytes": 250,
@@ -26,8 +26,8 @@
       "sha256": "e40b7533d9495844983cd4cb21ba9fc5eeb38c39674cb16e6ab290d846ef1e29"
     },
     "assets/framework-3d.js": {
-      "bytes": 90017,
-      "sha256": "b924475ba79253f481936e7c0a68385335f9a30a9bd01730a70a351fa9ea1598"
+      "bytes": 90051,
+      "sha256": "bedced95910048aed4d958f751ababeab01174df745f059397df588e620a5dbf"
     },
     "assets/framework-depth.js": {
       "bytes": 5786,
@@ -395,7 +395,7 @@
     },
     "index.html": {
       "bytes": 22706,
-      "sha256": "68267c37e411312c4093d820f22a26492f7a03457a0c0ff1b8522e02af752721"
+      "sha256": "36a4f205b4c137b317efde6c8f574e131878a25f8ed23995b67b3639255fa7c0"
     }
   }
 }

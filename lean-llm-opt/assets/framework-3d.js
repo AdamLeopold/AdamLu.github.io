@@ -73,7 +73,8 @@ export function sampleCameraFlight(from,to,progress,{reduced=false}={}){
 }
 
 // Fixed physical scale, calibrated at the centre of the desktop overview.
-const PLATE_UNIT = 0.022;
+const PLATE_UNIT = 0.015;
+const PLATE_MOUNT_RISE = 0.132;
 export const PLATE_FONT = 'Arial, "PingFang SC", "Microsoft YaHei", sans-serif';
 let measureContext;
 const plateMetrics = new Map();
@@ -111,7 +112,7 @@ export function computeNameplateGeometry(position, footprint, nameWidth, toolWid
   const right = footprint.maxX ?? footprint.width / 2;
   const midHeight = ((footprint.minY ?? -footprint.height / 2) + (footprint.maxY ?? footprint.height / 2)) / 2;
   const rear = footprint.minZ ?? -(footprint.depth ?? 0) / 2;
-  const localAnchor = [right + 0.10, midHeight + 6 * PLATE_UNIT, rear - 0.02];
+  const localAnchor = [right + 0.10, midHeight + PLATE_MOUNT_RISE, rear - 0.02];
   const width = (Math.max(1, nameWidth, hasTool ? toolWidth : 0) + 2) * PLATE_UNIT, height = (hasTool ? 28 : 15) * PLATE_UNIT;
   const corners = [[0,0],[width,0],[width,height],[0,height]].map(([x,y])=>transformNodePoint(position,[localAnchor[0]+x,localAnchor[1]-y,localAnchor[2]],quaternion));
   return {

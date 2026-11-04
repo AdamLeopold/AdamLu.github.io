@@ -1,4 +1,4 @@
-import {createFramework} from './framework-3d.js?v=facing-nodes-20261104-1';
+import {createFramework} from './framework-3d.js?v=small-labels-20261104-1';
 import {STAGES,NODE_BY_ID,JOURNEY_EXAMPLE,routeFromRunValue} from './framework-topology.js?v=vertical-side-20261104-1';
 const root = document.documentElement;
 const isStaticDeployment = root.dataset.deployment === 'static';
