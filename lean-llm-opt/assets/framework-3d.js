@@ -1,5 +1,6 @@
 import * as THREE from './vendor/three/three.module.js';
-import {buildFrameworkObject,svgFrameworkObject,OBJECT_PROFILES} from './framework-objects.js?v=local-partitions-20261104-1';
+import {loadSculptureLibrary,makeFlowSculpture,disposeSculptures} from './framework-sculptures.js';
+import {buildFrameworkObject,svgFrameworkObject,OBJECT_PROFILES} from './framework-objects.js?v=blender-flow-20261105-1';
 import {computeFlowRoute,sampleFlowRoute} from './framework-routes.js?v=local-partitions-20261104-1';
 import {toDepthPoint,toDepthDirection,computeDepthCameraPose} from './framework-depth.js?v=facing-nodes-20261104-1';
 export {toDepthPoint,toDepthDirection} from './framework-depth.js?v=facing-nodes-20261104-1';
@@ -176,7 +177,7 @@ export function placeDOMLabels(items,bounds,gap=7,reserved=[]){
 }
 
 /** The detail scene can also serve an optional overview viewport. */
-export function createFramework({heroHost,detailHost,onStageChange=()=>{},onNodeSelect=()=>{},onFlowChange=()=>{},renderer:rendererMode='auto'}={}){
+export function createFramework({heroHost,detailHost,onStageChange=()=>{},onNodeSelect=()=>{},onFlowChange=()=>{},renderer:rendererMode='auto',loadSculptures=loadSculptureLibrary}={}){
  if(!detailHost)throw new Error('The detail framework host is required');
  const state={lang:'zh',theme:'dark',reduced:false,free:false,route:'tailored',stage:0,progress:0,scrollLinked:false,selected:null,hover:null,run:null,runEvent:null,zoom:1,localProgress:null,started:performance.now(),flowElapsed:0,flowPlaying:true,flowFrame:sampleTeachingCycle(0),liveMode:false,liveElapsed:0,visible:true,runId:null,visited:new Set(),lastDataAt:'csv'};
  let disposed=false,fallback=rendererMode==='svg',raf=0,last=0,quality=1.5,slowFrames=0,flowSignature='';
@@ -626,7 +627,7 @@ export function createFramework({heroHost,detailHost,onStageChange=()=>{},onNode
    const p=point(node.id),canonical=positions.get(node.id),world=worldPoint(canonical),bounds=view.framing.projectedNodeBounds[node.id],label=labels.get(node.id),selected=node.id===state.selected,working=node.id===state.run?.nodeId,kind=nodeColor(node),iconScale=Math.min(bounds.width/82,bounds.height/88);
    const guideValue=guideProgress(node,view,now),guide=guideValue!==null;
    const clipId=`fw-nameplate-clip-${suffix}-${node.id}`,caption=label?`${label.depthClipped?`<defs><clipPath id="${clipId}" clipPathUnits="userSpaceOnUse"><polygon points="${label.projected.map(p=>p.map(v=>v.toFixed(4)).join(',')).join(' ')}"/></clipPath></defs>`:''}<g class="fw-fallback-caption fw-nameplate" data-label-node="${node.id}" data-label-x="${label.x.toFixed(3)}" data-label-y="${label.y.toFixed(3)}" data-label-width="${label.width.toFixed(3)}" data-label-height="${label.height.toFixed(3)}" data-label-anchor-x="${label.origin.x.toFixed(3)}" data-label-anchor-y="${label.origin.y.toFixed(3)}" data-nameplate-anchor="${escapeHTML(JSON.stringify(label.geometry.anchor))}" data-nameplate-world-corners="${escapeHTML(JSON.stringify(label.worldCorners))}" data-nameplate-matrix="${escapeHTML(JSON.stringify(label.matrix))}" data-nameplate-node="${node.id}" data-nameplate-local-anchor="${escapeHTML(JSON.stringify(label.geometry.localAnchor))}" data-nameplate-quaternion="${escapeHTML(JSON.stringify(label.geometry.quaternion))}" data-nameplate-corners="${escapeHTML(JSON.stringify(label.worldCorners))}" data-nameplate-projected-corners="${escapeHTML(JSON.stringify(label.projected))}" data-nameplate-width="${label.geometry.width}" data-nameplate-height="${label.geometry.height}" data-nameplate-name-size="${label.geometry.nameSize}" data-nameplate-tool-size="${label.geometry.toolSize}" data-nameplate-line-step="${label.geometry.lineStep}" data-nameplate-name-baseline="${label.geometry.nameBaseline}" data-nameplate-tool-baseline="${label.geometry.toolBaseline}" data-nameplate-pixels="${platePixels}"${label.depthClipped?` clip-path="url(#${clipId})"`:''}><g transform="matrix(${label.matrix.map(v=>v.toFixed(8)).join(' ')})"><rect class="fw-nameplate-hit" width="${label.geometry.width*platePixels}" height="${label.geometry.height*platePixels}"/><text class="fw-fallback-name" x="0" y="${label.geometry.nameBaseline*platePixels}" text-anchor="start" textLength="${label.metrics.nameWidth*label.geometry.nameSize/12*platePixels}" lengthAdjust="spacingAndGlyphs" style="font-size:${label.geometry.nameSize*platePixels}px;font-family:${escapeHTML(PLATE_FONT)};font-weight:500">${escapeHTML(label.name)}</text>${label.tools?`<text class="fw-fallback-tool" x="0" y="${label.geometry.toolBaseline*platePixels}" text-anchor="start" textLength="${label.metrics.toolWidth*label.geometry.toolSize/10*platePixels}" lengthAdjust="spacingAndGlyphs" style="font-size:${label.geometry.toolSize*platePixels}px;font-family:${escapeHTML(PLATE_FONT)};font-weight:400">${escapeHTML(label.tools)}</text>`:''}</g></g>`:'';
-   const icon=view.visibleNodeIds.has(node.id)?`<g transform="translate(${p.x.toFixed(3)} ${p.y.toFixed(3)}) scale(${iconScale})"><g class="fw-fallback-depth" transform="translate(3 4)">${svgIcon(iconOf(node))}</g>${svgIcon(iconOf(node))}<path class="fw-fallback-selection" d="M-22 36H${guide?-22+44*Math.max(.08,guideValue):22}"/></g>`:'';
+   const icon=view.visibleNodeIds.has(node.id)?`<g transform="translate(${p.x.toFixed(3)} ${p.y.toFixed(3)}) scale(${iconScale})">${svgIcon(iconOf(node))}<path class="fw-fallback-selection" d="M-22 36H${guide?-22+44*Math.max(.08,guideValue):22}"/></g>`:'';
    return `<g class="fw-fallback-node${selected?' fw-fallback-node--selected':''}${working?' fw-fallback-node--run':''}${guide?' fw-fallback-node--guide':''}" data-node="${node.id}" data-node-quaternion="${escapeHTML(JSON.stringify(billboardQuaternion))}" ${portAttrs} data-x="${p.x.toFixed(3)}" data-y="${p.y.toFixed(3)}" data-canonical-x="${canonical.x}" data-canonical-y="${canonical.y}" data-canonical-z="${canonical.z}" data-world-x="${world.x}" data-world-y="${world.y}" data-world-z="${world.z}" data-icon="${iconOf(node)}" data-icon-visible="${Boolean(icon)}" data-nameplate-visible="${Boolean(label)}" data-camera-depth="${depth}" data-object-width="${bounds.width.toFixed(3)}" data-object-height="${bounds.height.toFixed(3)}" data-station-owner="${STATIONS.find(station=>station.nodes.includes(node.id))?.id||node.id}" data-kind="${kind}" data-focused="${view.hero||focus.has(node.id)}" data-context="${desired.mode!=='overview'&&!focus.has(node.id)}" data-run-status="${working?state.run.status:''}" role="button" tabindex="${view.hero?-1:0}" aria-pressed="${selected}" aria-label="${escapeHTML(tr(node.title,state.lang))}"><title>${escapeHTML(tr(node.description,state.lang))}</title>${icon}${caption}</g>`;
   }).join('');
   const edgeTextItems=captionRoutes(view).map(edge=>{const curve=curveFor(edge,positions,view),ts=arrowFractions(view,curve),t=ts.length?ts.reduce((a,b)=>a+b,0)/ts.length:.5,p=curve.getPoint(t);if(!visiblePoint(view,p,.15))return null;const pos=map(p),label=edgeCaption(edge);return{id:edge.id,edge,label,x:pos.x,y:pos.y-16,width:Math.min(150,[...label].reduce((a,c)=>a+(/[\u3400-\u9fff]/.test(c)?10:5.5),12)),height:24};}).filter(Boolean);
@@ -674,5 +675,22 @@ export function createFramework({heroHost,detailHost,onStageChange=()=>{},onNode
   resetCamera(){state.zoom=1;state.scrollLinked=false;state.free=false;state.selected=null;state.stage=0;state.progress=0;onNodeSelect(null,null);onStageChange(0);for(const v of views){v.pan.set(0,0);v.initialized=false;}detailHost.classList.remove('fw-host--free');requestFrame();},
   dispose(){disposed=true;cancelAnimationFrame(raf);resizeObserver.disconnect();intersection.disconnect();cleanup.forEach(fn=>fn());for(const entry of links.values())for(const layout of entry.layouts.values())layout.geometry.dispose();scene?.traverse(o=>{o.geometry?.dispose();for(const m of(Array.isArray(o.material)?o.material:[o.material]))m?.dispose();});for(const map of textureCache.values())map.dispose();for(const entry of nameplates.values())entry.map.dispose();nameplates.clear();renderer?.dispose();system.remove();labelLayer.remove();views.forEach(v=>{v.fallback?.remove();v.host.classList.remove('fw-host','fw-host--hover','fw-host--free');});}
  };
+ api.ready=(async()=>{
+  if(fallback||!loadSculptures)return;
+  let library;const prepared=[];
+  try{
+   library=await loadSculptures();if(disposed)return;
+   for(const item of meshes.values())prepared.push({item,model:makeFlowSculpture(item.node.id,library,item.footprint)});
+   for(const {item,model} of prepared){
+    const keep=new Set([item.selection,item.progress,item.parts.led]);
+    for(const child of item.group.children)if(!keep.has(child)&&!child.userData.nodeId)child.visible=false;
+    item.group.updateMatrix();
+    const mount=new THREE.Group();mount.matrix.copy(item.group.matrix).invert();mount.matrixAutoUpdate=false;mount.add(model);item.group.add(mount);
+    item.sculpture=model;
+   }
+   requestFrame();
+  }catch(error){for(const {model} of prepared)disposeSculptures(model);if(!disposed)console.warn('Architecture sculptures could not load.',error);}
+  finally{disposeSculptures(library);}
+ })();
  requestFrame();return api;
 }

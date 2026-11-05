@@ -1,4 +1,4 @@
-/** Abstract role components; scene, labels, camera, and flow belong to the renderer. */
+/** Procedural fallback geometry and fixed layout envelopes for the workflow nodes. */
 const PROFILE_DEFINITIONS={
   query:{name:'abstract-message-capsule',width:1.578919,height:1.753539,depth:.977127,minZ:-.201041,maxZ:.776086},
   classification:{name:'abstract-classification-prism-fork',width:2.225872,height:2.217729,depth:.924818,minZ:.006468,maxZ:.931286},
@@ -125,32 +125,17 @@ export function buildFrameworkObject(node,{THREE,palette,helpers}={}){
   return{node,group,material,faceInk,ink,selection,progress,parts,ledMaterial,shell,metal,dark,wood:metal,paper:shell,brass:warm,hierarchy,footprint};
 }
 
-/** SVG uses the same abstract vocabulary, independent of teaching or live content. */
-export function svgFrameworkObject(requestedIcon,{liveMode=false}={}){
-  const candidate=aliases[requestedIcon]||requestedIcon,icon=PROFILE_DEFINITIONS[candidate]?candidate:'data-access';
-  const line='fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"',metal='fill="none" stroke="var(--fw-metal)" stroke-linecap="round" stroke-linejoin="round"';
-  const cube=(x,y,size=7,color='currentColor')=>`<g><path fill="${color}" fill-opacity=".75" d="M${x} ${y}h${size}v${size}h${-size}Z"/><path fill="${color}" fill-opacity=".38" d="M${x} ${y}l3-3h${size}l-3 3Z"/><path fill="${color}" fill-opacity=".55" d="M${x+size} ${y}l3-3v${size}l-3 3Z"/></g>`;
-  let markup='';
-  if(icon==='query'){
-    markup=`<path fill="currentColor" fill-opacity=".13" stroke="currentColor" stroke-width="2" d="M-29-23Q-29-32-20-32H20Q29-32 29-23V15Q29 23 21 23H-8L-22 33L-20 23Q-29 23-29 15Z"/><path ${line} stroke-width="3" d="M-18-14H13M-18-3H19M-18 8H4"/><path ${metal} stroke-width="1" opacity=".5" d="M-25-31L-20-36H25Q34-36 34-27V11L29 16"/>`;
-  }else if(icon==='classification'){
-    markup=`<path ${line} stroke-width="4" d="M0-37V-14"/><path fill="currentColor" fill-opacity=".17" stroke="currentColor" stroke-width="1.2" d="M-16-14H16L0 13Z"/><path ${metal} stroke-width="1" d="M-16-14L-10-22H22L16-14M16-14L22-22L6 5L0 13"/><path fill="none" stroke="#72cbb2" stroke-width="4.5" stroke-linecap="round" d="M0 0L-29 25"/><path fill="none" stroke="#ad94d8" stroke-width="4.5" stroke-linecap="round" d="M0 0L29 25"/>${cube(-36,23,10,'#72cbb2')}<path fill="#ad94d8" stroke="#8c73bb" d="M30 18L39 27L30 36L21 27Z"/><circle fill="var(--fw-ink)" cx="0" cy="-38" r="3"/>`;
-  }else if(icon==='workflow'){
-    markup=`<path ${line} stroke-width="2.4" d="M-31-9C-19-33 13-35 29-12S14 31-11 25S-39 11-31-9Z"/><path fill="none" stroke="#d4b77c" stroke-width="1.8" d="M-31-9L1 0L20 21"/>${[[-35,-13,'#72cbb2'],[-8,-32,'currentColor'],[24,-15,'var(--fw-ink)'],[16,17,'#ad94d8'],[-24,20,'var(--fw-metal)']].map(([x,y,c])=>cube(x,y,8,c)).join('')}<path fill="#d4b77c" d="M1-5L6 0L1 5L-4 0Z"/><path fill="currentColor" d="M14-29L20-25L13-22ZM29 3L26 10L23 4Z"/>`;
-  }else if(icon==='model'){
-    markup=`<path fill="currentColor" fill-opacity=".15" stroke="currentColor" stroke-width=".8" d="M-35-8L10-29L35 7L-11 32Z"/><path fill="#ad94d8" fill-opacity=".15" stroke="#ad94d8" stroke-width=".8" d="M-21-30L35-12L20 31L-37 13Z"/><path ${metal} stroke-width="1.6" d="M-27-17H15V23H-27ZM-11-33H31V7H-11ZM-27-17L-11-33M15-17L31-33M15 23L31 7M-27 23L-11 7"/><path ${line} stroke-width="1.4" d="M-27 23L31-33M-11-33L15 23"/>${[[-29,-19],[13,-19],[13,21],[-29,21],[-13,-35],[29,5]].map(([x,y],i)=>cube(x,y,5,i%3===0?'#d4b77c':i%3===1?'currentColor':'#72cbb2')).join('')}<path fill="none" stroke="#d4b77c" stroke-width="2" d="M9-28L23-36H36"/><path fill="#d4b77c" d="M35-40L42-36L35-32Z"/>`;
-  }else if(icon==='code'){
-    markup=`${[[-4,'var(--fw-metal)'],[0,'currentColor'],[4,'#ad94d8']].map(([offset,color])=>`<path fill="none" stroke="${color}" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" d="M${-10+offset} -29L${-32+offset} 0L${-10+offset} 29M${10+offset} -29L${32+offset} 0L${10+offset} 29"/>`).join('')}<path fill="none" stroke="#d4b77c" stroke-width="2.8" stroke-linecap="round" d="M-5 26L6-26"/>`;
-  }else if(icon==='solver'){
-    markup=`<ellipse ${metal} stroke-width="2.4" cx="0" cy="0" rx="33" ry="31"/><ellipse ${line} stroke-width="2.5" cx="0" cy="0" rx="21" ry="23"/><circle fill="none" stroke="#d4b77c" stroke-width="1.8" cx="0" cy="0" r="12"/>${Array.from({length:8},(_,i)=>{const a=i*Math.PI/4;return `<path ${line} stroke-width="2.4" d="M${(Math.cos(a)*26).toFixed(2)} ${(Math.sin(a)*25).toFixed(2)}L${(Math.cos(a)*32).toFixed(2)} ${(Math.sin(a)*31).toFixed(2)}"/>`;}).join('')}<path fill="currentColor" fill-opacity=".23" stroke="currentColor" stroke-width="1.2" d="M0-8L8 0L0 8L-8 0Z"/><path ${line} stroke-width="1.8" d="M15 4A16 16 0 0 0-10-12"/>`;
-  }else if(icon==='result'){
-    markup=`<path ${metal} stroke-width="2.5" d="M-36-24C-21-23-12-1 4 0"/><path ${line} stroke-width="2.8" d="M-39 0H4"/><path fill="none" stroke="#d4b77c" stroke-width="2.5" d="M-36 24C-21 23-12 1 4 0"/>${cube(-40,-27,6,'var(--fw-metal)')}${cube(-43,-3,6,'currentColor')}${cube(-40,21,6,'#d4b77c')}<path fill="currentColor" fill-opacity=".16" stroke="currentColor" stroke-width="1.4" d="M4-10H23L34 0L23 10H4Z"/><path ${line} stroke-width="2" d="M6 0H32"/><path fill="currentColor" d="M32-4L40 0L32 4Z"/>`;
-  }else if(icon==='references'){
-    markup=`${[-1,0,1].map((i)=>`<path fill="none" stroke="${i===0?'currentColor':'var(--fw-metal)'}" stroke-width="2.3" d="M${31+i*5} ${-2+i*9}C${27+i*5} ${-24+i*9} ${-33+i*5} ${-24+i*9} ${-31+i*5} ${i*9}S${20+i*5} ${22+i*9} ${27+i*5} ${8+i*9}"/>${cube(26+i*5,-6+i*9,6,i===0?'currentColor':'#d4b77c')}`).join('')}<path fill="none" stroke="#ad94d8" stroke-width="1.4" d="M-29 9L-18-10M24 14L35-5"/>`;
-  }else if(icon==='csv'){
-    markup=`${[-1,0].map(layer=>Array.from({length:9},(_,i)=>{const row=Math.floor(i/3),col=i%3;return cube(-24+col*17+layer*4,-18+row*17-layer*4,11,layer===-1?'var(--fw-metal)':(row+col)%3===0?'#72cbb2':'currentColor');}).join('')).join('')}`;
-  }else{
-    markup=`${Array.from({length:8},(_,i)=>cube(-28+(i%4)*16,-12+Math.floor(i/4)*19,9,i%2?'currentColor':'var(--fw-metal)')).join('')}<path fill="currentColor" fill-opacity=".12" stroke="currentColor" stroke-width=".8" d="M-30-20L28-15L32 23L-27 18Z"/><path fill="none" stroke="#72cbb2" stroke-width="2.6" d="M13-29V29"/><path fill="none" stroke="#d4b77c" stroke-width="1.8" d="M21 22V-21"/><path fill="#d4b77c" d="M17-20L21-27L25-20Z"/>`;
+const iconAtlas = new URL('./framework-icons.webp', import.meta.url).href;
+const atlasSlots = {query:1,classification:6,workflow:7,model:3,code:9,result:12,references:5,csv:2,'data-access':4};
+
+/** The SVG fallback displays renders of the same Blender icon library. */
+export function svgFrameworkObject(requestedIcon){
+  const icon=aliases[requestedIcon]||requestedIcon;
+  if(!OBJECT_PROFILES[icon])throw new Error('Unknown framework icon: '+icon);
+  function cell(index,x,y,width,height){
+    const left=(index%4)*340,top=Math.floor(index/4)*340;
+    return `<svg x="${x}" y="${y}" width="${width}" height="${height}" viewBox="${left} ${top} 340 340" overflow="hidden"><image href="${iconAtlas}" width="1360" height="1700"/></svg>`;
   }
-  return `<g class="fw-abstract-object" data-object-style="abstract" data-object-profile="${OBJECT_PROFILES[icon].name}" data-object-kind="${icon}">${markup}</g>`;
+  const art=icon==='solver'?cell(10,-42,-29,48,58)+cell(11,-4,-29,48,58):cell(atlasSlots[icon],-48,-48,96,96);
+  return `<g class="fw-sculpted-object" data-object-style="sculpted" data-object-profile="${OBJECT_PROFILES[icon].name}" data-object-kind="${icon}">${art}</g>`;
 }

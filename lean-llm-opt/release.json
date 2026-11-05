@@ -2,11 +2,11 @@
   "format": "lean-llm-opt-static-v1",
   "deployment": "static",
   "demo": "visitor-local-handoff",
-  "builtAt": "2026-11-05T10:04:06.954Z",
-  "runtimeFileCount": 106,
-  "fileCount": 108,
-  "payloadBytes": 7315216,
-  "totalBytes": 7332805,
+  "builtAt": "2026-11-05T10:14:52.509Z",
+  "runtimeFileCount": 108,
+  "fileCount": 110,
+  "payloadBytes": 7397655,
+  "totalBytes": 7415544,
   "hashAlgorithm": "sha256",
   "files": {
     ".nojekyll": {
@@ -15,7 +15,7 @@
     },
     "assets/app.js": {
       "bytes": 59616,
-      "sha256": "d5b52a30a3c8ca0bf53e62d0685a443802a97e097411c1cd7b08e53d95ef6222"
+      "sha256": "37d3a6a9b8fdd3e3e4e39b3f61833f6aa5ddbcb1e5ab7f68364388b205d9a021"
     },
     "assets/favicon.svg": {
       "bytes": 250,
@@ -26,20 +26,28 @@
       "sha256": "e40b7533d9495844983cd4cb21ba9fc5eeb38c39674cb16e6ab290d846ef1e29"
     },
     "assets/framework-3d.js": {
-      "bytes": 90094,
-      "sha256": "91f8959e1b7ad08625fa05c619e4c7b7944855d8615fcd05ed564f5251bf6da9"
+      "bytes": 91062,
+      "sha256": "041b5c53fe92f8c09d321af5b491b10d752ec9562787c60962a59c31bb2df9b1"
     },
     "assets/framework-depth.js": {
       "bytes": 5786,
       "sha256": "da20f09553c9ac760d9ef399ca72d4dfd503e2ac360f450611565addb5e0eef7"
     },
+    "assets/framework-icons.webp": {
+      "bytes": 84018,
+      "sha256": "f2d12c4eb7621af566d307d0bdfb8c0bfa646c92c09e7ca28283223ff4599f8f"
+    },
     "assets/framework-objects.js": {
-      "bytes": 19135,
-      "sha256": "9e614f84e7805bf6e4df0f626c21311c3746d5627a45fd1d0d1c42a28a9fb492"
+      "bytes": 14216,
+      "sha256": "60109c90eb45d36a6c5d75c67907bb056614caca4a803b4e07d29e5240aa0443"
     },
     "assets/framework-routes.js": {
       "bytes": 16045,
       "sha256": "8cd7adc5932eabf1f842943706cc983684f876275a1b18954a83419b01623f29"
+    },
+    "assets/framework-sculptures.js": {
+      "bytes": 2372,
+      "sha256": "9669b2bf4d6b213a16339864c64b53a7dae9d19e8a15fc81c19cb411158cdc46"
     },
     "assets/framework-topology.js": {
       "bytes": 44204,
@@ -435,7 +443,7 @@
     },
     "index.html": {
       "bytes": 26781,
-      "sha256": "a164c0bab28c8bf2e3fb1ca58e6df89635e728825ea32a2721b900fcb16ff82a"
+      "sha256": "8c63348279a64357b0a774984966e9c68a9c4ec09d73bce772cc05ff6b550ee9"
     }
   }
 }
