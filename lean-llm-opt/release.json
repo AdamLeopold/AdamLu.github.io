@@ -2,11 +2,11 @@
   "format": "lean-llm-opt-static-v1",
   "deployment": "static",
   "demo": "visitor-local-handoff",
-  "builtAt": "2026-11-05T10:14:52.509Z",
-  "runtimeFileCount": 108,
-  "fileCount": 110,
-  "payloadBytes": 7397655,
-  "totalBytes": 7415544,
+  "builtAt": "2026-11-05T17:31:51.425Z",
+  "runtimeFileCount": 111,
+  "fileCount": 113,
+  "payloadBytes": 7436547,
+  "totalBytes": 7454872,
   "hashAlgorithm": "sha256",
   "files": {
     ".nojekyll": {
@@ -14,8 +14,8 @@
       "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     },
     "assets/app.js": {
-      "bytes": 59616,
-      "sha256": "37d3a6a9b8fdd3e3e4e39b3f61833f6aa5ddbcb1e5ab7f68364388b205d9a021"
+      "bytes": 59683,
+      "sha256": "7665f283ccf30c388d32162e1a2c8f9a26282e813005077208b7755c34952069"
     },
     "assets/favicon.svg": {
       "bytes": 250,
@@ -58,8 +58,8 @@
       "sha256": "64e001149595bc54a70508da9791e7e68b06b4670e289aa5b2adbcd78621d3c9"
     },
     "assets/paper-figure.js": {
-      "bytes": 15269,
-      "sha256": "8d148fe57974425c52ece1f8aa28374494ebe82a83ad68b0545d6a802002c09c"
+      "bytes": 11902,
+      "sha256": "8478164a72c16356b06483d857877fe91d02a83fad347c307181c8ac0e5db130"
     },
     "assets/paper-figure/figure3.webp": {
       "bytes": 317580,
@@ -81,13 +81,25 @@
       "bytes": 845980,
       "sha256": "b8d706d326859785b59a4656d41901315e6fc2cb5d036c48dc091147a0962f7b"
     },
+    "assets/paper-flow-motion.js": {
+      "bytes": 19138,
+      "sha256": "b3bc09104653db258b233dcbd1edec26e13c106df807fd77cc08cdd9e8dedd68"
+    },
+    "assets/paper-journey.js": {
+      "bytes": 17342,
+      "sha256": "9b39c0a01242a8ceb4655ea1b4d24aa48ceb19beb7515d0823f313b0f3d4ba68"
+    },
+    "assets/paper-model.js": {
+      "bytes": 3688,
+      "sha256": "1ff81a3ebee2bdcc80c89eaf74ade0e203415bb62cca7b8cf68e09879ca29fcf"
+    },
     "assets/paper-solids.js": {
-      "bytes": 18283,
-      "sha256": "de03827520cfaacf2ff33d9da4eff9af08d6762076477ea4b30d075bc54096e7"
+      "bytes": 18693,
+      "sha256": "c477d206f4e38f12960c8bd29621117530376b3ac9b736d8488bf4a6018ff2ee"
     },
     "assets/redesign.css": {
-      "bytes": 29123,
-      "sha256": "0a4d194f8b960ab5f6a2a738770fc285947ae2b490407ee67bd7e6f408ba9f1f"
+      "bytes": 30716,
+      "sha256": "9bf2e2d4978e0d86bd13b2713ead53a0368f59aeac32f5258637378062d31e9a"
     },
     "assets/style.css": {
       "bytes": 50724,
@@ -442,8 +454,8 @@
       "sha256": "31562417bd0e0d53f85c15298c210702a6342cef2e42d4769a3931e9e97d7ef6"
     },
     "index.html": {
-      "bytes": 26781,
-      "sha256": "8c63348279a64357b0a774984966e9c68a9c4ec09d73bce772cc05ff6b550ee9"
+      "bytes": 26802,
+      "sha256": "0c0f9291cc1bb73b604f22cd9edabb7d8b5b11009953d03028eae38bb5b44305"
     }
   }
 }

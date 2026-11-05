@@ -311,3 +311,26 @@
   #flow-live-label {font-size:12px}
   .flow-live-body {padding:0 10px 9px}
 }
+
+/* One complete paper apparatus, reused for the independent flow tour. */
+.paper-journey{position:relative;isolation:isolate;overflow:hidden;background:transparent;contain:layout paint}
+.paper-journey-canvas,.paper-journey-fallback{position:absolute;inset:0;display:block;width:100%;height:100%;outline-offset:-4px}
+.paper-journey [hidden]{display:none!important}
+.paper-journey-canvas{cursor:pointer;touch-action:pan-y}
+.paper-journey[data-free="true"] .paper-journey-canvas{cursor:grab;touch-action:none}
+.paper-journey[data-free="true"] .paper-journey-canvas:active{cursor:grabbing}
+.paper-journey-fallback [role="button"]{cursor:pointer;outline:none}
+.paper-journey-fallback [role="button"]:focus-visible{stroke:var(--accent);stroke-width:4;stroke-dasharray:8 5}
+.architecture-graph .flow-key{font-size:10px;line-height:1.5}
+.architecture-graph .graph-stage-caption{flex-wrap:wrap;gap:5px 12px}
+@media(min-width:1001px) and (min-height:650px){
+  :root:not([data-motion="reduced"]) .architecture-graph .graph-stage-wrap{grid-template-rows:0 minmax(0,1fr) auto}
+  .architecture-graph .flow-live-status{width:clamp(170px,24%,225px);margin-top:8px;margin-left:8px}
+  :root:not([data-motion="reduced"]) .architecture-graph .arch-body{grid-template-columns:minmax(0,3.1fr) minmax(245px,1fr)}
+}
+@media(max-width:1000px){.architecture-graph .paper-journey{height:clamp(490px,74svh,760px)}}
+@media(max-width:600px){
+  .architecture-graph .paper-journey{height:clamp(450px,72svh,640px)}
+  .architecture-graph .flow-live-status{width:min(50%,190px)}
+  .architecture-graph .flow-key{font-size:9px}
+}

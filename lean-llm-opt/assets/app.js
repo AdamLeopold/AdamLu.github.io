@@ -1,4 +1,4 @@
-import {createFramework} from './framework-3d.js?v=blender-flow-20261105-1';
+import {createFramework} from './paper-journey.js?v=paper-journey-20261106-1';
 import {STAGES,NODE_BY_ID,JOURNEY_EXAMPLE,routeFromRunValue} from './framework-topology.js?v=vertical-side-20261104-1';
 const root = document.documentElement;
 const isStaticDeployment = root.dataset.deployment === 'static';
@@ -499,7 +499,7 @@ autoplayVisibilityObserver.observe($('#replay'));autoplayVisibilityObserver.obse
 const revealObserver=new IntersectionObserver(entries=>entries.forEach(entry=>{if(entry.isIntersecting){entry.target.classList.remove('waiting');revealObserver.unobserve(entry.target);}}),{threshold:.08});
 $$('.reveal').forEach(el=>{if(el.getBoundingClientRect().top>innerHeight&&!state.reduced)el.classList.add('waiting');revealObserver.observe(el);});
 translateStatic();renderArchitecture();
-modelView=createFramework({detailHost:$('#framework-stage'),renderer:new URLSearchParams(location.search).get('renderer')==='svg'?'svg':'auto',onFlowChange(frame){renderFlowStatus(frame);},onStageChange(index,meta){state.stage=index;state.node=null;if(meta?.runState?.nodeId)liveTrace.nodeId=meta.runState.nodeId;if(meta?.route){state.route=meta.route;$$('[data-route]').forEach(el=>el.setAttribute('aria-pressed',String(el.dataset.route===state.route)));}renderStageDetail();},onNodeSelect(id){state.node=id;if(id){pageScrollIntentUntil=0;state.free=false;leaveLiveFollow();modelView?.setFree(false);const box=$('#architecture').getBoundingClientRect();if(box.top>innerHeight*.5||box.bottom<innerHeight*.5)$('#architecture').scrollIntoView({behavior:'instant',block:'start'});}renderStageDetail();}});
+modelView=createFramework({detailHost:$('#framework-stage'),renderer:new URLSearchParams(location.search).get('renderer')==='svg'?'svg':'auto',onFlowChange(frame){renderFlowStatus(frame);},onStageChange(index,meta){if(meta?.manual){state.manualStage=true;pageScrollIntentUntil=0;}state.stage=index;state.node=null;if(meta?.runState?.nodeId)liveTrace.nodeId=meta.runState.nodeId;if(meta?.route){state.route=meta.route;$$('[data-route]').forEach(el=>el.setAttribute('aria-pressed',String(el.dataset.route===state.route)));}renderStageDetail();},onNodeSelect(id){state.node=id;if(id){pageScrollIntentUntil=0;state.free=false;leaveLiveFollow();modelView?.setFree(false);const box=$('#architecture').getBoundingClientRect();if(box.top>innerHeight*.5||box.bottom<innerHeight*.5)$('#architecture').scrollIntoView({behavior:'instant',block:'start'});}renderStageDetail();}});
 modelView.setLanguage(state.lang);modelView.setTheme(state.theme);modelView.setReduced(state.reduced);syncDemoLinks();requestFrame();
 try {
   [research,caseData]=await Promise.all(['data/research.json','data/case.json'].map(async path=>{const response=await fetch(new URL(`../${path}`,import.meta.url));if(!response.ok)throw new Error(`${path}: ${response.status}`);return response.json();}));

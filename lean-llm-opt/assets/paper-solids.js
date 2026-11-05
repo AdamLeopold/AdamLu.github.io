@@ -200,7 +200,7 @@ function appendCell(data,x,y,w,h,base,top,palette){
   ringJoin(data,bottom,upper,4);flatCap(data,pts,top,rgb(palette[0]),true);flatCap(data,pts,base,rgb(palette[2]),false);
 }
 function vector(x,y,z) { return new THREE.Vector3(...world(x,y,z)); }
-function samplePath(points,radius) {
+export function samplePath(points,radius) {
   const p=points.map(([x,y,z])=>vector(x,y,z)), path=new THREE.CurvePath();
   let start=p[0];
   for(let i=1;i<p.length-1;i++){
@@ -250,6 +250,12 @@ function connector(parent,[id,coords,radius,tint],material) {
   }
   const mesh=reify(parent,id,data.pos,data.col,data.indices,material,'conduit');
   mesh.userData.endpoints=coords;
+  // Motion reuses the actual rounded shaft and its straight arrow axis. Keeping
+  // this curve on the conduit prevents a second approximation from drifting.
+  const flowCurve=new THREE.CurvePath();
+  for(const segment of curve.curves) flowCurve.add(segment);
+  flowCurve.add(new THREE.LineCurve3(startHead,goal));
+  Object.assign(mesh.userData,{flowCurve,flowRadius:radius,flowHeadLength:tipLength});
 }
 // The small repositories share a physical tree with the larger reference library.
 // The paper draws these as unheaded links to distinguish examples from workflow transitions.
