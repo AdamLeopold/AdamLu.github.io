@@ -2,11 +2,11 @@
   "format": "lean-llm-opt-static-v1",
   "deployment": "static",
   "demo": "visitor-local-handoff",
-  "builtAt": "2026-11-04T17:12:12.246Z",
-  "runtimeFileCount": 101,
-  "fileCount": 103,
-  "payloadBytes": 5184126,
-  "totalBytes": 5200947,
+  "builtAt": "2026-11-05T03:13:40.211Z",
+  "runtimeFileCount": 106,
+  "fileCount": 108,
+  "payloadBytes": 6880419,
+  "totalBytes": 6898008,
   "hashAlgorithm": "sha256",
   "files": {
     ".nojekyll": {
@@ -46,24 +46,36 @@
       "sha256": "85b1d1dc5447b86c7f599e8912702480fb6c8bc0425f33ad7f54c819718b766e"
     },
     "assets/paper-figure.css": {
-      "bytes": 5608,
-      "sha256": "6e322158d1a2546d3fad49cf3a532022ffc067aabf43e760e0b6128e55c1a3f2"
+      "bytes": 6371,
+      "sha256": "64e001149595bc54a70508da9791e7e68b06b4670e289aa5b2adbcd78621d3c9"
     },
     "assets/paper-figure.js": {
-      "bytes": 13407,
-      "sha256": "2571c64263ebe1415213dd9cb927f4156fe9d0681bec8ee3201e4b0b62c63d14"
+      "bytes": 15269,
+      "sha256": "ee064e1c80a45fbf7aaeceb4be5f1dc0505e7f066d09a5a549041ca576658638"
     },
     "assets/paper-figure/figure3.webp": {
       "bytes": 317580,
       "sha256": "c7400fd259cb5e237fe857773d840ced0186df7caa38a0cb0e7aa8edf99c847d"
     },
-    "assets/paper-figure/regions.png": {
-      "bytes": 32771,
-      "sha256": "d68e97c81c2496c7ec0a49ef4c685533249c8cc5852bbee7d7a30f186c415425"
+    "assets/paper-figure/front.webp": {
+      "bytes": 401156,
+      "sha256": "b3245333fdd1dfbd0089139eba89d38f6ac34e612d237ad5aa0f0942d48393ff"
     },
-    "assets/paper-figure/segments.json": {
-      "bytes": 153536,
-      "sha256": "fc76129b4904e738e52fbd51222340c039f7da569cadccbabacdb9491530d021"
+    "assets/paper-figure/icons.glb": {
+      "bytes": 723952,
+      "sha256": "2e7d42700bfbd93dffa39ad1c09482f6913c95b173c00fa173bc7a8ac6cc61e2"
+    },
+    "assets/paper-figure/print.webp": {
+      "bytes": 183600,
+      "sha256": "4371de4dd2b5e4110bac3e8edb4ed631b411faee53a8158b06eca0da2e832f40"
+    },
+    "assets/paper-figure/spatial.webp": {
+      "bytes": 411208,
+      "sha256": "22a6cb27fdf36000dc016bd4b9b87f77629d5713a6009083b1e748011d2bb6da"
+    },
+    "assets/paper-solids.js": {
+      "bytes": 18283,
+      "sha256": "de03827520cfaacf2ff33d9da4eff9af08d6762076477ea4b30d075bc54096e7"
     },
     "assets/redesign.css": {
       "bytes": 29123,
@@ -353,6 +365,14 @@
       "bytes": 14162,
       "sha256": "22fc51613a10dd2b6d0554b2d5b1ff36e75a8c6d477051502d46111463b4de4b"
     },
+    "assets/vendor/three/BufferGeometryUtils.js": {
+      "bytes": 31918,
+      "sha256": "3a6701d824adfe05dc28c09b6c1d64aeab9a183bc3b944d85f15f596e5c6c2b3"
+    },
+    "assets/vendor/three/GLTFLoader.js": {
+      "bytes": 108527,
+      "sha256": "1f9b02acfbf219a6ebb77f09e355500449a3ba9e6a77d87e0de72c0b9315ea4e"
+    },
     "assets/vendor/three/LICENSE": {
       "bytes": 1081,
       "sha256": "852e0e8699169bf9f6fdc6bda3e682d078dcbc738b5d33e74df594721bff271d"
@@ -414,8 +434,8 @@
       "sha256": "31562417bd0e0d53f85c15298c210702a6342cef2e42d4769a3931e9e97d7ef6"
     },
     "index.html": {
-      "bytes": 25425,
-      "sha256": "a56eaf3e148a07415ba915ad6a692b06b0a57302295df198bc2f806512bb9c2a"
+      "bytes": 26756,
+      "sha256": "552e12ff75bef19f8a9bcd2368d0b7cce1734415601ab0bc0296d432f5829541"
     }
   }
 }
