@@ -2,11 +2,11 @@
   "format": "lean-llm-opt-static-v1",
   "deployment": "static",
   "demo": "visitor-local-handoff",
-  "builtAt": "2026-11-05T03:13:40.211Z",
+  "builtAt": "2026-11-05T10:04:06.954Z",
   "runtimeFileCount": 106,
   "fileCount": 108,
-  "payloadBytes": 6880419,
-  "totalBytes": 6898008,
+  "payloadBytes": 7315216,
+  "totalBytes": 7332805,
   "hashAlgorithm": "sha256",
   "files": {
     ".nojekyll": {
@@ -51,7 +51,7 @@
     },
     "assets/paper-figure.js": {
       "bytes": 15269,
-      "sha256": "ee064e1c80a45fbf7aaeceb4be5f1dc0505e7f066d09a5a549041ca576658638"
+      "sha256": "8d148fe57974425c52ece1f8aa28374494ebe82a83ad68b0545d6a802002c09c"
     },
     "assets/paper-figure/figure3.webp": {
       "bytes": 317580,
@@ -70,8 +70,8 @@
       "sha256": "4371de4dd2b5e4110bac3e8edb4ed631b411faee53a8158b06eca0da2e832f40"
     },
     "assets/paper-figure/spatial.webp": {
-      "bytes": 411208,
-      "sha256": "22a6cb27fdf36000dc016bd4b9b87f77629d5713a6009083b1e748011d2bb6da"
+      "bytes": 845980,
+      "sha256": "b8d706d326859785b59a4656d41901315e6fc2cb5d036c48dc091147a0962f7b"
     },
     "assets/paper-solids.js": {
       "bytes": 18283,
@@ -434,8 +434,8 @@
       "sha256": "31562417bd0e0d53f85c15298c210702a6342cef2e42d4769a3931e9e97d7ef6"
     },
     "index.html": {
-      "bytes": 26756,
-      "sha256": "552e12ff75bef19f8a9bcd2368d0b7cce1734415601ab0bc0296d432f5829541"
+      "bytes": 26781,
+      "sha256": "a164c0bab28c8bf2e3fb1ca58e6df89635e728825ea32a2721b900fcb16ff82a"
     }
   }
 }

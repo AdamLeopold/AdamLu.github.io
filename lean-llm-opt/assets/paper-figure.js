@@ -3,7 +3,7 @@ import { GLTFLoader } from './vendor/three/GLTFLoader.js';
 import { buildDiagramPlates, iconPlacements } from './paper-solids.js';
 
 export const PAPER_SIZE = {width: 1582, height: 1632};
-export const PAPER_OVERVIEW = {yaw: -.37, pitch: .34};
+export const PAPER_OVERVIEW = {yaw: .37, pitch: -.34};
 const iconURL = new URL('./paper-figure/icons.glb', import.meta.url);
 const printURL = new URL('./paper-figure/print.webp', import.meta.url);
 const clamp = THREE.MathUtils.clamp;
