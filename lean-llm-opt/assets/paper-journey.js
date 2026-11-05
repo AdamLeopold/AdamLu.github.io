@@ -58,7 +58,17 @@ export function createFramework({detailHost:host,renderer:mode='auto',rendererFa
     link.setAttribute('width',(box[2]-box[0])*.95);link.setAttribute('height',(box[3]-box[1])*.95);
     link.setAttribute('fill','transparent');link.setAttribute('data-paper-node',id);svg.append(link);links.push([link,id]);
   }
-  host.classList.add('paper-journey');host.append(svg,canvas);
+  host.classList.add('paper-journey');
+  // SVGElement.hidden is not a reflected HTML property. Keep just one surface
+  // mounted so a fallback can never show behind the transparent WebGL canvas.
+  function mountSurface(kind){
+    const active=kind==='webgl'?canvas:svg,inactive=kind==='webgl'?svg:canvas;
+    inactive.setAttribute('hidden','');inactive.setAttribute('aria-hidden','true');inactive.remove();
+    active.removeAttribute('hidden');active.removeAttribute('aria-hidden');
+    if(active.parentElement!==host)host.append(active);
+    host.dataset.renderer=kind;
+  }
+  mountSurface('svg');
   let renderer,assets,art,motion,disposed=false,raf=0,lastTime=null,lastNotice=-Infinity,drag,pose,flow;
   const cleanup=[];
   function listen(target,type,fn,options){target.addEventListener(type,fn,options);cleanup.push(()=>target.removeEventListener(type,fn,options));}
@@ -82,7 +92,7 @@ export function createFramework({detailHost:host,renderer:mode='auto',rendererFa
     canvas.setAttribute('aria-label',label);svg.setAttribute('aria-label',label);
     for(const [link,id]of links)link.setAttribute('aria-label',NODE_BY_ID.get(id).title[state.lang]);
   }
-  function enableFallback(){state.fallback=true;canvas.hidden=true;svg.hidden=false;host.dataset.renderer='svg';requestFrame();}
+  function enableFallback(){state.fallback=true;mountSurface('svg');requestFrame();}
   function regionPose(key,index){
     // A restrained orbit supplies depth without turning the diagram upside down.
     const yaw=[.37,.29,.40,.31,.24,.36,.37][index]||.37,pitch=[-.30,-.24,-.25,-.21,-.18,-.25,-.30][index]||-.30;
@@ -165,7 +175,7 @@ export function createFramework({detailHost:host,renderer:mode='auto',rendererFa
     else return;event.preventDefault();
   });
   listen(canvas,'webglcontextlost',event=>{event.preventDefault();enableFallback();});
-  listen(canvas,'webglcontextrestored',()=>{if(!art||disposed)return;state.fallback=false;canvas.hidden=false;svg.hidden=true;host.dataset.renderer='webgl';renderer.shadowMap.needsUpdate=true;requestFrame();});
+  listen(canvas,'webglcontextrestored',()=>{if(!art||disposed)return;state.fallback=false;mountSurface('webgl');renderer.shadowMap.needsUpdate=true;requestFrame();});
   listen(document,'visibilitychange',()=>{lastTime=null;if(document.hidden){cancelAnimationFrame(raf);raf=0;}else requestFrame();});
   const resize=new ResizeObserver(requestFrame);resize.observe(host);
   const observer=new IntersectionObserver(([entry])=>{state.visible=entry.isIntersecting;lastTime=null;if(state.visible)requestFrame();else{cancelAnimationFrame(raf);raf=0;}},{rootMargin:'80px'});observer.observe(host);
@@ -181,8 +191,8 @@ export function createFramework({detailHost:host,renderer:mode='auto',rendererFa
       art=buildPaperFigure(assets.print,assets.library);scene.add(art);addPaperLighting(scene);
       motion=createPaperFlow(art);
       if(renderer)renderer.shadowMap.needsUpdate=true;
-    }catch(error){console.warn('The diagram is using its rendered view.',error);enableFallback();}
-    canvas.hidden=state.fallback;svg.hidden=!state.fallback;host.dataset.renderer=state.fallback?'svg':'webgl';names();sync();
+    }catch(error){if(disposed)return;console.warn('The diagram is using its rendered view.',error);enableFallback();}
+    mountSurface(state.fallback?'svg':'webgl');names();sync();
   }
   const api={
     setProgress(value){if(state.free||state.live||state.selected||state.reduced)return;const progress=clamp(Number(value)||0,0,1);if(Math.abs(progress-state.progress)<.000001)return;

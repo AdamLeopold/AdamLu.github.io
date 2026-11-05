@@ -2,11 +2,11 @@
   "format": "lean-llm-opt-static-v1",
   "deployment": "static",
   "demo": "visitor-local-handoff",
-  "builtAt": "2026-11-05T17:31:51.425Z",
+  "builtAt": "2026-11-05T17:42:53.852Z",
   "runtimeFileCount": 111,
   "fileCount": 113,
-  "payloadBytes": 7436547,
-  "totalBytes": 7454872,
+  "payloadBytes": 7436947,
+  "totalBytes": 7455272,
   "hashAlgorithm": "sha256",
   "files": {
     ".nojekyll": {
@@ -14,8 +14,8 @@
       "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     },
     "assets/app.js": {
-      "bytes": 59683,
-      "sha256": "7665f283ccf30c388d32162e1a2c8f9a26282e813005077208b7755c34952069"
+      "bytes": 59681,
+      "sha256": "ae900a8deb0b66d52431e44694f16bf9d682ae171c6f91906288cd0093cac8b4"
     },
     "assets/favicon.svg": {
       "bytes": 250,
@@ -86,8 +86,8 @@
       "sha256": "b3bc09104653db258b233dcbd1edec26e13c106df807fd77cc08cdd9e8dedd68"
     },
     "assets/paper-journey.js": {
-      "bytes": 17342,
-      "sha256": "9b39c0a01242a8ceb4655ea1b4d24aa48ceb19beb7515d0823f313b0f3d4ba68"
+      "bytes": 17746,
+      "sha256": "fd31118b29e79664efec82f301793fe070647df4f8f329bf72dff4a44b77f9da"
     },
     "assets/paper-model.js": {
       "bytes": 3688,
@@ -454,8 +454,8 @@
       "sha256": "31562417bd0e0d53f85c15298c210702a6342cef2e42d4769a3931e9e97d7ef6"
     },
     "index.html": {
-      "bytes": 26802,
-      "sha256": "0c0f9291cc1bb73b604f22cd9edabb7d8b5b11009953d03028eae38bb5b44305"
+      "bytes": 26800,
+      "sha256": "25bf5ff9045634d84e571a934d9f8adb50270f24aabc36a184778903cc60a2b3"
     }
   }
 }
