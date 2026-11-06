@@ -1,4 +1,4 @@
-import {createFramework} from './paper-journey.js?v=surface-fix-20261106-1';
+import {createFramework} from './paper-journey.js?v=editorial-hero-20261106-1';
 import {STAGES,NODE_BY_ID,JOURNEY_EXAMPLE,routeFromRunValue} from './framework-topology.js?v=vertical-side-20261104-1';
 const root = document.documentElement;
 const isStaticDeployment = root.dataset.deployment === 'static';
@@ -204,7 +204,7 @@ function setDemoLauncherCollapsed(collapsed){
   syncDemoLauncher();
 }
 const demoLauncherMedia=matchMedia('(max-width:760px)');
-setDemoLauncherCollapsed(demoLauncherMedia.matches);
+setDemoLauncherCollapsed(true);
 demoLauncherMedia.addEventListener('change',event=>setDemoLauncherCollapsed(event.matches));
 $('#demo-launcher-toggle').addEventListener('click',()=>setDemoLauncherCollapsed(!$('#demo-launcher').classList.contains('is-collapsed')));
 let demoChannel;
@@ -473,6 +473,9 @@ function frame(){
   $('#reading-progress').style.transform=`scaleX(${max>0?clamp(scrollY/max):0})`;
   const track=$('#arch-track'),box=track.getBoundingClientRect();
   const launcher=$('#demo-launcher'),overArchitecture=box.top<innerHeight&&box.bottom>0;
+  const heroBox=$('#home').getBoundingClientRect(),overHero=heroBox.bottom>82&&heroBox.top<innerHeight;
+  if(overHero&&!launcher?.classList?.contains('over-hero'))setDemoLauncherCollapsed(true);
+  launcher?.classList?.toggle('over-hero',overHero);
   if(launcher?.classList&&overArchitecture&&!launcher.classList.contains('over-architecture'))setDemoLauncherCollapsed(true);
   launcher?.classList?.toggle('over-architecture',overArchitecture);
   const pageMoved=architectureScrollY===null||architectureScrollY!==scrollY;architectureScrollY=scrollY;

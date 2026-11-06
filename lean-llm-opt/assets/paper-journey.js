@@ -26,7 +26,7 @@ function region(key, route) {return PAPER_REGIONS[key==='modeling'||key==='csvqa
 const world = (x,y,z=60) => new THREE.Vector3(x-PAPER_SIZE.width/2,PAPER_SIZE.height/2-y,z);
 
 /** Fit the actual raised diagram from the lower-left; all movement is a camera move. */
-export function journeyPose(box, aspect, yaw=.37, pitch=-.30) {
+export function journeyPose(box, aspect, yaw=.23, pitch=-.17) {
   const target = world((box[0]+box[2])/2,(box[1]+box[3])/2);
   const direction = new THREE.Vector3(-Math.sin(yaw)*Math.cos(pitch),Math.sin(pitch),Math.cos(yaw)*Math.cos(pitch));
   const right = new THREE.Vector3().crossVectors(new THREE.Vector3(0,1,0),direction).normalize();
@@ -95,7 +95,7 @@ export function createFramework({detailHost:host,renderer:mode='auto',rendererFa
   function enableFallback(){state.fallback=true;mountSurface('svg');requestFrame();}
   function regionPose(key,index){
     // A restrained orbit supplies depth without turning the diagram upside down.
-    const yaw=[.37,.29,.40,.31,.24,.36,.37][index]||.37,pitch=[-.30,-.24,-.25,-.21,-.18,-.25,-.30][index]||-.30;
+    const yaw=[.23,.19,.25,.20,.17,.23,.23][index]||.23,pitch=[-.17,-.14,-.15,-.12,-.11,-.15,-.17][index]||-.17;
     return journeyPose(region(key,state.route),camera.aspect,yaw+state.yaw,pitch+state.pitch);
   }
   function applyCamera(width,height){
