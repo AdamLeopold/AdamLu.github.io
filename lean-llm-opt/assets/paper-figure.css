@@ -190,7 +190,7 @@
 }
 
 /* A page peeking through a feathered diagonal, carried into the existing dock. */
-.demo-peek-slot {position:absolute;right:-40px;top:clamp(94px,13svh,150px);width:clamp(260px,22vw,370px);height:clamp(340px,47svh,500px);pointer-events:none}
+.demo-peek-slot {position:absolute;right:-40px;top:clamp(34px,5svh,62px);width:clamp(260px,22vw,370px);height:clamp(340px,47svh,500px);pointer-events:none}
 .demo-peek-visual,.demo-peek-eyebrow,.demo-peek-note {display:none}
 .demo-peek-caption {display:contents}
 .demo-preview {display:none;width:100%;height:auto;max-width:none}
@@ -218,24 +218,29 @@
 .demo-launcher.is-peeking .demo-peek-visual {
   position:absolute;inset:0;display:block;overflow:hidden;perspective:1000px;
   opacity:var(--peek-page-opacity);pointer-events:none;
-  -webkit-mask-image:linear-gradient(137deg,transparent 12%,rgba(0,0,0,.12) 27%,#000 50%),linear-gradient(to bottom,transparent,#000 15%,#000 65%,transparent),linear-gradient(to right,transparent,#000 19%,#000 90%,transparent);
-  mask-image:linear-gradient(137deg,transparent 12%,rgba(0,0,0,.12) 27%,#000 50%),linear-gradient(to bottom,transparent,#000 15%,#000 65%,transparent),linear-gradient(to right,transparent,#000 19%,#000 90%,transparent);
+  /* Visible half: upper right. The feathered boundary runs top left to bottom right. */
+  -webkit-mask-image:linear-gradient(to bottom left,#000 42%,rgba(0,0,0,.88) 46%,transparent 54%),linear-gradient(to bottom,transparent,#000 6%,#000 93%,transparent),linear-gradient(to right,transparent,#000 6%,#000 96%,transparent);
+  mask-image:linear-gradient(to bottom left,#000 42%,rgba(0,0,0,.88) 46%,transparent 54%),linear-gradient(to bottom,transparent,#000 6%,#000 93%,transparent),linear-gradient(to right,transparent,#000 6%,#000 96%,transparent);
   -webkit-mask-composite:source-in;mask-composite:intersect;
+  transform:scale(.96);transform-origin:100% 0;
+  transition:transform .62s cubic-bezier(.18,.86,.34,1);
 }
-.demo-launcher.is-peeking .demo-peek-visual::before {content:"";position:absolute;inset:7% -30% 0 8%;background:radial-gradient(ellipse,rgba(151,165,248,.23),transparent 67%);filter:blur(22px)}
-.demo-launcher.is-peeking .demo-peek-visual::after {content:"";position:absolute;inset:38% 0 0;background:linear-gradient(transparent,var(--bg));pointer-events:none}
+.demo-launcher.is-peeking .demo-peek-visual::before {content:"";position:absolute;inset:0 -15% 0 0;background:radial-gradient(ellipse at 75% 25%,rgba(151,165,248,.24),transparent 70%);filter:blur(16px)}
+.demo-launcher.is-peeking .demo-peek-visual::after {content:"";position:absolute;inset:62% 0 0;background:linear-gradient(transparent,var(--bg));pointer-events:none}
 .demo-page-window {
-  position:absolute;display:block;left:18px;top:20px;width:650px;
+  --page-scale:.92;--page-hover-scale:1.04;
+  position:absolute;display:block;left:auto;right:10px;top:12px;width:650px;
   border:1px solid rgba(187,200,246,.35);border-radius:15px;overflow:hidden;
   background:#1c233f;box-shadow:-15px 26px 72px rgba(0,0,0,.24),inset 0 1px rgba(255,255,255,.2);
-  transform:translateX(-112px) rotateY(-21deg) rotateZ(-6deg) scale(.86);
-  transform-origin:43% 42%;transition:transform .55s cubic-bezier(.2,.7,.2,1),filter .55s;
+  transform:rotateY(-8deg) rotateZ(2deg) scale(var(--page-scale));
+  transform-origin:100% 0;transition:transform .5s cubic-bezier(.22,.75,.3,1);
 }
-.demo-page-bar {height:26px;display:flex;align-items:center;gap:5px;padding:0 12px;background:#252c49;border-bottom:1px solid rgba(183,196,244,.14);color:#aebbdc;font:8px var(--mono)}
+.demo-page-bar {height:26px;display:flex;align-items:center;justify-content:flex-end;gap:5px;padding:0 12px;background:#252c49;border-bottom:1px solid rgba(183,196,244,.14);color:#aebbdc;font:8px var(--mono)}
 .demo-page-bar i {display:block;width:4px;height:4px;border-radius:50%;background:#7887b3}
 .demo-page-bar>span {margin-left:12px;letter-spacing:.08em}
 .demo-page-content {display:block;overflow:hidden}
-.demo-launcher.is-peeking[data-peek-state="preview"] .demo-launcher-link:is(:hover,:focus-visible) .demo-page-window {transform:translateX(-150px) rotateY(-10deg) rotateZ(-3deg) scale(1.03)}
+.demo-launcher.is-peeking[data-peek-state="preview"] .demo-launcher-link:is(:hover,:focus-visible) .demo-peek-visual {transform:scale(1);transition-timing-function:cubic-bezier(.18,1.55,.36,1)}
+.demo-launcher.is-peeking[data-peek-state="preview"] .demo-launcher-link:is(:hover,:focus-visible) .demo-page-window {transform:translateY(-3px) rotateY(-3deg) rotateZ(.5deg) scale(var(--page-hover-scale));transition-duration:.68s;transition-timing-function:cubic-bezier(.18,1.55,.36,1)}
 .demo-launcher.is-peeking .demo-peek-caption {
   display:block;position:absolute;left:calc(12px + 20px*var(--peek-open));right:calc(35px + 3px*var(--peek-open));bottom:calc(10px + 18px*var(--peek-open));
   padding:0;line-height:1.5;pointer-events:none;
@@ -250,18 +255,16 @@
 @media (min-width:1700px){.demo-peek-slot {right:-42px;width:380px}}
 @media (max-width:1279px) and (min-width:761px){
   .demo-peek-slot {position:relative;grid-column:7 / -1;grid-row:2;justify-self:end;right:0;top:0;width:100%;max-width:330px;height:230px;margin-top:10px;margin-bottom:20px}
-  .demo-launcher.is-peeking .demo-page-window {top:-38px;transform:translateX(-90px) rotateY(-17deg) rotateZ(-6deg) scale(.66)}
-  .demo-launcher.is-peeking[data-peek-state="preview"] .demo-launcher-link:is(:hover,:focus-visible) .demo-page-window {transform:translateX(-125px) rotateY(-8deg) rotateZ(-3deg) scale(.80)}
+  .demo-launcher.is-peeking .demo-page-window {--page-scale:.76;--page-hover-scale:.86;top:6px}
   .demo-launcher.is-peeking .demo-peek-caption {bottom:16px}
   .demo-launcher.is-peeking .demo-peek-note {display:none}
 }
 @media(max-width:760px){
   .demo-peek-slot {position:relative;align-self:flex-end;right:0;top:0;width:calc(100% - 38px);height:240px;margin:0 18px 22px 20px}
-  .demo-launcher.is-peeking .demo-page-window {top:-25px;left:25px;transform:translateX(-110px) rotateY(-15deg) rotateZ(-6deg) scale(.72)}
-  .demo-launcher.is-peeking[data-peek-state="preview"] .demo-launcher-link:is(:hover,:focus-visible) .demo-page-window {transform:translateX(-145px) rotateY(-6deg) rotateZ(-2deg) scale(.86)}
+  .demo-launcher.is-peeking .demo-page-window {--page-scale:.76;--page-hover-scale:.86;top:6px}
   .demo-launcher.is-peeking .demo-peek-note {display:none}
   .demo-launcher.is-peeking .demo-peek-caption {bottom:calc(10px + 8px*var(--peek-open))}
   .demo-launcher.is-peeking .demo-peek-arrow {bottom:calc(11px + 15px*var(--peek-open))}
 }
-:root[data-motion="reduced"] .demo-page-window {transition:none}
-@media(prefers-reduced-motion:reduce){.demo-page-window {transition:none}}
+:root[data-motion="reduced"] .demo-launcher.is-peeking .demo-page-window,:root[data-motion="reduced"] .demo-launcher.is-peeking .demo-peek-visual {transition:none!important}
+@media(prefers-reduced-motion:reduce){.demo-launcher.is-peeking .demo-page-window,.demo-launcher.is-peeking .demo-peek-visual {transition:none!important}}

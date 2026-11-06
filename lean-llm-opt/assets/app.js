@@ -1,4 +1,4 @@
-import {createDemoPeek} from './demo-peek.js?v=demo-peek-20261107-1';
+import {createDemoPeek} from './demo-peek.js?v=demo-corner-20261107-1';
 import {createFramework} from './paper-journey.js?v=editorial-hero-20261106-1';
 import {STAGES,NODE_BY_ID,JOURNEY_EXAMPLE,routeFromRunValue} from './framework-topology.js?v=vertical-side-20261104-1';
 const root = document.documentElement;
