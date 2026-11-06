@@ -2,11 +2,11 @@
   "format": "lean-llm-opt-static-v1",
   "deployment": "static",
   "demo": "visitor-local-handoff",
-  "builtAt": "2026-11-06T06:18:34.165Z",
-  "runtimeFileCount": 111,
-  "fileCount": 113,
-  "payloadBytes": 7446113,
-  "totalBytes": 7464439,
+  "builtAt": "2026-11-06T17:44:56.899Z",
+  "runtimeFileCount": 116,
+  "fileCount": 118,
+  "payloadBytes": 7608351,
+  "totalBytes": 7627435,
   "hashAlgorithm": "sha256",
   "files": {
     ".nojekyll": {
@@ -14,8 +14,28 @@
       "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     },
     "assets/app.js": {
-      "bytes": 59911,
-      "sha256": "b4b27fa992c94757dd7c5b77d813a94478785556a89789004f9eb13c4a86b805"
+      "bytes": 60207,
+      "sha256": "4e6e3bc57ef38fe2aafcd5d050b4341680062d986575098ff470cfb88311a0db"
+    },
+    "assets/demo-peek.js": {
+      "bytes": 3136,
+      "sha256": "2a93d6e36a46137a2526e480f6f87cdad27ff0a8720c5fe32ec74915d1f73296"
+    },
+    "assets/demo-preview-en-dark.webp": {
+      "bytes": 41488,
+      "sha256": "fdf24d94471944982f67f81b131be5da3d5617e8d2c3ba6eb03ec08135374340"
+    },
+    "assets/demo-preview-en-light.webp": {
+      "bytes": 42300,
+      "sha256": "ac779e3acea30cd0246043b143c7dd0ee948998a0e85921e6adb10b3dce28c4e"
+    },
+    "assets/demo-preview-zh-dark.webp": {
+      "bytes": 33114,
+      "sha256": "a56bcd917a0d8f128a0d9bd8b25ef7cf5c4316cc621d5c6516ef88621d549454"
+    },
+    "assets/demo-preview-zh-light.webp": {
+      "bytes": 34040,
+      "sha256": "b3e1b9ce7fb03002217146f4678a3cc1b2a455af94a8d6786e098531f6615694"
     },
     "assets/favicon.svg": {
       "bytes": 250,
@@ -54,8 +74,8 @@
       "sha256": "85b1d1dc5447b86c7f599e8912702480fb6c8bc0425f33ad7f54c819718b766e"
     },
     "assets/paper-figure.css": {
-      "bytes": 14341,
-      "sha256": "098ba6916a25ed67612d964155d8797eda58f7974b6e7dba81e0ef9173ebadaa"
+      "bytes": 20967,
+      "sha256": "2b23e4454f893efae890ef446a90fbc1de8d58e8382a06fb14c197e5064f1c63"
     },
     "assets/paper-figure.js": {
       "bytes": 11902,
@@ -454,8 +474,8 @@
       "sha256": "31562417bd0e0d53f85c15298c210702a6342cef2e42d4769a3931e9e97d7ef6"
     },
     "index.html": {
-      "bytes": 27766,
-      "sha256": "cb9bb44eb2a53b701fec6cd12076a1e455647f2d14335263193a17be67d86dd1"
+      "bytes": 29004,
+      "sha256": "5da49da469642ae427022d9e534d60a0f6638a0ef256916adcbb67f643e848cc"
     }
   }
 }

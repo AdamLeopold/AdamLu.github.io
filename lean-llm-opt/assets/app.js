@@ -1,3 +1,4 @@
+import {createDemoPeek} from './demo-peek.js?v=demo-peek-20261107-1';
 import {createFramework} from './paper-journey.js?v=editorial-hero-20261106-1';
 import {STAGES,NODE_BY_ID,JOURNEY_EXAMPLE,routeFromRunValue} from './framework-topology.js?v=vertical-side-20261104-1';
 const root = document.documentElement;
@@ -18,7 +19,7 @@ const number = (value, decimals = 0) => Number(value).toLocaleString(state.lang 
 const modelName = (model) => model === 'gpt41' ? 'GPT-4.1' : 'gpt-oss-20B';
 const clamp = (value, min = 0, max = 1) => Math.max(min, Math.min(max, value));
 const storage = (key, value) => { try { localStorage.setItem(`lean-${key}`, value); } catch (_) {} };
-let research, caseData, replayTimer = null, studyTimer = null, replayVisible = false, studyVisible = false, toastTimer, frameId = 0, modelView, flowFrame, lastRunEvent, liveTrace={files:[],objective:null,status:null,runId:null,route:null};
+let demoPeek, research, caseData, replayTimer = null, studyTimer = null, replayVisible = false, studyVisible = false, toastTimer, frameId = 0, modelView, flowFrame, lastRunEvent, liveTrace={files:[],objective:null,status:null,runId:null,route:null};
 const AUTOPLAY_DELAY = 10000;
 // Follow the available space until the visitor chooses a card state.
 const statusCard = $('#flow-live-status');
@@ -198,6 +199,7 @@ function syncDemoLauncher(){
   $('#demo-launcher-description').hidden=collapsed;
   $('#demo-launcher-link-label').textContent=collapsed?t('试用 Demo','Try demo'):t('打开工作台','Open workspace');
   $('.demo-launcher-toggle-icon').textContent=collapsed?'+':'−';
+  demoPeek?.refresh();
 }
 function setDemoLauncherCollapsed(collapsed){
   $('#demo-launcher').classList.toggle('is-collapsed',collapsed);$('#demo-launcher').dataset.collapsed=String(collapsed);
@@ -207,6 +209,7 @@ const demoLauncherMedia=matchMedia('(max-width:760px)');
 setDemoLauncherCollapsed(true);
 demoLauncherMedia.addEventListener('change',event=>setDemoLauncherCollapsed(event.matches));
 $('#demo-launcher-toggle').addEventListener('click',()=>setDemoLauncherCollapsed(!$('#demo-launcher').classList.contains('is-collapsed')));
+demoPeek=createDemoPeek({hero:$('#home'),slot:$('.demo-peek-slot'),launcher:$('#demo-launcher'),isReduced:()=>state.reduced,collapse:()=>setDemoLauncherCollapsed(true)});
 let demoChannel;
 function connectDemoChannel(){
   if(isStaticDeployment){$('#follow-run').hidden=true;return;}
@@ -478,6 +481,7 @@ function frame(){
   launcher?.classList?.toggle('over-hero',overHero);
   if(launcher?.classList&&overArchitecture&&!launcher.classList.contains('over-architecture'))setDemoLauncherCollapsed(true);
   launcher?.classList?.toggle('over-architecture',overArchitecture);
+  demoPeek?.update();
   const pageMoved=architectureScrollY===null||architectureScrollY!==scrollY;architectureScrollY=scrollY;
   resumeScrollGuide(pageMoved);
   if(canGuideScroll()&&!state.free&&!state.follow&&!state.node&&!state.manualStage&&(canPin()||pageMoved)){
