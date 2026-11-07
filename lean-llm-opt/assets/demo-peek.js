@@ -5,9 +5,23 @@ const mix = (a,b,t)=>a+(b-a)*t;
 export function createDemoPeek({hero,slot,launcher,isReduced=()=>false,collapse=()=>{}}){
   if(!hero||!slot||!launcher)return {update(){},refresh(){},dispose(){}};
   const link=launcher.querySelector('.demo-launcher-link');
-  let dock=null,metricKey='',disposed=false;
-  const styles=['--peek-left','--peek-top','--peek-width','--peek-height','--peek-open','--peek-progress','--peek-page-opacity'];
+  const framework=hero.querySelector('#paper-viewport');
+  const slotBase={top:slot.style.top,height:slot.style.height};
+  let dock=null,metricKey='',disposed=false,slotAligned=false;
+  const styles=['--peek-left','--peek-top','--peek-width','--peek-height','--peek-source-height','--peek-open','--peek-progress','--peek-page-opacity'];
   function refresh(){metricKey='';}
+  function restoreSlot(){for(const [name,value]of Object.entries(slotBase))slot.style[name]=value;slotAligned=false;}
+  function alignSlot(){
+    // The desktop triangle shares the framework's vertical bounds; its width
+    // remains a CSS layout choice. Narrow layouts retain their separate row.
+    if(innerWidth>=1280&&framework&&slot.offsetParent){
+      const box=framework.getBoundingClientRect(),parent=slot.offsetParent.getBoundingClientRect();
+      for(const [name,value]of Object.entries({top:box.top-parent.top,height:box.height})){
+        const pixels=value+'px';if(slot.style[name]!==pixels)slot.style[name]=pixels;
+      }
+      slotAligned=true;
+    }else if(slotAligned)restoreSlot();
+  }
   function measureDock(){
     const peeking=launcher.classList.contains('is-peeking');
     launcher.classList.remove('is-peeking');
@@ -17,6 +31,7 @@ export function createDemoPeek({hero,slot,launcher,isReduced=()=>false,collapse=
   }
   function update(){
     if(disposed)return;
+    alignSlot();
     const slotBox=slot.getBoundingClientRect(),heroBox=hero.getBoundingClientRect();
     const slotY=slotBox.top+scrollY,heroY=heroBox.top+scrollY;
     // On narrow screens the preview must enter the viewport before it docks.
@@ -40,10 +55,11 @@ export function createDemoPeek({hero,slot,launcher,isReduced=()=>false,collapse=
       '--peek-top':mix(slotBox.top,target.top,t)+'px',
       '--peek-width':mix(slotBox.width,dock.width,t)+'px',
       '--peek-height':mix(slotBox.height,dock.height,t)+'px',
+      '--peek-source-height':slotBox.height+'px',
       '--peek-open':1-t,'--peek-progress':t,'--peek-page-opacity':Math.max(0,1-t*1.32),
     };
     for(const [name,value]of Object.entries(values))launcher.style.setProperty(name,String(value));
   }
   update();
-  return {update,refresh,dispose(){disposed=true;launcher.classList.remove('is-peeking');for(const name of styles)launcher.style.removeProperty(name);for(const key of ['peekState','peekProgress','peekStart','peekEnd'])delete launcher.dataset[key];}};
+  return {update,refresh,dispose(){disposed=true;restoreSlot();launcher.classList.remove('is-peeking');for(const name of styles)launcher.style.removeProperty(name);for(const key of ['peekState','peekProgress','peekStart','peekEnd'])delete launcher.dataset[key];}};
 }

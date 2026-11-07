@@ -2,11 +2,11 @@
   "format": "lean-llm-opt-static-v1",
   "deployment": "static",
   "demo": "visitor-local-handoff",
-  "builtAt": "2026-11-06T18:08:27.541Z",
+  "builtAt": "2026-11-07T03:44:12.710Z",
   "runtimeFileCount": 116,
   "fileCount": 118,
-  "payloadBytes": 7608654,
-  "totalBytes": 7627738,
+  "payloadBytes": 7609470,
+  "totalBytes": 7628554,
   "hashAlgorithm": "sha256",
   "files": {
     ".nojekyll": {
@@ -14,12 +14,12 @@
       "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     },
     "assets/app.js": {
-      "bytes": 60209,
-      "sha256": "8b79e7b529795dc6713df78999364cb8cf6fea2eec8de553a851f4aed2f8288c"
+      "bytes": 60212,
+      "sha256": "2c14436a336d878d324ef505497ef245da02f5203a6fc235b1a03252daf3a362"
     },
     "assets/demo-peek.js": {
-      "bytes": 3136,
-      "sha256": "2a93d6e36a46137a2526e480f6f87cdad27ff0a8720c5fe32ec74915d1f73296"
+      "bytes": 4087,
+      "sha256": "986b3e2aeeba63d0f9d482fe1e05d26c629bd231f6e47df4513485e0d3733317"
     },
     "assets/demo-preview-en-dark.webp": {
       "bytes": 41488,
@@ -74,8 +74,8 @@
       "sha256": "85b1d1dc5447b86c7f599e8912702480fb6c8bc0425f33ad7f54c819718b766e"
     },
     "assets/paper-figure.css": {
-      "bytes": 21264,
-      "sha256": "9c983c2593261fe1ef761cfba8d8c122770af06c97f2b9764cc1674e01890a52"
+      "bytes": 21120,
+      "sha256": "9c2ecfac50db97c2d5f1b06802c2a77200747063486bb880ae318dafb6093d5c"
     },
     "assets/paper-figure.js": {
       "bytes": 11902,
@@ -474,8 +474,8 @@
       "sha256": "31562417bd0e0d53f85c15298c210702a6342cef2e42d4769a3931e9e97d7ef6"
     },
     "index.html": {
-      "bytes": 29008,
-      "sha256": "6030fb3f6ce250aec94961fbd62a869d6a6fbaf9382cc8c3f6c824de141af607"
+      "bytes": 29014,
+      "sha256": "49055d4a193b56be1eb76d902b947e8ac561d4a9ebdc9182baa66e97089ef86e"
     }
   }
 }
