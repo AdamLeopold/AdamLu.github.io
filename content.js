@@ -9,8 +9,8 @@ window.HOMEPAGE_CONTENT = {
       zh: "卢宇航，南洋理工大学计算机与数据科学学院计算机科学博士生，研究经济世界模型、医疗经济学中的人工智能、大语言模型、智能优化与智能体仿真。",
     },
     lastUpdated: {
-      en: "Last substantive update: October 2026",
-      zh: "最近一次实质更新：2026 年 10 月",
+      en: "Last substantive update: November 2026",
+      zh: "最近一次实质更新：2026 年 11 月",
     },
   },
 
@@ -129,6 +129,22 @@ window.HOMEPAGE_CONTENT = {
   },
 
   updates: [
+    {
+      date: "2026-11",
+      title: { en: "Economic World Model Challenge schedule", zh: "经济世界模型挑战赛日程" },
+      text: {
+        en: "The official website lists free registration and schedules Tracks 1–3 to open on 18 November 2026 at 08:00 Hong Kong / Singapore time. I continue to serve as Challenge Coordinator.",
+        zh: "官网已提供免费报名入口，并公布三个赛道将于 2026 年 11 月 18 日香港／新加坡时间 08:00 开启。我继续担任比赛协调人。",
+      },
+    },
+    {
+      date: "2026-11",
+      title: { en: "LEAN-LLM-OPT project website", zh: "LEAN-LLM-OPT 项目网站" },
+      text: {
+        en: "The bilingual project website is public, with an interactive workflow explanation and a modeling demo interface. Running new modeling tasks requires the visitor's own local backend, model service, and solver setup.",
+        zh: "双语项目网站已公开，提供交互式建模流程讲解与 Demo 界面。运行新的建模任务需要访客配置自己的本机后端、模型服务和求解环境。",
+      },
+    },
     {
       date: "2026-10",
       title: { en: "Economic World Model Challenge", zh: "经济世界模型挑战赛" },
@@ -374,11 +390,11 @@ window.HOMEPAGE_CONTENT = {
   platforms: [
     {
       title: "Economic World Model Challenge (SimuWorld)",
-      status: { en: "Competition website public; tracks in preparation", zh: "比赛网站已公开；赛道筹备中" },
+      status: { en: "Tracks scheduled to open on 18 November 2026", zh: "赛道计划于 2026 年 11 月 18 日开启" },
       role: { en: "Co-lead; Challenge Coordinator", zh: "共同负责人；比赛协调人" },
       description: {
-        en: "A competition built around economic world models and multi-agent simulation, hosted by GIFTS and Nanyang Business School at NTU. Tracks cover DeFi strategy, protocol risk, and city planning. The public website introduces the tracks and organising committee; it does not establish completed evaluations or a fully launched submission platform.",
-        zh: "围绕经济世界模型与多智能体仿真的比赛，由南洋理工大学 GIFTS 与南洋理工商学院主办。赛道涵盖 DeFi 策略、协议风险与城市规划。公开网站介绍赛道与组委会；这不代表评测已经完成或提交平台已全面上线。",
+        en: "A competition built around economic world models and multi-agent simulation, initiated by GIFTS at NTU, with Nanyang Business School among the partner institutions. Tracks cover DeFi strategy, protocol risk, and city planning. The official website lists free registration and a scheduled opening for all three tracks on 18 November 2026; evaluations have not been reported as completed.",
+        zh: "围绕经济世界模型与多智能体仿真的比赛，由南洋理工大学 GIFTS 发起，南洋理工商学院为合作机构之一。赛道涵盖 DeFi 策略、协议风险与城市规划。官网已提供免费报名入口，三个赛道计划于 2026 年 11 月 18 日开启；尚未公布已完成的评测结果。",
       },
       link: { url: "https://adamleopold.github.io/ewm-challenge/", label: { en: "Competition website", zh: "比赛网站" } },
     },
