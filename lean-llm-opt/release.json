@@ -2,11 +2,11 @@
   "format": "lean-llm-opt-static-v1",
   "deployment": "static",
   "demo": "visitor-local-handoff",
-  "builtAt": "2026-11-09T16:38:22.882Z",
+  "builtAt": "2026-11-09T17:16:10.530Z",
   "runtimeFileCount": 116,
   "fileCount": 118,
-  "payloadBytes": 7657157,
-  "totalBytes": 7676241,
+  "payloadBytes": 7661855,
+  "totalBytes": 7680939,
   "hashAlgorithm": "sha256",
   "files": {
     ".nojekyll": {
@@ -22,20 +22,20 @@
       "sha256": "99e8469f6fac17da0b5b8e8b0a5d1e010d9c290a213cd8c279047e028b9a4e87"
     },
     "assets/demo-preview-en-dark.webp": {
-      "bytes": 40046,
-      "sha256": "2b0ff9d8e2f364a45cee9c3e2c8ea409e0e519015ba3b06d11d6f77fd4e927f9"
+      "bytes": 39502,
+      "sha256": "f73944c45bd92c70e0c280e841c4b54dbc8fe3b5123e9daa35befa91b94dd55b"
     },
     "assets/demo-preview-en-light.webp": {
-      "bytes": 40924,
-      "sha256": "4aad10b5189d95b75e50e1e68771edc95916bc918bc75180b7d0bbab2d2d741f"
+      "bytes": 40618,
+      "sha256": "fbe973c07d4f58123175498f7705ef617adb5d3f5de48f77ee16c3d4c612822d"
     },
     "assets/demo-preview-zh-dark.webp": {
-      "bytes": 32596,
-      "sha256": "91001a547093d21a702386c8d7dcc7ade966bc86db54f7ef4bbaaa1f39a5d6aa"
+      "bytes": 31834,
+      "sha256": "d1c0ea1bd56e341067149242883eed4b4e004b6b13d84c3aaea2159a5e82349c"
     },
     "assets/demo-preview-zh-light.webp": {
-      "bytes": 33852,
-      "sha256": "42cbbf3871905a821665f5a8e7f0ad99cba45673e2daf02e6786ec2934874b5e"
+      "bytes": 33220,
+      "sha256": "e486cee9024535fc1fde7e0e3dce296e16f9bde87b3d4dd08508f589cadd74bc"
     },
     "assets/favicon.svg": {
       "bytes": 250,
@@ -454,28 +454,28 @@
       "sha256": "bc743d9544b633f10f4bc1748b8039ee6c718e15bbbc7bc50df720f4c541987a"
     },
     "demo/demo.js": {
-      "bytes": 81265,
-      "sha256": "f7a59dafe8310f647c3730ea51053c0245e2f15b37ab9fa7556b5a828328d3c4"
+      "bytes": 86753,
+      "sha256": "15190f643b88799f984b689cf27f9367506f64cf1ffc27debab18e2cce407e73"
     },
     "demo/examples.json": {
       "bytes": 14622,
       "sha256": "03340a9801fb3a9aec19429149b4a496964dfe7bf77ac39018f5bf671ceb28fe"
     },
     "demo/index.html": {
-      "bytes": 25096,
-      "sha256": "31f566568ef83f228f0c7caa74c29709dbad1084cef8ffa933c8e6801b5ad8e5"
+      "bytes": 24970,
+      "sha256": "e3b29cddf69380629eef5eaf71698f87671c0ee20cd0c2fd8c81fa1502102430"
     },
     "demo/rich-text.js": {
       "bytes": 8214,
       "sha256": "47eea724cc6ba28e49a49b2a86ccbd7e1fccbac002ada5f40d24911a7e339d96"
     },
     "downloads/lean-llm-opt-local.zip": {
-      "bytes": 1162598,
-      "sha256": "6121798a2313fb6a371cad8e0ca81dd155155578a55fc10f4e07c9ec9af22ef3"
+      "bytes": 1164186,
+      "sha256": "f74527ea46ad600859c8d32e2450cfb6ee2c7657a0e6ee4f14dc88b31b77410b"
     },
     "index.html": {
-      "bytes": 29116,
-      "sha256": "512558f0233348995c53bed6d1578542fbe434fc708748bd2de694d1382fe2c9"
+      "bytes": 29108,
+      "sha256": "ae0344fcec01c94377bfae2b2bea39aea1c568ab3a5ad3501989a8b54f20a346"
     }
   }
 }
