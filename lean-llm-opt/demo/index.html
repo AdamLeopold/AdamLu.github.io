@@ -8,10 +8,10 @@
   <script>{const p=new URLSearchParams(location.search);const read=k=>{try{return localStorage.getItem(k)}catch{return null}};document.documentElement.dataset.theme=(p.get('theme')||read('lean-theme'))==='light'?'light':'dark';const language=p.get('lang')||read('lean-demo-lang');document.documentElement.dataset.lang=language==='zh'?'zh':'en';document.documentElement.lang=document.documentElement.dataset.lang==='en'?'en':'zh-CN'}</script>
   <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="../assets/vendor/katex/katex.min.css">
-  <link rel="stylesheet" href="demo.css?v=personal-settings-20261109-1">
+  <link rel="stylesheet" href="demo.css?v=csv-sidebar-20261110-1">
   <script defer src="../assets/vendor/katex/katex.min.js"></script>
   <script defer src="../assets/vendor/katex/auto-render.min.js"></script>
-  <script type="module" src="demo.js?v=personal-settings-20261109-1"></script>
+  <script type="module" src="demo.js?v=csv-sidebar-20261110-1"></script>
 </head>
 <body>
   <a href="#composer" class="skip-link" data-zh="跳到问题输入" data-en="Skip to question">Skip to question</a>
@@ -27,7 +27,7 @@
     <aside class="settings-panel" id="settings-panel" aria-label="模型与文件 / Models and files">
       <div class="panel-heading"><span class="eyebrow" data-zh="运行设置" data-en="RUN SETTINGS">RUN SETTINGS</span><button class="icon-button mobile-only" id="settings-close" type="button" aria-label="关闭设置 / Close settings">×</button></div>
       <div class="setting-field"><label for="provider" data-zh="模型服务" data-en="Model service">Model service</label><select id="provider"><option value="" disabled data-zh="选择模型服务" data-en="Choose a model service">Choose a model service</option><option value="openai" selected>OpenAI · GPT-4.1</option><option value="ollama">Ollama · gpt-oss:20b</option></select></div>
-      <div class="setting-field key-field" id="key-field"><span class="field-label">OpenAI API key</span><button id="key-configure" class="key-configure" type="button" aria-controls="personal-settings" aria-haspopup="dialog" aria-expanded="false"><span id="key-status">Add your API key</span><span aria-hidden="true">↗</span></button></div>
+      <div class="key-field" id="key-field"><span>OpenAI API key:</span><span id="key-status" hidden>Added</span><button id="key-configure" class="text-button key-edit" type="button" aria-controls="personal-settings" aria-haspopup="dialog" aria-expanded="false">Add key</button></div>
       <p class="fixed-model"><span data-zh="固定模型：" data-en="Fixed model: ">Fixed model: </span><output id="model">GPT-4.1</output></p>
       <p class="field-hint" id="model-location" data-zh="模型请求发送至 OpenAI，产物由本机工作台保存。" data-en="Model requests go to OpenAI; artifacts are saved by the local workspace.">Model requests go to OpenAI; artifacts are saved by the local workspace.</p><button id="model-setup-open" class="text-button setup-link" type="button" data-zh="安装与连接指南 ↗" data-en="Setup & connection guide ↗">Setup & connection guide ↗</button>
       <div class="section-rule"></div>
@@ -36,8 +36,8 @@
       <div id="file-list" class="file-list"></div>
       <button id="drop-zone" class="drop-zone" type="button"><span>↥</span><span data-zh="拖入 CSV，或点击上传" data-en="Drop CSVs or click to upload">Drop CSVs or click to upload</span></button>
       <div class="section-rule"></div>
-      <h2 class="sidebar-title" data-zh="示例问题" data-en="EXAMPLES">EXAMPLES</h2>
-      <div class="example-list"><button data-example="tp" type="button"><span class="example-symbol">⌁</span><span data-zh="运输规划" data-en="Transportation">Transportation</span><small>TP ↗</small></button><button data-example="nrm" type="button"><span class="example-symbol">↗</span><span data-zh="收益管理" data-en="Revenue management">Revenue management</span><small>NRM ↗</small></button><button data-example="ra" type="button"><span class="example-symbol">▥</span><span data-zh="资源分配" data-en="Resource allocation">Resource allocation</span><small>RA ↗</small></button><button data-example="flp" type="button"><span class="example-symbol">⌖</span><span data-zh="设施选址" data-en="Facility location">Facility location</span><small>FLP ↗</small></button><button data-example="ap" type="button"><span class="example-symbol">⋈</span><span data-zh="人员指派" data-en="Assignment">Assignment</span><small>AP ↗</small></button></div>
+      <details id="sidebar-examples" class="sidebar-examples"><summary class="sidebar-title" data-zh="示例问题" data-en="EXAMPLES">EXAMPLES</summary>
+      <div class="example-list"><button data-example="tp" type="button"><span class="example-symbol">⌁</span><span data-zh="运输规划" data-en="Transportation">Transportation</span><small>TP ↗</small></button><button data-example="nrm" type="button"><span class="example-symbol">↗</span><span data-zh="收益管理" data-en="Revenue management">Revenue management</span><small>NRM ↗</small></button><button data-example="ra" type="button"><span class="example-symbol">▥</span><span data-zh="资源分配" data-en="Resource allocation">Resource allocation</span><small>RA ↗</small></button><button data-example="flp" type="button"><span class="example-symbol">⌖</span><span data-zh="设施选址" data-en="Facility location">Facility location</span><small>FLP ↗</small></button><button data-example="ap" type="button"><span class="example-symbol">⋈</span><span data-zh="人员指派" data-en="Assignment">Assignment</span><small>AP ↗</small></button></div></details>
       <div class="runtime-card"><i id="runtime-dot"></i><div><strong id="runtime-title" data-zh="本机执行环境" data-en="Local execution">Local execution</strong><p id="runtime-description" data-zh="Python / Gurobi" data-en="Python / Gurobi">Python / Gurobi</p></div></div>
       <button id="runtime-check" class="text-button setup-link" type="button" data-zh="检测 Python / Gurobi" data-en="Check Python / Gurobi">Check Python / Gurobi</button><p class="session-caption" id="session-caption"></p>
     </aside>

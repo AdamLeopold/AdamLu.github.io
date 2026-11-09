@@ -2435,3 +2435,13 @@ select option {
  .header-actions {gap:2px}
  .studio-header .icon-button,#history-open {width:25px}
 }
+
+/* The sidebar keeps data selection available before a runtime is connected. */
+.key-field {display:flex;align-items:baseline;flex-wrap:wrap;gap:4px 6px;margin:0 0 12px;font-size:11px;color:var(--muted)}
+.key-field #key-status {font-weight:600;color:var(--fg)}
+.key-field .key-edit {padding:0;font-size:11px;line-height:1.6;color:var(--accent);text-decoration:underline;text-underline-offset:3px}
+.sidebar-examples>summary {cursor:pointer;list-style-position:inside;padding:8px 0;user-select:none}
+.sidebar-examples>summary::marker {color:var(--dim)}
+.sidebar-examples .example-list {margin-top:4px}
+.file-row.pending .csv-icon {border-style:dashed}
+.file-row.pending .file-info small {display:block}
