@@ -23,8 +23,8 @@
   <link rel="stylesheet" href="assets/style.css?v=global-motion-20261110-1">
   <link rel="stylesheet" href="assets/framework-3d.css?v=fixed-right-20261104-1">
   <link rel="stylesheet" href="assets/redesign.css?v=paper-journey-20261106-1">
-  <link rel="stylesheet" href="assets/paper-figure.css?v=global-motion-20261110-1">
-  <script type="module" src="assets/app.js?v=global-motion-20261110-1"></script>
+  <link rel="stylesheet" href="assets/paper-figure.css?v=demo-english-20261110-1">
+  <script type="module" src="assets/app.js?v=demo-english-20261110-1"></script>
   <script type="module" src="assets/paper-figure.js?v=global-motion-20261110-1"></script>
 </head>
 <body>
@@ -33,7 +33,7 @@
     <a class="brand" href="#home" aria-label="LEAN-LLM-OPT"><svg viewBox="0 0 30 30" aria-hidden="true"><path d="m15 2 13 7.5v15L15 17 2 24.5v-15Z"/><path d="m2 9.5 13 7.5 13-7.5M15 2v15"/></svg><span>LEAN<span class="brand-divider">/</span><span class="brand-small">LLM OPT</span></span></a>
     <nav id="primary-navigation" class="nav-links" aria-label="主导航" data-zh-aria="主导航" data-en-aria="Main navigation">
       <a href="#architecture" data-zh="模型架构" data-en="Architecture">模型架构</a>
-      <a href="demo/" data-demo-link target="_blank" rel="noopener" data-zh="建模 Demo" data-en="Modeling demo">建模 Demo</a>
+      <a href="demo/?lang=en" data-demo-link target="_blank" rel="noopener" data-zh="建模 Demo" data-en="Modeling demo">建模 Demo</a>
       <a href="#replay" data-zh="案例回放" data-en="Case study">案例回放</a>
       <a href="#experiments" data-zh="实验结果" data-en="Results">实验结果</a>
       <a href="#resources" data-zh="论文与代码" data-en="Resources">论文与代码</a>
@@ -57,7 +57,7 @@
             <p class="hero-statement" data-zh="从问题描述与数据，<br>到数学模型与求解程序。" data-en="From problems and data<br>to models and solver code.">从问题描述与数据，<br>到数学模型与求解程序。</p>
             <p class="hero-description" data-zh="分类、工作流与建模智能体协作，连接自然语言、表格数据和优化求解。" data-en="Classification, workflow, and modeling agents connect natural language, tabular data, and optimization solvers.">分类、工作流与建模智能体协作，连接自然语言、表格数据和优化求解。</p>
           </div>
-          <div class="hero-actions"><a class="hero-primary-link" href="#architecture"><span data-zh="探索建模流程" data-en="Explore the workflow">探索建模流程</span><span aria-hidden="true">↘</span></a><a class="hero-demo-link" href="demo/" data-demo-link target="_blank" rel="noopener"><span data-zh="试用 Demo" data-en="Try the demo">试用 Demo</span><span aria-hidden="true">↗</span></a></div>
+          <div class="hero-actions"><a class="hero-primary-link" href="#architecture"><span data-zh="探索建模流程" data-en="Explore the workflow">探索建模流程</span><span aria-hidden="true">↘</span></a><a class="hero-demo-link" href="demo/?lang=en" data-demo-link target="_blank" rel="noopener"><span data-zh="试用 Demo" data-en="Try the demo">试用 Demo</span><span aria-hidden="true">↗</span></a></div>
           <div class="hero-method" aria-label="建模步骤" data-zh-aria="建模步骤" data-en-aria="Modeling stages"><span data-zh="问题分类" data-en="Classify">问题分类</span><i aria-hidden="true"></i><span data-zh="工作流生成" data-en="Plan">工作流生成</span><i aria-hidden="true"></i><span data-zh="模型生成" data-en="Formulate">模型生成</span></div>
         </div>
       <figure id="paper-figure" class="paper-figure" aria-labelledby="paper-caption">
@@ -124,7 +124,7 @@
   <aside id="demo-launcher" class="demo-launcher" data-collapsed="false" aria-labelledby="demo-launcher-title">
     <span id="demo" class="demo-launcher-anchor" aria-hidden="true"></span>
     <div class="demo-launcher-header"><h2 id="demo-launcher-title" class="demo-launcher-heading" data-zh="试用 Demo" data-en="Try the demo">试用 Demo</h2><button id="demo-launcher-toggle" class="demo-launcher-toggle" type="button" aria-controls="demo-launcher-description" aria-expanded="true" aria-label="收起 Demo 说明"><span class="demo-launcher-toggle-label" data-zh="展开说明" data-en="Expand description">展开说明</span><span class="demo-launcher-toggle-icon" aria-hidden="true">−</span></button></div>
-    <div id="demo-launcher-body" class="demo-launcher-body"><p id="demo-launcher-description" data-zh="从五类示例开始" data-en="Start with five examples">从五类示例开始</p><a id="demo-fullscreen" class="demo-launcher-link" href="demo/" data-demo-link target="_blank" rel="noopener"><span class="demo-peek-visual" aria-hidden="true"><span class="demo-page-window"><span class="demo-page-bar"><i></i><i></i><i></i><span>LEAN–LLM–OPT / DEMO</span></span><span class="demo-page-content"><img class="demo-preview demo-preview-zh-dark" src="assets/demo-preview-zh-dark.webp?v=global-motion-20261110-1" alt="" width="1100" height="800" decoding="async"><img class="demo-preview demo-preview-en-dark" src="assets/demo-preview-en-dark.webp?v=global-motion-20261110-1" alt="" width="1100" height="800" decoding="async"><img class="demo-preview demo-preview-zh-light" src="assets/demo-preview-zh-light.webp?v=global-motion-20261110-1" alt="" width="1100" height="800" decoding="async"><img class="demo-preview demo-preview-en-light" src="assets/demo-preview-en-light.webp?v=global-motion-20261110-1" alt="" width="1100" height="800" decoding="async"></span></span></span><span class="demo-peek-caption"><span class="demo-peek-eyebrow" data-zh="交互式建模工作台" data-en="INTERACTIVE WORKSPACE">交互式建模工作台</span><span id="demo-launcher-link-label" data-zh="打开工作台" data-en="Open workspace">打开工作台</span><span class="demo-peek-note" data-zh="从五类问题开始，查看建模与求解过程。" data-en="Explore five problem types, from modeling to solving.">从五类问题开始，查看建模与求解过程。</span></span><span class="demo-peek-arrow" aria-hidden="true">↗</span></a></div>
+    <div id="demo-launcher-body" class="demo-launcher-body"><p id="demo-launcher-description" data-zh="从五类示例开始" data-en="Start with five examples">从五类示例开始</p><a id="demo-fullscreen" class="demo-launcher-link" href="demo/?lang=en" data-demo-link target="_blank" rel="noopener"><span class="demo-peek-visual" aria-hidden="true"><span class="demo-page-window"><span class="demo-page-bar"><i></i><i></i><i></i><span>LEAN–LLM–OPT / DEMO</span></span><span class="demo-page-content"><img class="demo-preview demo-preview-en-dark" src="assets/demo-preview-en-dark.webp?v=demo-english-20261110-1" alt="" width="1100" height="800" decoding="async"><img class="demo-preview demo-preview-en-light" src="assets/demo-preview-en-light.webp?v=demo-english-20261110-1" alt="" width="1100" height="800" decoding="async"></span></span></span><span class="demo-peek-caption"><span class="demo-peek-eyebrow" data-zh="交互式建模工作台" data-en="INTERACTIVE WORKSPACE">交互式建模工作台</span><span id="demo-launcher-link-label" data-zh="打开工作台" data-en="Open workspace">打开工作台</span><span class="demo-peek-note" data-zh="从五类问题开始，查看建模与求解过程。" data-en="Explore five problem types, from modeling to solving.">从五类问题开始，查看建模与求解过程。</span></span><span class="demo-peek-arrow" aria-hidden="true">↗</span></a></div>
   </aside>
   <footer class="footer wrap"><a class="footer-brand" href="#home">LEAN–LLM–OPT<span>↗</span></a><div><p data-zh="语言 × 数据 × 优化" data-en="LANGUAGE × DATA × OPTIMIZATION">语言 × 数据 × 优化</p><p data-zh="多智能体优化建模研究" data-en="Multi-agent optimization modeling">多智能体优化建模研究</p></div><a href="#home" class="back-top" data-zh-title="回到顶部" data-en-title="Back to top" title="回到顶部">↑</a></footer>
   <div id="toast" class="toast" role="status"></div>

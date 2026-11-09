@@ -215,7 +215,7 @@ $('#graph-replay').addEventListener('click',()=>{state.flowPlaying=true;modelVie
 $('#graph-reset').addEventListener('click',()=>{modelView?.resetCamera();selectStage(0,true);});
 $('#graph-free').addEventListener('click',()=>{pageScrollIntentUntil=0;state.free=state.follow?true:!state.free;leaveLiveFollow();modelView?.setFree(state.free);renderStageDetail();});
 function syncDemoLinks(){
-  const url=new URL('demo/',location.href);url.searchParams.set('theme',state.theme);
+  const url=new URL('demo/',location.href);url.searchParams.set('lang','en');url.searchParams.set('theme',state.theme);
   $$('[data-demo-link]').forEach(link=>{link.href=url.href;});
 }
 function syncDemoLauncher(){

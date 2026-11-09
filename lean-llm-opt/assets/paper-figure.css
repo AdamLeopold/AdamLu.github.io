@@ -197,10 +197,8 @@
 .demo-peek-visual,.demo-peek-eyebrow,.demo-peek-note {display:none}
 .demo-peek-caption {display:contents}
 .demo-preview {display:none;width:100%;height:auto;max-width:none}
-:root[data-lang="zh"][data-theme="dark"] .demo-preview-zh-dark,
-:root[data-lang="en"][data-theme="dark"] .demo-preview-en-dark,
-:root[data-lang="zh"][data-theme="light"] .demo-preview-zh-light,
-:root[data-lang="en"][data-theme="light"] .demo-preview-en-light {display:block}
+:root[data-theme="dark"] .demo-preview-en-dark,
+:root[data-theme="light"] .demo-preview-en-light {display:block}
 .demo-launcher.is-peeking {
   position:fixed;left:0;top:0;right:auto;bottom:auto;
   transform:translate3d(var(--peek-left),var(--peek-top),0);

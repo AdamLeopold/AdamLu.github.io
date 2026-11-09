@@ -2,11 +2,11 @@
   "format": "lean-llm-opt-static-v1",
   "deployment": "static",
   "demo": "visitor-local-handoff",
-  "builtAt": "2026-11-09T18:01:43.921Z",
-  "runtimeFileCount": 116,
-  "fileCount": 118,
-  "payloadBytes": 7682556,
-  "totalBytes": 7701640,
+  "builtAt": "2026-11-09T18:15:30.327Z",
+  "runtimeFileCount": 114,
+  "fileCount": 116,
+  "payloadBytes": 7610573,
+  "totalBytes": 7629348,
   "hashAlgorithm": "sha256",
   "files": {
     ".nojekyll": {
@@ -14,8 +14,8 @@
       "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     },
     "assets/app.js": {
-      "bytes": 61732,
-      "sha256": "d0b9ca9be17b28bda310c46049b4e66c7f56f00858de48004fb394f6526bd020"
+      "bytes": 61766,
+      "sha256": "115b404cc0b938d218350b90e91254d3a8860f35dc2b67c80f08227900262b5d"
     },
     "assets/demo-peek.js": {
       "bytes": 9198,
@@ -28,14 +28,6 @@
     "assets/demo-preview-en-light.webp": {
       "bytes": 40650,
       "sha256": "e97efa66c3c0e513046ee63d2b436c8e7b6c374c0c01168261d24175fa1a0250"
-    },
-    "assets/demo-preview-zh-dark.webp": {
-      "bytes": 31876,
-      "sha256": "144cc65e5cb4933de7fc96d985c2d42f3e8b59db27cf59a8171265bb2a5756ad"
-    },
-    "assets/demo-preview-zh-light.webp": {
-      "bytes": 33226,
-      "sha256": "095a52271922d527b19ac02cf8eb7a9ecbbee69b10cde8787bce8f99a904c4e7"
     },
     "assets/favicon.svg": {
       "bytes": 250,
@@ -74,8 +66,8 @@
       "sha256": "85b1d1dc5447b86c7f599e8912702480fb6c8bc0425f33ad7f54c819718b766e"
     },
     "assets/paper-figure.css": {
-      "bytes": 21578,
-      "sha256": "f2aee21ac1f24bd175677089e67a73f00959328e3268f1ae3e838ac7b1dc2362"
+      "bytes": 21416,
+      "sha256": "063d66e5c40bc27f8e6eacef905377862d43bdf6e87f8d9fd7c06130fef361fc"
     },
     "assets/paper-figure.js": {
       "bytes": 13001,
@@ -454,28 +446,28 @@
       "sha256": "082806e6ca69a7473467064a861446902ce7d1673d4d71258f66b5787eaf5a79"
     },
     "demo/demo.js": {
-      "bytes": 96667,
-      "sha256": "24a3a4022a0baba49935725112debe7800e4d5882699a254276b96a52e9af62e"
+      "bytes": 96189,
+      "sha256": "e51d4e43a6b106effde1562d489bc067ede25358ffd4817c4353f95cc40d291d"
     },
     "demo/examples.json": {
       "bytes": 14622,
       "sha256": "03340a9801fb3a9aec19429149b4a496964dfe7bf77ac39018f5bf671ceb28fe"
     },
     "demo/index.html": {
-      "bytes": 24974,
-      "sha256": "9cd567621896748dbc43011a65715ed856eba6f8ff57ae638be804dd56402a51"
+      "bytes": 20933,
+      "sha256": "80378dc493b5d85bc14185a931f4a91a6bc481e44b834f3f9420bcfbcae052dc"
     },
     "demo/rich-text.js": {
       "bytes": 8214,
       "sha256": "47eea724cc6ba28e49a49b2a86ccbd7e1fccbac002ada5f40d24911a7e339d96"
     },
     "downloads/lean-llm-opt-local.zip": {
-      "bytes": 1167267,
-      "sha256": "611506210ad94ec8e33c6968f4d4611c0faa21fd8f8bb14c2e2702050b69b9e3"
+      "bytes": 1165341,
+      "sha256": "248cce3ead086799818cf8607de5554e467e9868321c7f9ba163f2d3bdb8f78b"
     },
     "index.html": {
-      "bytes": 29121,
-      "sha256": "0572949535b17b3ff444a78ed34cd3ab95c2ab0598f3f6efd08b2bcb820ada6c"
+      "bytes": 28813,
+      "sha256": "7cffcce67ce00e76f636ae5a00692929f7600dc87ddef7173890caacb1399ff7"
     }
   }
 }

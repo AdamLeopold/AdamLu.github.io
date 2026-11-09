@@ -10,8 +10,8 @@ const isCloudRuntime=document.documentElement.dataset.deployment==='cloud'&&(loc
 const terminal=new Set(['completed','failed','cancelled','timeout']);
 const stages={classification:['问题分类','Classification'],workflow:['工作流生成','Workflow'],data:['数据读取','Data access'],model:['数学建模','Formulation'],code:['代码生成','Code generation'],execution:['求解','Solve'],output:['输出','Output']};
 const statuses={queued:['排队中','Queued'],running:['运行中','Running'],started:['进行中','Working'],completed:['已完成','Completed'],failed:['失败','Failed'],error:['错误','Error'],cancelled:['已取消','Cancelled'],timeout:['超时','Timed out'],optimal:['已证最优','Optimal'],infeasible:['不可行','Infeasible'],unbounded:['无界','Unbounded'],time_limit:['达到时间上限','Time limit'],solver_stopped:['已停止，未证最优','Stopped; not proven optimal'],execution_unavailable:['执行环境不可用','Execution unavailable'],cancellation_requested:['正在停止','Stopping'],saved:['历史记录','Saved']};
-const state={lang:document.documentElement.dataset.lang,theme:document.documentElement.dataset.theme,session:null,runs:new Map(),selectedRun:null,activeRun:null,source:null,tab:'model',connected:false,health:null,lastSeq:new Map(),processNodes:new Map(),stageNodes:new Map(),downloadUrl:null,initializing:true,sending:false,capabilities:null,setupConfirmed:false,setupBusy:false,setupError:'',exampleLoading:false,catalog:[],previewFiles:[],previewMode:false,pendingExample:null,taskExample:null,resetSession:false,restoreSessionId:null,pendingSend:false,runtimeChecked:false,examplesCollapsed:false,artifactTrigger:null,history:[],historyLoading:false,historyError:'',changingSession:false,filesBusy:false,drafts:new Map()};
-const welcomeTemplate=$('#welcome').cloneNode(true),t=(zh,en)=>state.lang==='en'?en:zh,local=v=>v&&typeof v==='object'?(v[state.lang]||v.en||v.zh):v;
+const state={lang:'en',theme:document.documentElement.dataset.theme,session:null,runs:new Map(),selectedRun:null,activeRun:null,source:null,tab:'model',connected:false,health:null,lastSeq:new Map(),processNodes:new Map(),stageNodes:new Map(),downloadUrl:null,initializing:true,sending:false,capabilities:null,setupConfirmed:false,setupBusy:false,setupError:'',exampleLoading:false,catalog:[],previewFiles:[],previewMode:false,pendingExample:null,taskExample:null,resetSession:false,restoreSessionId:null,pendingSend:false,runtimeChecked:false,examplesCollapsed:false,artifactTrigger:null,history:[],historyLoading:false,historyError:'',changingSession:false,filesBusy:false,drafts:new Map()};
+const welcomeTemplate=$('#welcome').cloneNode(true),t=(_zh,en)=>en,local=v=>v&&typeof v==='object'?v.en:v;
 const label=k=>statuses[k]?t(...statuses[k]):k;
 function node(tag,cls,text){const e=document.createElement(tag);if(cls)e.className=cls;if(text!=null)e.textContent=String(text);return e;}
 function store(k,v){try{localStorage.setItem(k,v);}catch{}}
@@ -163,12 +163,12 @@ function scrollBottom(force=false,anchor=null){
  if(followRequest){followRequest.force ||= force;return;}followRequest={force,top:anchor?.top??box.scrollTop};
  followFrame=requestAnimationFrame(()=>{const request=followRequest;followFrame=null;followRequest=null;if(!request)return;if(request.force||Math.abs(box.scrollTop-request.top)<2)box.scrollTop=box.scrollHeight;});
 }
-function translate(root=document){$$('[data-zh][data-en]',root).forEach(e=>{e.textContent=e.getAttribute(`data-${state.lang}`);});}
-function researchHome(){const u=isLocalRuntime||isCloudRuntime?new URL(PUBLIC_HOME):new URL('../',location.href);u.searchParams.set('lang',state.lang);u.searchParams.set('theme',state.theme);$('#research-home').href=u.href;$('.studio-brand').href=u.href;}
-function preferences(lang,theme,persist=false){
- state.lang=lang==='en'?'en':'zh';state.theme=theme==='light'?'light':'dark';document.documentElement.dataset.lang=state.lang;document.documentElement.dataset.theme=state.theme;document.documentElement.lang=state.lang==='en'?'en':'zh-CN';
- document.title=`LEAN-LLM-OPT · ${t('建模工作台','Modeling Studio')}`;translate();$('#language-toggle').textContent=state.lang==='en'?'中':'EN';$('#query').placeholder=t('描述目标、变量与约束；也可以追问或修改已有模型…','Describe the goal, decisions and constraints, or explain and revise the model…');
- if(persist){store('lean-demo-lang',state.lang);store('lean-theme',state.theme);}renderHealth();renderFiles();renderVersions();renderConversation();renderArtifact();researchHome();renderPersonalSettings();updateSetup();if($('#conversation-history').open)renderHistory();
+function translate(root=document){$$('[data-en]',root).forEach(e=>{e.textContent=e.getAttribute('data-en');});}
+function researchHome(){const u=isLocalRuntime||isCloudRuntime?new URL(PUBLIC_HOME):new URL('../',location.href);u.searchParams.set('theme',state.theme);$('#research-home').href=u.href;$('.studio-brand').href=u.href;}
+function preferences(theme,persist=false){
+ state.lang='en';state.theme=theme==='light'?'light':'dark';document.documentElement.dataset.lang=state.lang;document.documentElement.dataset.theme=state.theme;document.documentElement.lang='en';
+ document.title=`LEAN-LLM-OPT · ${t('建模工作台','Modeling Studio')}`;translate();$('#query').placeholder=t('描述目标、变量与约束；也可以追问或修改已有模型…','Describe the goal, decisions and constraints, or explain and revise the model…');
+ if(persist)store('lean-theme',state.theme);renderHealth();renderFiles();renderVersions();renderConversation();renderArtifact();researchHome();renderPersonalSettings();updateSetup();if($('#conversation-history').open)renderHistory();
 }
 async function api(path,options={}){
  if(!isLocalRuntime&&!isCloudRuntime)throw new Error(t('请打开在线工作台，或使用这台电脑的本机工作台。','Open the online workspace or the local workspace on this computer.'));
@@ -236,7 +236,7 @@ function renderWelcomeDescription(){
  intro.textContent=isCloudRuntime&&$('#provider').value==='openai'||isLocalRuntime?t('选择示例直接运行，或上传 CSV 并输入自己的问题。','Run an example, or upload CSVs and enter your own question.'):$('#provider').value==='ollama'?t('选择示例，或上传 CSV 并输入自己的问题。连接本机 Ollama 后运行。','Choose an example, or upload CSVs and enter your own question. Connect local Ollama to run.'):t('选择示例，或上传 CSV 并输入自己的问题。在线服务连接后即可运行。','Choose an example, or upload CSVs and enter your own question. Run when the online service is connected.');
 }
 function localWorkspaceURL(exampleId=null,provider=$('#provider').value){
- const u=new URL(LOCAL_WORKSPACE);u.searchParams.set('lang',state.lang);u.searchParams.set('theme',state.theme);u.searchParams.set('provider',provider==='openai'?'openai':'ollama');
+ const u=new URL(LOCAL_WORKSPACE);u.searchParams.set('lang','en');u.searchParams.set('theme',state.theme);u.searchParams.set('provider',provider==='openai'?'openai':'ollama');
  if(EXAMPLE_IDS.has(exampleId)){u.searchParams.set('example',exampleId);u.searchParams.set('autorun','1');}return u.href;
 }
 function selectedExample(){return state.catalog.find(e=>e.id===state.pendingExample);}
@@ -406,7 +406,7 @@ async function prepareExample(){
 function renderVersions(){const select=$('#version-select'),ids=state.session?.runs||[],signature=JSON.stringify([state.lang,state.selectedRun,ids.map(id=>[id,state.runs.get(id)?.status])]);if(select.dataset.signature===signature)return;select.dataset.signature=signature;select.replaceChildren();if(!ids.length){select.append(node('option','',t('尚无运行记录','No runs yet')));return;}for(let i=ids.length-1;i>=0;i--){const id=ids[i],run=state.runs.get(id),option=node('option','',`${t('运行','Run')} ${String(i+1).padStart(2,'0')} · ${label(run?.status||'completed')}`);option.value=id;option.selected=id===state.selectedRun;select.append(option);}}
 function result(){return state.runs.get(state.selectedRun)?.result||{};}
 function artifact(){const r=result(),a=r.artifacts||{};return state.tab==='model'?r.model||a.formulation||a.model||'':state.tab==='code'?r.code||a.code||'':r.execution||a.execution||null;}
-function number(n){return typeof n==='number'?new Intl.NumberFormat(state.lang==='en'?'en-US':'zh-CN',{maximumFractionDigits:6}).format(n):String(n);}
+function number(n){return typeof n==='number'?new Intl.NumberFormat('en-US',{maximumFractionDigits:6}).format(n):String(n);}
 function safeArtifactUrl(value){try{const u=new URL(value,location.href);return u.origin===location.origin&&u.pathname.startsWith(`${API}/runs/${state.selectedRun}/artifacts/`)?u.href:null;}catch{return null;}}
 function executionView(value){
  const root=node('div');let rawRecord=null;
@@ -471,7 +471,7 @@ async function send(fromExample=false,resumedIntent=null){
   if(!await flushPendingFiles({allowExample:fromExample})||!currentIntent(intent)||state.activeRun||state.sending)return;
   if(!state.session)return;
   notice();const session=state.session;pendingRunIntent=null;state.pendingSend=false;state.sending=true;busy(state.activeRun);
-  try{const p=await api(`/sessions/${session.id}/messages`,{method:'POST',body:JSON.stringify({content:query,provider:openai?'openai':'ollama',model:openai?'gpt-4.1':'gpt-oss:20b',...(openai?{api_key:openaiKey}:{}),language:state.lang})}),id=p.run_id;if(state.session?.id!==session.id)return;state.runs.set(id,{...p.run,id,status:p.status,events:[],result:null});session.runs.push(id);session.messages.push({role:'user',content:query,run_id:id});state.selectedRun=id;if($('#query').value===submittedDraft)$('#query').value='';resizeQuery();busy(id);examplesView(false,false);renderVersions();renderArtifact();scrollBottom(true);watch(id);}catch(e){notice(e.message);busy(null);}finally{state.sending=false;}
+  try{const p=await api(`/sessions/${session.id}/messages`,{method:'POST',body:JSON.stringify({content:query,provider:openai?'openai':'ollama',model:openai?'gpt-4.1':'gpt-oss:20b',...(openai?{api_key:openaiKey}:{}),language:'en'})}),id=p.run_id;if(state.session?.id!==session.id)return;state.runs.set(id,{...p.run,id,status:p.status,events:[],result:null});session.runs.push(id);session.messages.push({role:'user',content:query,run_id:id});state.selectedRun=id;if($('#query').value===submittedDraft)$('#query').value='';resizeQuery();busy(id);examplesView(false,false);renderVersions();renderArtifact();scrollBottom(true);watch(id);}catch(e){notice(e.message);busy(null);}finally{state.sending=false;}
  }finally{intent.running=false;busy(state.activeRun);}
 }
 async function cancel(){if(!state.activeRun)return;$('#cancel-button').disabled=true;try{await api(`/runs/${state.activeRun}/cancel`,{method:'POST'});toast(t('正在停止运行…','Stopping the run…'));}catch(e){notice(e.message);$('#cancel-button').disabled=false;}}
@@ -482,7 +482,7 @@ function renderHistory(){
  status.textContent=state.historyError||(state.historyLoading?t('正在读取对话…','Loading conversations…'):state.activeRun?t('当前对话正在运行','The current conversation is running'):t('最近对话','Recent conversations'));
  if((!isLocalRuntime&&!isCloudRuntime)||!state.setupConfirmed){list.append(node('p','history-empty',isCloudRuntime||!isLocalRuntime&&$('#provider').value==='openai'?t('在线服务连接后，可在这里继续之前的对话。','Connect to the online service to continue your conversations here.'):t('连接本机工作台后，在这里继续之前的对话。','Connect the local workspace to continue your conversations here.')));return;}
  if(!state.history.length&&!state.historyLoading){list.append(node('p','history-empty',t('从新对话或一个示例开始。','Start a new conversation or choose an example.')));return;}
- for(const session of state.history){const button=node('button','history-item'),date=node('span','history-date');button.type='button';button.dataset.sessionId=session.id;button.setAttribute('aria-current',session.id===state.session?.id?'true':'false');button.disabled=Boolean(state.activeRun||state.sending||state.changingSession||state.filesBusy||state.exampleLoading);button.append(node('strong','history-title',session.title||t('新对话','New conversation')));const time=new Date(session.updated_at||session.created_at);date.textContent=Number.isNaN(time.getTime())?'':new Intl.DateTimeFormat(state.lang==='en'?'en-US':'zh-CN',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}).format(time);button.append(date,node('span','history-meta',session.status==='empty'?t('尚未运行','No runs yet'):`${session.run_count} ${t('次运行','runs')} · ${label(session.status)}`));list.append(button);}
+ for(const session of state.history){const button=node('button','history-item'),date=node('span','history-date');button.type='button';button.dataset.sessionId=session.id;button.setAttribute('aria-current',session.id===state.session?.id?'true':'false');button.disabled=Boolean(state.activeRun||state.sending||state.changingSession||state.filesBusy||state.exampleLoading);button.append(node('strong','history-title',session.title||t('新对话','New conversation')));const time=new Date(session.updated_at||session.created_at);date.textContent=Number.isNaN(time.getTime())?'':new Intl.DateTimeFormat('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}).format(time);button.append(date,node('span','history-meta',session.status==='empty'?t('尚未运行','No runs yet'):`${session.run_count} ${t('次运行','runs')} · ${label(session.status)}`));list.append(button);}
 }
 async function loadHistory(){
  if(state.historyLoading)return;if((!isLocalRuntime&&!isCloudRuntime)||!state.setupConfirmed){renderHistory();return;}
@@ -540,7 +540,7 @@ matchMedia('(max-width:950px)').addEventListener('change',event=>{if(!event.matc
 $('#preview-close').addEventListener('click',()=>closeDialog($('#file-preview')));$('#file-preview').addEventListener('click',e=>{if(e.target===$('#file-preview')){const b=e.target.getBoundingClientRect();if(e.clientX<b.left||e.clientX>b.right||e.clientY<b.top||e.clientY>b.bottom)closeDialog(e.target);}});
 $$('[role="tab"][data-tab]').forEach(e=>e.addEventListener('click',()=>{state.tab=e.dataset.tab;renderArtifact();}));$('.artifact-tabs').addEventListener('keydown',e=>{if(!['ArrowLeft','ArrowRight','Home','End'].includes(e.key))return;e.preventDefault();const keys=['model','code','execution'],i=keys.indexOf(state.tab);state.tab=e.key==='Home'?keys[0]:e.key==='End'?keys.at(-1):keys[(i+(e.key==='ArrowRight'?1:2))%3];renderArtifact();$(`#${state.tab}-tab`).focus();});$('#version-select').addEventListener('change',e=>selectedVersion(e.target.value));
 $('#copy-artifact').addEventListener('click',async()=>{const value=artifact();if(!value)return;try{await navigator.clipboard.writeText(typeof value==='string'?value:JSON.stringify(value,null,2));toast(t('已复制','Copied'));}catch{notice(t('复制不可用，请使用下载。','Clipboard unavailable; use the download link.'));}});
-$('#language-toggle').addEventListener('click',()=>preferences(state.lang==='en'?'zh':'en',state.theme,true));$('#theme-toggle').addEventListener('click',()=>preferences(state.lang,state.theme==='dark'?'light':'dark',true));
+$('#theme-toggle').addEventListener('click',()=>preferences(state.theme==='dark'?'light':'dark',true));
 window.addEventListener('pagehide',()=>{invalidateRunIntent();fileQueueEpoch++;pendingFiles=[];parkedCustomTasks=[];state.source?.close();runChannel?.close();runChannel=null;endHandoff();stopCredentialReceiver();openaiKey='';$('#api-key').value='';$('#api-key').type='password';state.setupConfirmed=false;renderPersonalSettings();if(state.downloadUrl)URL.revokeObjectURL(state.downloadUrl);artifactRenderSignature='';});
 window.addEventListener('pageshow',event=>{if(!event.persisted)return;runChannel=createRunChannel();if(state.session)publishSession(state.session.id);if(state.activeRun)watch(state.activeRun,state.lastSeq.get(state.activeRun)||0);renderArtifact();});
 $('#local-setup-open').addEventListener('click',()=>openSetup());$('#model-setup-open').addEventListener('click',()=>openSetup());
@@ -566,7 +566,7 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden){settleMoti
 $$('[data-copy-command]').forEach(button=>button.addEventListener('click',async()=>{try{await navigator.clipboard.writeText(document.getElementById(button.dataset.copyCommand).textContent);toast(t('命令已复制','Command copied'));}catch{toast(t('请选中命令复制。','Select the command text to copy it.'));}}));
 $('#setup-provider-ollama').addEventListener('click',()=>{$('#provider').value='ollama';$('#provider').dispatchEvent(new Event('change'));});$('#setup-provider-openai').addEventListener('click',()=>{$('#provider').value='openai';$('#provider').dispatchEvent(new Event('change'));});
 $('#provider').value=params.get('provider')==='ollama'?'ollama':'openai';
-preferences(state.lang,state.theme);
+preferences(state.theme);
 try{await loadCatalog();}catch(error){notice(error.message);}
 await health();
 if(isCloudRuntime&&state.connected&&$('#provider').value==='openai')await ensureCloudSession();
