@@ -1,6 +1,6 @@
 import * as THREE from './vendor/three/three.module.js';
 import {PAPER_SIZE, buildPaperFigure, addPaperLighting, loadArtwork, releaseObjects} from './paper-model.js';
-import {createPaperFlow} from './paper-flow-motion.js';
+import {createPaperFlow} from './paper-flow-motion.js?v=global-motion-20261110-1';
 import {NODE_BY_ID, STAGES, TEACHING_CYCLE, sampleTeachingFlows, resolveRunEvent} from './framework-topology.js';
 
 const clamp = THREE.MathUtils.clamp;
@@ -70,10 +70,13 @@ export function createFramework({detailHost:host,renderer:mode='auto',rendererFa
   }
   mountSurface('svg');
   let renderer,assets,art,motion,disposed=false,raf=0,lastTime=null,lastNotice=-Infinity,drag,pose,flow;
+  let width=800,height=680,sizeDirty=true,cameraSignature='';
+  const fallbackMarkers=[];
   const cleanup=[];
   function listen(target,type,fn,options){target.addEventListener(type,fn,options);cleanup.push(()=>target.removeEventListener(type,fn,options));}
   function frameSnapshot(){
-    const streams=sampleTeachingFlows(state.elapsed),primary=streams[0];
+    const sampled=motion?.getState();
+    const streams=!sampled?.live&&sampled?.elapsedMs===state.elapsed?sampled.streams:sampleTeachingFlows(state.elapsed),primary=streams[0];
     const packets=motion?.getState()?.packets||[];
     return {...primary,streams:state.live?[]:streams,progress:primary.localProgress,cycleProgress:primary.progress,
       total:TEACHING_CYCLE.steps.length,durationMs:TEACHING_CYCLE.durationMs,elapsedMs:state.elapsed,
@@ -99,6 +102,9 @@ export function createFramework({detailHost:host,renderer:mode='auto',rendererFa
     return journeyPose(region(key,state.route),camera.aspect,yaw+state.yaw,pitch+state.pitch);
   }
   function applyCamera(width,height){
+    const signature=[width,height,state.selected,state.stage,state.progress,state.route,state.zoom,...state.pan,state.yaw,state.pitch,state.fallback,Boolean(art)].join('|');
+    if(signature===cameraSignature)return;
+    cameraSignature=signature;
     camera.aspect=width/height;
     if(state.selected)pose=regionPose(state.selected,state.stage);
     else {
@@ -113,24 +119,35 @@ export function createFramework({detailHost:host,renderer:mode='auto',rendererFa
     // A frontal render of the identical model is kept usable when WebGL is absent.
     const box=pose.box,cx=791+((box[0]+box[2])/2-791)*.95+state.pan[0]*.95,cy=816+((box[1]+box[3])/2-816)*.95-state.pan[1]*.95;
     const h=Math.max((box[3]-box[1])*.95,(box[2]-box[0])*.95/camera.aspect)/state.zoom*1.08,w=h*camera.aspect;
-    svg.setAttribute('viewBox',`${cx-w/2} ${cy-h/2} ${w} ${h}`);
+    if(state.fallback||!art)svg.setAttribute('viewBox',`${cx-w/2} ${cy-h/2} ${w} ${h}`);
   }
   function draw(now){
     raf=0;if(disposed||!state.visible||document.hidden){lastTime=null;return;}
-    const advance=state.playing&&!state.reduced&&!state.live;
+    const advance=Boolean(motion)&&state.playing&&!state.reduced&&!state.live;
     if(advance&&lastTime!==null)state.elapsed+=clamp(now-lastTime,0,100);
     lastTime=now;
-    const width=host.clientWidth||800,height=host.clientHeight||680;applyCamera(width,height);
+    if(sizeDirty){
+      width=host.clientWidth||800;height=host.clientHeight||680;sizeDirty=false;
+      if(renderer){const ratio=Math.min(window.devicePixelRatio||1,width<600?1.5:2);if(renderer.getPixelRatio()!==ratio)renderer.setPixelRatio(ratio);}
+    }
+    applyCamera(width,height);
     const sampled=motion?.update(state.elapsed,{route:state.route,live:state.live,reduced:state.reduced,frame:state.run});
     if(state.fallback){
-      fallbackPackets.replaceChildren();
+      let count=0;
       for(const packet of sampled?.packets||[]){
         if(!packet.point)continue;
-        const circle=document.createElementNS(NS,'circle');circle.setAttribute('cx',791+packet.point[0]*.95);circle.setAttribute('cy',816-packet.point[1]*.95);
-        circle.setAttribute('r','7');circle.setAttribute('fill',packet.kind==='data'?'#10bf88':packet.kind==='output'?'#f3a936':'#32a6ff');
-        circle.setAttribute('stroke','#fff');circle.setAttribute('stroke-width','2');fallbackPackets.append(circle);
-        if(packet.mark){const text=document.createElementNS(NS,'text');text.setAttribute('x',791+packet.point[0]*.95+12);text.setAttribute('y',816-packet.point[1]*.95-8);text.setAttribute('font-size','18');text.setAttribute('fill',packet.kind==='data'?'#158561':'#147bd2');text.setAttribute('stroke','#fff');text.setAttribute('stroke-width','2');text.setAttribute('paint-order','stroke');text.textContent=packet.mark;fallbackPackets.append(text);}
+        if(!fallbackMarkers[count]){
+          const group=document.createElementNS(NS,'g'),circle=document.createElementNS(NS,'circle'),text=document.createElementNS(NS,'text');
+          circle.setAttribute('r','7');circle.setAttribute('stroke','#fff');circle.setAttribute('stroke-width','2');
+          text.setAttribute('x','12');text.setAttribute('y','-8');text.setAttribute('font-size','18');text.setAttribute('stroke','#fff');text.setAttribute('stroke-width','2');text.setAttribute('paint-order','stroke');
+          group.append(circle,text);fallbackPackets.append(group);fallbackMarkers[count]={group,circle,text};
+        }
+        const {group,circle,text}=fallbackMarkers[count++];group.removeAttribute('display');
+        group.setAttribute('transform',`translate(${791+packet.point[0]*.95} ${816-packet.point[1]*.95})`);
+        circle.setAttribute('fill',packet.kind==='data'?'#10bf88':packet.kind==='output'?'#f3a936':'#32a6ff');
+        text.setAttribute('fill',packet.kind==='data'?'#158561':'#147bd2');text.textContent=packet.mark||'';
       }
+      for(let index=count;index<fallbackMarkers.length;index++)fallbackMarkers[index].group.setAttribute('display','none');
     } else if(art&&renderer){
       const ratio=renderer.getPixelRatio();if(canvas.width!==Math.round(width*ratio)||canvas.height!==Math.round(height*ratio))renderer.setSize(width,height,false);
       renderer.render(scene,camera);
@@ -154,7 +171,7 @@ export function createFramework({detailHost:host,renderer:mode='auto',rendererFa
     const dx=event.clientX-drag.x,dy=event.clientY-drag.y;drag.travel+=Math.hypot(dx,dy);drag.x=event.clientX;drag.y=event.clientY;
     if(!state.free)return;
     if(event.shiftKey){state.yaw=clamp(state.yaw+dx*.002,-.2,.35);state.pitch=clamp(state.pitch+dy*.002,-.15,.25);}
-    else if(pose){const scale=2*pose.distance/state.zoom*Math.tan(32*Math.PI/360)/(host.clientHeight||680);state.pan[0]-=dx*scale;state.pan[1]+=dy*scale;}
+    else if(pose){const scale=2*pose.distance/state.zoom*Math.tan(32*Math.PI/360)/height;state.pan[0]-=dx*scale;state.pan[1]+=dy*scale;}
     requestFrame();
   });
   listen(canvas,'pointerup',event=>{
@@ -177,7 +194,8 @@ export function createFramework({detailHost:host,renderer:mode='auto',rendererFa
   listen(canvas,'webglcontextlost',event=>{event.preventDefault();enableFallback();});
   listen(canvas,'webglcontextrestored',()=>{if(!art||disposed)return;state.fallback=false;mountSurface('webgl');renderer.shadowMap.needsUpdate=true;requestFrame();});
   listen(document,'visibilitychange',()=>{lastTime=null;if(document.hidden){cancelAnimationFrame(raf);raf=0;}else requestFrame();});
-  const resize=new ResizeObserver(requestFrame);resize.observe(host);
+  const resized=()=>{sizeDirty=true;requestFrame();};
+  const resize=new ResizeObserver(resized);resize.observe(host);listen(window,'resize',resized);
   const observer=new IntersectionObserver(([entry])=>{state.visible=entry.isIntersecting;lastTime=null;if(state.visible)requestFrame();else{cancelAnimationFrame(raf);raf=0;}},{rootMargin:'80px'});observer.observe(host);
   async function initialize(){
     if(!state.fallback){try{
@@ -189,6 +207,9 @@ export function createFramework({detailHost:host,renderer:mode='auto',rendererFa
       assets=await loadAssets();if(disposed){releaseObjects(assets.library);assets.print.dispose();return;}
       assets.print.anisotropy=Math.min(8,renderer?.capabilities.getMaxAnisotropy()||1);
       art=buildPaperFigure(assets.print,assets.library);scene.add(art);addPaperLighting(scene);
+      // Paper parts never move relative to each other. Keep their local matrices
+      // fixed while the camera and the separately mounted flow remain dynamic.
+      art.traverse(object=>{if(object!==art){object.updateMatrix();object.matrixAutoUpdate=false;}});
       motion=createPaperFlow(art);
       if(renderer)renderer.shadowMap.needsUpdate=true;
     }catch(error){if(disposed)return;console.warn('The diagram is using its rendered view.',error);enableFallback();}

@@ -9,12 +9,12 @@ export function createDemoPeek({hero,slot,launcher,avoid,isReduced=()=>false,col
   const controls=launcher.querySelector('.demo-launcher-header');
   const framework=hero.querySelector('#paper-viewport');
   const slotBase={top:slot.style.top,height:slot.style.height};
-  let dock=null,metricKey='',disposed=false,slotAligned=false,frame=0,lastTime=0,visualY=null;
+  let dock=null,geometry=null,metricKey='',disposed=false,slotAligned=false,frame=0,lastTime=0,visualY=null;
   let hover=0,velocity=0,pointer=false,focused=false,visualLift=null;
   const styles=['--peek-left','--peek-top','--peek-width','--peek-height','--peek-source-height','--peek-open','--peek-progress','--peek-page-opacity','--peek-hover','--peek-image-scale','--peek-controls','--peek-dock-bottom','--peek-caption-left','--peek-caption-bottom','--peek-arrow-right','--peek-arrow-bottom'];
   function schedule(){if(!disposed&&!frame&&!document.hidden)frame=requestAnimationFrame(draw);}
   function wake(){if(!frame)lastTime=0;schedule();}
-  function refresh(){metricKey='';wake();}
+  function refresh(){metricKey='';geometry=null;wake();}
   function restoreSlot(){for(const [name,value]of Object.entries(slotBase))slot.style[name]=value;slotAligned=false;}
   function alignSlot(){
     if(innerWidth>=1280&&framework&&slot.offsetParent){
@@ -38,12 +38,18 @@ export function createDemoPeek({hero,slot,launcher,avoid,isReduced=()=>false,col
     launcher.classList.toggle('over-architecture',over);launcher.classList.toggle('is-peeking',peeking);
     if(state!==undefined)launcher.dataset.peekState=state;
   }
+  function measureGeometry(){
+    alignSlot();
+    const slotBox=slot.getBoundingClientRect(),heroBox=hero.getBoundingClientRect(),avoidBox=avoid?.getBoundingClientRect();
+    geometry={left:slotBox.left,width:slotBox.width,height:slotBox.height,slotY:slotBox.top+scrollY,heroY:heroBox.top+scrollY,
+      avoidTop:avoidBox?avoidBox.top+scrollY:null,avoidBottom:avoidBox?avoidBox.bottom+scrollY:null};
+  }
   function draw(now){
     frame=0;if(disposed||document.hidden)return;
     const reduced=isReduced(),dt=lastTime?clamp((now-lastTime)/1000,.001,.1):1/60;lastTime=now;
-    alignSlot();
-    const slotBox=slot.getBoundingClientRect(),heroBox=hero.getBoundingClientRect();
-    const slotY=slotBox.top+scrollY,heroY=heroBox.top+scrollY;
+    const viewportKey=[innerWidth,innerHeight,document.documentElement.dataset.lang,launcher.classList.contains('is-collapsed')].join(':');
+    if(!geometry||viewportKey!==metricKey)measureGeometry();
+    const slotBox=geometry,{slotY,heroY}=geometry;
     const start=Math.max(heroY+32,slotY-innerHeight*.55);
     const end=start+clamp(innerHeight*.64,320,560);
     const targetY=Math.min(scrollY,end);
@@ -56,7 +62,7 @@ export function createDemoPeek({hero,slot,launcher,avoid,isReduced=()=>false,col
     if(progress<1&&!launcher.classList.contains('is-collapsed'))collapse();
     const key=[innerWidth,innerHeight,document.documentElement.dataset.lang,launcher.classList.contains('is-collapsed')].join(':');
     if(!dock||key!==metricKey){measureDock();metricKey=key;}
-    const avoidBox=avoid?.getBoundingClientRect();
+    const avoidBox=geometry.avoidTop===null?null:{top:geometry.avoidTop-scrollY,bottom:geometry.avoidBottom-scrollY};
     const lift=avoidBox?dock.lift*ease((innerHeight-avoidBox.top)/180)*ease(avoidBox.bottom/180):0;
     if(visualLift===null||reduced)visualLift=lift;
     else visualLift=mix(visualLift,lift,1-Math.exp(-dt/.065));
@@ -96,7 +102,9 @@ export function createDemoPeek({hero,slot,launcher,avoid,isReduced=()=>false,col
       '--peek-arrow-right':mix(21,dock.arrowRight,t)+'px',
       '--peek-arrow-bottom':mix(innerWidth<1280?26:63,dock.arrowBottom,t)+'px',
     };
-    for(const [name,value]of Object.entries(values))launcher.style.setProperty(name,String(value));
+    for(const [name,value]of Object.entries(values)){
+      const text=String(value);if(launcher.style.getPropertyValue(name)!==text)launcher.style.setProperty(name,text);
+    }
     if(visualY!==targetY||visualLift!==lift||hover!==hoverTarget||velocity!==0)schedule();
   }
   function onEnter(){pointer=true;wake();}
@@ -107,7 +115,10 @@ export function createDemoPeek({hero,slot,launcher,avoid,isReduced=()=>false,col
   link.addEventListener('pointerenter',onEnter);link.addEventListener('pointerleave',onLeave);
   link.addEventListener('focus',onFocus);link.addEventListener('blur',onBlur);
   document.addEventListener('visibilitychange',onVisibility);
+  // Geometry changes with layout, not with every hover or scroll animation frame.
+  const layoutObserver=typeof ResizeObserver==='function'?new ResizeObserver(()=>{geometry=null;wake();}):null;
+  for(const element of [hero,slot,framework,avoid])if(element)layoutObserver?.observe(element);
   function update(){wake();}
   draw(performance.now());
-  return {update,refresh,dispose(){disposed=true;cancelAnimationFrame(frame);restoreSlot();launcher.classList.remove('is-peeking');controls.inert=false;controls.removeAttribute('aria-hidden');for(const name of styles)launcher.style.removeProperty(name);for(const key of ['peekState','peekProgress','peekStart','peekEnd'])delete launcher.dataset[key];link.removeEventListener('pointerenter',onEnter);link.removeEventListener('pointerleave',onLeave);link.removeEventListener('focus',onFocus);link.removeEventListener('blur',onBlur);document.removeEventListener('visibilitychange',onVisibility);}};
+  return {update,refresh,dispose(){disposed=true;cancelAnimationFrame(frame);layoutObserver?.disconnect();restoreSlot();launcher.classList.remove('is-peeking');controls.inert=false;controls.removeAttribute('aria-hidden');for(const name of styles)launcher.style.removeProperty(name);for(const key of ['peekState','peekProgress','peekStart','peekEnd'])delete launcher.dataset[key];link.removeEventListener('pointerenter',onEnter);link.removeEventListener('pointerleave',onLeave);link.removeEventListener('focus',onFocus);link.removeEventListener('blur',onBlur);document.removeEventListener('visibilitychange',onVisibility);}};
 }

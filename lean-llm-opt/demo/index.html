@@ -8,10 +8,10 @@
   <script>{const p=new URLSearchParams(location.search);const read=k=>{try{return localStorage.getItem(k)}catch{return null}};document.documentElement.dataset.theme=(p.get('theme')||read('lean-theme'))==='light'?'light':'dark';const language=p.get('lang')||read('lean-demo-lang');document.documentElement.dataset.lang=language==='zh'?'zh':'en';document.documentElement.lang=document.documentElement.dataset.lang==='en'?'en':'zh-CN'}</script>
   <link rel="icon" href="../assets/favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="../assets/vendor/katex/katex.min.css">
-  <link rel="stylesheet" href="demo.css?v=entry-flows-20261110-1">
+  <link rel="stylesheet" href="demo.css?v=global-motion-20261110-1">
   <script defer src="../assets/vendor/katex/katex.min.js"></script>
   <script defer src="../assets/vendor/katex/auto-render.min.js"></script>
-  <script type="module" src="demo.js?v=entry-flows-20261110-1"></script>
+  <script type="module" src="demo.js?v=global-motion-20261110-1"></script>
 </head>
 <body>
   <a href="#composer" class="skip-link" data-zh="跳到问题输入" data-en="Skip to question">Skip to question</a>

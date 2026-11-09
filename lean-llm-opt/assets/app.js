@@ -1,5 +1,5 @@
-import {createDemoPeek} from './demo-peek.js?v=peek-motion-20261109-1';
-import {createFramework} from './paper-journey.js?v=editorial-hero-20261106-1';
+import {createDemoPeek} from './demo-peek.js?v=global-motion-20261110-1';
+import {createFramework} from './paper-journey.js?v=global-motion-20261110-1';
 import {STAGES,NODE_BY_ID,JOURNEY_EXAMPLE,routeFromRunValue} from './framework-topology.js?v=vertical-side-20261104-1';
 const root = document.documentElement;
 const isStaticDeployment = root.dataset.deployment === 'static';
@@ -21,6 +21,32 @@ const clamp = (value, min = 0, max = 1) => Math.max(min, Math.min(max, value));
 const storage = (key, value) => { try { localStorage.setItem(`lean-${key}`, value); } catch (_) {} };
 let demoPeek, research, caseData, replayTimer = null, studyTimer = null, replayVisible = false, studyVisible = false, toastTimer, frameId = 0, modelView, flowFrame, lastRunEvent, liveTrace={files:[],objective:null,status:null,runId:null,route:null};
 const AUTOPLAY_DELAY = 10000;
+const panelMotions = new Map();
+function settlePanelMotions() {
+  for (const [panel, animation] of panelMotions) {
+    animation.cancel(); panel.style.removeProperty('overflow');
+  }
+  panelMotions.clear();
+}
+function replacePanel(panel, html, afterRender) {
+  // Read the displayed height before cancelling an interrupted tab transition.
+  const previousHeight = panel.children.length ? panel.getBoundingClientRect().height : 0;
+  panelMotions.get(panel)?.cancel(); panelMotions.delete(panel);
+  panel.style.removeProperty('overflow');
+  panel.innerHTML = html; afterRender?.();
+  if (!previousHeight || state.reduced || document.hidden || !panel.animate) return;
+  const nextHeight = panel.getBoundingClientRect().height;
+  if (Math.abs(nextHeight - previousHeight) < 1) return;
+  panel.style.overflow = 'clip';
+  const animation = panel.animate([{height:`${previousHeight}px`},{height:`${nextHeight}px`}], {
+    duration:320, easing:'cubic-bezier(.22,1,.36,1)',
+  });
+  panelMotions.set(panel, animation);
+  animation.finished.then(() => {
+    if (panelMotions.get(panel) !== animation) return;
+    panelMotions.delete(panel); panel.style.removeProperty('overflow');
+  }, () => {});
+}
 // Follow the available space until the visitor chooses a card state.
 const statusCard = $('#flow-live-status');
 const fullStatus = matchMedia('(min-width: 761px) and (min-height: 680px)');
@@ -273,8 +299,9 @@ function renderReplay() {
     html = `<div><div class="code-toolbar"><span>PYTHON / GUROBI · ${t('生成程序','GENERATED PROGRAM')}</span><a class="text-link" href="data/transport-code.py" download>${t('下载完整代码 ↓','Download full code ↓')}</a></div><pre class="code-block"><code>${highlightPython(snippet)}</code></pre><p class="case-mechanism">${t('运行程序时，将 transport 数据目录放在脚本同级目录。','Place the transport data directory beside the script to run the program.')}</p></div>`;
   }
   if (state.replay === 5) html = `<div class="case-grid"><div><p class="case-eyebrow">THE RECORDED SOLUTION</p><h3 class="case-title">${t('最优方案：<br>28 条运输流。','Optimal plan:<br>28 active shipping routes.')}</h3><p class="solution-label">${t('最优目标值 / TOTAL TRANSPORT COST','OPTIMAL OBJECTIVE / TOTAL TRANSPORT COST')}</p><p class="solution-value">${number(caseData.objective,4)}</p><p class="case-description">${t('参考目标值','Reference objective')}: ${number(caseData.reference_objective,4)}</p><div class="solution-checks"><span>${t('全部客户需求得到满足','Every customer demand is satisfied')}</span><span>${t('全部配送中心容量约束得到满足','All distribution-center capacities are respected')}</span><span>${t('最优目标值与参考值匹配','Optimal objective matches the reference')}</span></div><a class="text-link" href="data/case.json" download style="display:inline-block;margin-top:20px">${t('下载案例数据 ↓','Download the case data ↓')}</a></div><div>${transportSVG()}<p class="flow-note" id="flow-inspector" role="status">${t('线宽表示运量；选择连线查看数值','Line width encodes shipment volume; select a link for values')}</p></div></div>`;
-  panel.innerHTML = `<div class="case-step-enter">${html}</div>`;
-  if (state.replay === 2) {$('#case-data-select').value = state.dataTable; renderCaseTable();}
+  replacePanel(panel, `<div class="case-step-enter">${html}</div>`, () => {
+    if (state.replay === 2) {$('#case-data-select').value = state.dataTable; renderCaseTable();}
+  });
   syncPlayButton();syncReplayPlayback();
 }
 function highlightPython(code) {
@@ -356,7 +383,7 @@ function renderStudyPanel() {
   const panel=$('#experiment-panel');panel.setAttribute('aria-labelledby',`study-tab-${state.study}`);
   const big=(state.study==='large'||(state.study==='perturbation'&&state.view==='overall'));
   const html=`<div class="experiment-header"><div><h3>${esc(local(study.title))}</h3><p>${esc(local(study.description))}</p></div><div class="legend"><span>GPT-4.1</span><span>gpt-oss-20B</span></div></div><div class="chart-toolbar"><span class="metric-label">${esc(local(study.metric))} / %</span>${state.study==='perturbation'?`<div class="view-switch" role="group" aria-label="${t('扰动结果分组','Group perturbation results')}">${[['overall',t('总体','Overall')],['seed',t('按种子','By seed')],['type',t('按类型','By type')]].map(([key,label])=>`<button type="button" data-view="${key}" aria-pressed="${state.view===key}">${label}</button>`).join('')}</div>`:''}</div><div class="chart-area">${state.study==='repair'?repairChart(rows):big?largeChart(rows):barChart(rows)}</div><div class="study-footer"><p class="study-note">${esc(studyNote(state.study, study))}</p><div class="study-sources">${study.sources.map((v,i)=>`<a href="${esc(v.url)}" target="_blank" rel="noopener">${t('来源','SOURCE')} ${String(i+1).padStart(2,'0')} ↗</a>`).join('')}<a href="data/research.json" download>${t('下载汇总数据','Download data')} ↓</a></div><details class="results-table-details"><summary>${t('查看数值表与来源说明','View values and source details')}</summary>${tableHTML([t('分组','Group'),t('模型','Model'),t('正确 / 总数','Matched / total'),t('匹配率','Match rate')],rows.map(v=>[groupLabel(v.group),modelName(v.model),v.total?`${v.correct} / ${v.total}`:t('报告值','Reported'),`${pct(v.rate)}%`]))}<div class="study-sources">${study.sources.map(v=>`<a href="${esc(v.url)}" target="_blank" rel="noopener">${esc(v.label)} ↗</a>`).join('')}<a href="data/SOURCES.md" target="_blank">${t('完整来源说明','Source notes')} ↗</a></div></details></div>`;
-  panel.innerHTML=`<div class="study-step-enter">${html}</div>`;
+  replacePanel(panel, `<div class="study-step-enter">${html}</div>`);
   $$('#experiment-tabs button').forEach(el=>{const selected=el.dataset.study===state.study;el.setAttribute('aria-selected',String(selected));el.tabIndex=selected?0:-1;});
   syncStudyPlayButton();syncStudyPlayback();
 }
@@ -424,7 +451,7 @@ installTabKeyboard($('#experiment-tabs'),'[role="tab"]',button=>selectStudy(butt
 $('#lang-toggle').addEventListener('click',()=>{
   const position=anchorSnapshot();state.lang=state.lang==='zh'?'en':'zh';storage('lang',state.lang);
   translateStatic();renderArchitecture();modelView?.setLanguage(state.lang);syncDemoLinks();if(research){renderReplay();renderExperiments();renderAirline();}
-  updateURL();restoreAnchor(position);requestFrame();
+  settlePanelMotions();updateURL();restoreAnchor(position);requestFrame();
 });
 $('#theme-toggle').addEventListener('click',()=>{
   state.theme=state.theme==='dark'?'light':'dark';root.dataset.theme=state.theme;storage('theme',state.theme);
@@ -434,7 +461,7 @@ $('#motion-toggle').addEventListener('click',()=>{
   if(matchMedia('(prefers-reduced-motion: reduce)').matches && state.reduced){notify(t('已遵循系统的减少动态效果设置','Following your system’s reduced-motion setting'));return;}
   const position=anchorSnapshot(),inArchitecture=position.element.id==='architecture',stage=state.stage;
   state.reduced=!state.reduced;root.dataset.motion=state.reduced?'reduced':'full';storage('motion',state.reduced?'reduced':'full');
-  if(state.reduced){stopReplay();stopStudy();}translateStatic();renderArchitecture();modelView?.setReduced(state.reduced);
+  if(state.reduced){stopReplay();stopStudy();settlePanelMotions();}translateStatic();renderArchitecture();modelView?.setReduced(state.reduced);
   if(inArchitecture){
     const track=$('#arch-track'),top=track.getBoundingClientRect().top+scrollY;
     if(canPin())window.scrollTo({top:top+(track.offsetHeight-innerHeight)*stage/6,behavior:'instant'});
@@ -496,11 +523,14 @@ function frame(){
   $$('.nav-links a').forEach(link=>link.classList.toggle('active',Boolean(link.hash)&&link.hash===active));
 }
 window.addEventListener('scroll',requestFrame,{passive:true});window.addEventListener('resize',requestFrame,{passive:true});
+window.addEventListener('resize',settlePanelMotions,{passive:true});
+matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change',event=>{if(event.matches)settlePanelMotions();});
 window.addEventListener('wheel',notePageScrollIntent,{passive:true});window.addEventListener('touchmove',notePageScrollIntent,{passive:true});
 window.addEventListener('keydown',notePageScrollKey);
 window.addEventListener('pointerdown',noteScrollbarIntent,{passive:true});
  document.addEventListener('visibilitychange',()=>{root.dataset.inactive=String(document.hidden);if(document.hidden){cancelAnimationFrame(frameId);frameId=0;}else requestFrame();syncReplayPlayback();syncStudyPlayback();});
 matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change',event=>{if(event.matches){state.reduced=true;root.dataset.motion='reduced';stopReplay();stopStudy();translateStatic();renderArchitecture();modelView?.setReduced(true);requestFrame();}});
+document.addEventListener('visibilitychange',()=>{if(document.hidden)settlePanelMotions();});
 const autoplayVisibilityObserver=new IntersectionObserver(entries=>{for(const entry of entries){if(entry.target.id==='replay')replayVisible=entry.isIntersecting;if(entry.target.id==='experiments')studyVisible=entry.isIntersecting;}syncReplayPlayback();syncStudyPlayback();},{threshold:0});
 autoplayVisibilityObserver.observe($('#replay'));autoplayVisibilityObserver.observe($('#experiments'));
 const revealObserver=new IntersectionObserver(entries=>entries.forEach(entry=>{if(entry.isIntersecting){entry.target.classList.remove('waiting');revealObserver.unobserve(entry.target);}}),{threshold:.08});

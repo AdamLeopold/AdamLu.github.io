@@ -140,6 +140,10 @@ export function samplePaperCurve(curve, progress, direction = 1) {
 }
 
 const RINGS = 25, SIDES = 9;
+const RING_DIRECTIONS = Array.from({length: SIDES}, (_, side) => {
+  const angle = side / SIDES * Math.PI * 2;
+  return [Math.cos(angle), Math.sin(angle)];
+});
 function packetMesh() {
   const geometry = new THREE.BufferGeometry();
   geometry.setAttribute('position', new THREE.BufferAttribute(new Float32Array(RINGS * SIDES * 3), 3).setUsage(THREE.DynamicDrawUsage));
@@ -171,12 +175,13 @@ function placePacket(mesh, path, packet) {
   const head = Math.min(14, length * .30), tail = Math.min(44, length * .58);
   const begin = Math.max(0, travel - head - tail), end = Math.max(begin + .01, travel);
   const position = mesh.geometry.attributes.position, colors = mesh.geometry.attributes.color;
-  const reference = new THREE.Vector3(0, 0, 1), normal = new THREE.Vector3(), binormal = new THREE.Vector3();
+  const reference = new THREE.Vector3(0, 0, 1), vertical = new THREE.Vector3(0, 1, 0);
+  const normal = new THREE.Vector3(), binormal = new THREE.Vector3(), point = new THREE.Vector3(), tangent = new THREE.Vector3();
   for (let ring = 0; ring < RINGS; ring++) {
     const distance = THREE.MathUtils.lerp(begin, end, ring / (RINGS - 1));
     const u = direction === 1 ? distance / length : 1 - distance / length;
-    const point = curve.getPointAt(unit(u)), tangent = curve.getTangentAt(unit(u)).normalize();
-    normal.crossVectors(tangent, Math.abs(tangent.z) > .95 ? new THREE.Vector3(0, 1, 0) : reference).normalize();
+    curve.getPointAt(unit(u), point); curve.getTangentAt(unit(u), tangent).normalize();
+    normal.crossVectors(tangent, Math.abs(tangent.z) > .95 ? vertical : reference).normalize();
     binormal.crossVectors(tangent, normal).normalize();
     const remaining = (1 - u) * length;
     const surface = headLength > 0 && remaining < headLength ? radius * 2.1 * remaining / headLength : radius;
@@ -184,11 +189,11 @@ function placePacket(mesh, path, packet) {
     const sleeveRadius = Math.max(.8, surface) + (core ? 1.15 : .55);
     const alpha = core ? .98 : .55 * unit(1 - (age - head) / Math.max(.01, tail));
     for (let side = 0; side < SIDES; side++) {
-      const angle = side / SIDES * Math.PI * 2, vertex = ring * SIDES + side;
+      const [cos, sin] = RING_DIRECTIONS[side], vertex = ring * SIDES + side;
       position.setXYZ(vertex,
-        point.x + sleeveRadius * (normal.x * Math.cos(angle) + binormal.x * Math.sin(angle)),
-        point.y + sleeveRadius * (normal.y * Math.cos(angle) + binormal.y * Math.sin(angle)),
-        point.z + sleeveRadius * (normal.z * Math.cos(angle) + binormal.z * Math.sin(angle)),
+        point.x + sleeveRadius * (normal.x * cos + binormal.x * sin),
+        point.y + sleeveRadius * (normal.y * cos + binormal.y * sin),
+        point.z + sleeveRadius * (normal.z * cos + binormal.z * sin),
       );
       colors.setXYZW(vertex, 1, 1, 1, alpha);
     }
@@ -277,7 +282,7 @@ export function createPaperFlow(art) {
     });
   }
   art.add(group);
-  let lastState = null, frozenElapsed = null, disposed = false;
+  let lastState = null, frozenElapsed = null, highlightKey = null, disposed = false;
   return {
     group,
     update(elapsedMs = 0, options = {}) {
@@ -286,6 +291,9 @@ export function createPaperFlow(art) {
         if (frozenElapsed === null) frozenElapsed = elapsedMs;
         elapsedMs = frozenElapsed;
       } else frozenElapsed = null;
+      // Camera-only redraws must not rebuild or re-upload unchanged flow meshes.
+      if (!options.live && lastState && !lastState.live && lastState.elapsedMs === elapsedMs
+        && lastState.route === routeName(options.frame?.route || options.route)) return lastState;
       const state = samplePaperFlow(elapsedMs, options);
       for (const mesh of pool) mesh.visible = false;
       for (const label of labels) if (label) label.visible = false;
@@ -308,13 +316,17 @@ export function createPaperFlow(art) {
         }
         return [{...packet, point}];
       });
-      const names = new Set(state.nodes.flatMap(node => NODE_PARTS[node] || []));
-      for (const {materials, name} of highlights.values()) for (const material of materials) {
-        if (!material.emissive) continue;
-        const active = names.has(name), output = ['output-card', 'output-workbench', 'code-workstation', 'python-runtime', 'gurobi-solver'].includes(name);
-        const data = ['parameters', 'user-data-archive', 'model-rag', 'model-data-archive'].includes(name);
-        material.emissive.set(active ? PAPER_FLOW_COLORS[output ? 'output' : data ? 'data' : 'query'] : '#000000');
-        material.emissiveIntensity = active ? .20 : 0;
+      const nextHighlightKey = state.nodes.join('|');
+      if (nextHighlightKey !== highlightKey) {
+        const names = new Set(state.nodes.flatMap(node => NODE_PARTS[node] || []));
+        for (const {materials, name} of highlights.values()) for (const material of materials) {
+          if (!material.emissive) continue;
+          const active = names.has(name), output = ['output-card', 'output-workbench', 'code-workstation', 'python-runtime', 'gurobi-solver'].includes(name);
+          const data = ['parameters', 'user-data-archive', 'model-rag', 'model-data-archive'].includes(name);
+          material.emissive.set(active ? PAPER_FLOW_COLORS[output ? 'output' : data ? 'data' : 'query'] : '#000000');
+          material.emissiveIntensity = active ? .20 : 0;
+        }
+        highlightKey = nextHighlightKey;
       }
       lastState = state; return state;
     },

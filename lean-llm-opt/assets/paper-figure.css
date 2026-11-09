@@ -202,7 +202,8 @@
 :root[data-lang="zh"][data-theme="light"] .demo-preview-zh-light,
 :root[data-lang="en"][data-theme="light"] .demo-preview-en-light {display:block}
 .demo-launcher.is-peeking {
-  position:fixed;left:var(--peek-left);top:var(--peek-top);right:auto;bottom:auto;
+  position:fixed;left:0;top:0;right:auto;bottom:auto;
+  transform:translate3d(var(--peek-left),var(--peek-top),0);
   width:var(--peek-width);height:var(--peek-height);max-width:none;
   display:block;padding:0;border:0;border-radius:calc(var(--peek-progress)*14px);
   background:transparent;box-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none;

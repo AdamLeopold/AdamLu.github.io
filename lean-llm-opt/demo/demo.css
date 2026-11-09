@@ -584,7 +584,7 @@ input[readonly] {
   padding: 26px clamp(22px,3vw,48px);
   padding-bottom: 32px;
   scroll-padding-block: 20px 32px;
-  scroll-behavior: smooth;
+  scroll-behavior: auto;
   scrollbar-width: thin;
   scrollbar-color: var(--line) transparent;
 }
@@ -2269,7 +2269,7 @@ select option {
 .history-drawer[open] {
   display: flex;
   flex-direction: column;
-  animation: history-slide-in .2s ease-out both;
+
 }
 .history-drawer .preview-heading, .history-heading {
   display: flex;
@@ -2445,3 +2445,14 @@ select option {
 .sidebar-examples .example-list {margin-top:4px}
 .file-row.pending .csv-icon {border-style:dashed}
 .file-row.pending .file-info small {display:block}
+
+/* Short, interruptible overlays; JavaScript owns the matching modal lifecycle. */
+[data-motion] {will-change:opacity,transform}
+dialog[data-motion="closing"] {pointer-events:none}
+dialog[data-motion="opening"]::backdrop {animation:dialog-backdrop-in 180ms ease-out both}
+dialog[data-motion="closing"]::backdrop {animation:dialog-backdrop-out 140ms ease-in both}
+@keyframes dialog-backdrop-in {from{opacity:0}to{opacity:1}}
+@keyframes dialog-backdrop-out {from{opacity:1}to{opacity:0}}
+.icon-button,.small-icon,.text-button,.send-button,.cancel-button,.artifact-open-button,.setup-primary,.history-item {transition:background-color 140ms ease,border-color 140ms ease,color 140ms ease,opacity 140ms ease,transform 140ms ease}
+.icon-button:active:not(:disabled),.small-icon:active:not(:disabled),.send-button:active:not(:disabled),.setup-primary:active:not(:disabled),.artifact-open-button:active:not(:disabled) {transform:translateY(1px)}
+@media(prefers-reduced-motion:reduce){[data-motion]{will-change:auto}dialog::backdrop{animation:none!important}.icon-button:active:not(:disabled),.small-icon:active:not(:disabled),.send-button:active:not(:disabled),.setup-primary:active:not(:disabled),.artifact-open-button:active:not(:disabled){transform:none}}

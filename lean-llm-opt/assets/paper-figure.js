@@ -51,6 +51,12 @@ export function mountPaperFigure(root, {rendererFactory, loadAssets = loadArtwor
   const cleanups = [];
   let renderer, art, assets, drag, raf = 0, visible = true, disposed = false;
   let lastPose, transition;
+  let width=0,height=0,sizeDirty=true,lastShadowYaw,lastShadowPitch;
+
+  function measure() {
+    if(sizeDirty){width=viewport.clientWidth;height=viewport.clientHeight;sizeDirty=false;}
+    return {width,height};
+  }
 
   function listen(target, event, fn) {
     target.addEventListener(event,fn);
@@ -76,16 +82,19 @@ export function mountPaperFigure(root, {rendererFactory, loadAssets = loadArtwor
   function draw(now) {
     raf = 0;
     if (!visible || document.hidden || disposed) return;
-    const w = viewport.clientWidth, h = viewport.clientHeight;
+    const {width:w,height:h} = measure();
     if (!w || !h) return;
     const pose = paperPose(PAPER_SIZE.width,PAPER_SIZE.height,w,h,state);
     // Static renders use the same framing as the model at 1x.
-    viewport.style.setProperty('--paper-scale',String(state.zoom));
-    viewport.style.setProperty('--paper-x',(-pose.x*pose.scale)+'px');
-    viewport.style.setProperty('--paper-y',(pose.y*pose.scale)+'px');
+    if(state.fallback||!art||!renderer){
+      viewport.style.setProperty('--paper-scale',String(state.zoom));
+      viewport.style.setProperty('--paper-x',(-pose.x*pose.scale)+'px');
+      viewport.style.setProperty('--paper-y',(pose.y*pose.scale)+'px');
+    }
     if (!art || !renderer || state.fallback) return;
 
     const target = {...pose, pitch:state.view === 'spatial' ? state.pitch : 0, yaw:state.view === 'spatial' ? state.yaw : 0};
+    if (document.documentElement?.dataset.motion === 'reduced') transition=null;
     if (transition) {
       const t = clamp((now - transition.start)/320,0,1);
       for (const key of ['x','y','halfWidth','halfHeight','yaw','pitch']) {
@@ -94,9 +103,14 @@ export function mountPaperFigure(root, {rendererFactory, loadAssets = loadArtwor
       if (t >= 1) transition = null;
     }
     lastPose = target;
+    const wantedRatio=Math.min(window.devicePixelRatio||1,2);
+    if(renderer.getPixelRatio()!==wantedRatio)renderer.setPixelRatio(wantedRatio);
     const ratio = renderer.getPixelRatio();
     if (renderer.domElement.width !== Math.round(w*ratio) || renderer.domElement.height !== Math.round(h*ratio)) renderer.setSize(w,h,false);
     art.rotation.set(target.pitch,target.yaw,0,'YXZ');
+    if(target.yaw!==lastShadowYaw||target.pitch!==lastShadowPitch){
+      renderer.shadowMap.needsUpdate=true;lastShadowYaw=target.yaw;lastShadowPitch=target.pitch;
+    }
     Object.assign(camera,{left:-target.halfWidth,right:target.halfWidth,top:target.halfHeight,bottom:-target.halfHeight});
     camera.position.set(target.x,target.y,4000);
     camera.updateProjectionMatrix();
@@ -119,14 +133,16 @@ export function mountPaperFigure(root, {rendererFactory, loadAssets = loadArtwor
   function selectSection(section) {
     if (!DETAILS[section]) {reset();return;}
     Object.assign(state,{...PAPER_OVERVIEW, focus:section, pan:{x:0,y:0}});
-    state.zoom = sectionZoom(section,state,viewport.clientWidth,viewport.clientHeight);
+    const {width,height}=measure();
+    state.zoom = sectionZoom(section,state,width,height);
   }
   function zoom(factor) {
     state.zoom = clamp(state.zoom*factor,1,8);
     if (state.zoom === 1) {state.focus = null;state.pan = {x:0,y:0};}
   }
   function pan(dx,dy) {
-    const pose = paperPose(PAPER_SIZE.width,PAPER_SIZE.height,viewport.clientWidth,viewport.clientHeight,state);
+    const {width,height}=measure();
+    const pose = paperPose(PAPER_SIZE.width,PAPER_SIZE.height,width,height,state);
     state.pan.x = clamp(state.pan.x - dx/pose.scale,-PAPER_SIZE.width*.85,PAPER_SIZE.width*.85);
     state.pan.y = clamp(state.pan.y + dy/pose.scale,-PAPER_SIZE.height*.85,PAPER_SIZE.height*.85);
   }
@@ -209,12 +225,20 @@ export function mountPaperFigure(root, {rendererFactory, loadAssets = loadArtwor
   listen(canvas,'webglcontextrestored',() => {
     if (!art || disposed) return;
     state.fallback = false;state.tool = state.view === 'front' ? 'pan' : 'rotate';
+    renderer.shadowMap.needsUpdate=true;
     canvas.hidden = false;update();
   });
-  const resize = new ResizeObserver(() => {transition = null;invalidate();});
-  const observer = new IntersectionObserver(([entry]) => {visible = entry.isIntersecting;if (visible) invalidate();});
+  const resized=() => {sizeDirty=true;transition=null;invalidate();};
+  const resize = new ResizeObserver(resized);
+  const observer = new IntersectionObserver(([entry]) => {
+    visible=entry.isIntersecting;
+    if(visible)invalidate();else{cancelAnimationFrame(raf);raf=0;transition=null;}
+  });
   resize.observe(viewport);observer.observe(viewport);
-  listen(document,'visibilitychange',invalidate);
+  listen(document,'visibilitychange',()=>{
+    if(document.hidden){cancelAnimationFrame(raf);raf=0;transition=null;}else invalidate();
+  });
+  if(window.addEventListener)listen(window,'resize',resized);
   controlsChanged();
   async function initialize() {
     try {
@@ -223,10 +247,12 @@ export function mountPaperFigure(root, {rendererFactory, loadAssets = loadArtwor
       renderer.setClearColor(0,0);
       renderer.shadowMap.enabled = true;
       renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+      renderer.shadowMap.autoUpdate = false;
       assets = await loadAssets();
       if (disposed) {releaseObjects(assets.library);assets.print.dispose();return;}
       assets.print.anisotropy = Math.min(8,renderer.capabilities.getMaxAnisotropy());
       art = buildPaperFigure(assets.print,assets.library);
+      art.traverse(object=>{if(object!==art){object.updateMatrix();object.matrixAutoUpdate=false;}});
       scene.add(art);
       addPaperLighting(scene);
       viewport.append(canvas);
