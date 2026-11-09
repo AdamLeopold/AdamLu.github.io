@@ -2,11 +2,11 @@
   "format": "lean-llm-opt-static-v1",
   "deployment": "static",
   "demo": "visitor-local-handoff",
-  "builtAt": "2026-11-07T03:44:12.710Z",
+  "builtAt": "2026-11-09T09:47:19.196Z",
   "runtimeFileCount": 116,
   "fileCount": 118,
-  "payloadBytes": 7609470,
-  "totalBytes": 7628554,
+  "payloadBytes": 7639814,
+  "totalBytes": 7658898,
   "hashAlgorithm": "sha256",
   "files": {
     ".nojekyll": {
@@ -14,28 +14,28 @@
       "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     },
     "assets/app.js": {
-      "bytes": 60212,
-      "sha256": "2c14436a336d878d324ef505497ef245da02f5203a6fc235b1a03252daf3a362"
+      "bytes": 60192,
+      "sha256": "6ab0b091330e4e8137bb4709b5ffe8ed14ef5a391cccf8ec38f49d851c9db2ae"
     },
     "assets/demo-peek.js": {
-      "bytes": 4087,
-      "sha256": "986b3e2aeeba63d0f9d482fe1e05d26c629bd231f6e47df4513485e0d3733317"
+      "bytes": 8213,
+      "sha256": "99e8469f6fac17da0b5b8e8b0a5d1e010d9c290a213cd8c279047e028b9a4e87"
     },
     "assets/demo-preview-en-dark.webp": {
-      "bytes": 41488,
-      "sha256": "fdf24d94471944982f67f81b131be5da3d5617e8d2c3ba6eb03ec08135374340"
+      "bytes": 42602,
+      "sha256": "9a1658fc21e00067cc077597bcd72aa863ba9bbb11ea66a8d6de23284e35c290"
     },
     "assets/demo-preview-en-light.webp": {
-      "bytes": 42300,
-      "sha256": "ac779e3acea30cd0246043b143c7dd0ee948998a0e85921e6adb10b3dce28c4e"
+      "bytes": 43266,
+      "sha256": "5a55e35319aff4dc00c673706278aedac5f0234873dfbb7c7c54793429353866"
     },
     "assets/demo-preview-zh-dark.webp": {
-      "bytes": 33114,
-      "sha256": "a56bcd917a0d8f128a0d9bd8b25ef7cf5c4316cc621d5c6516ef88621d549454"
+      "bytes": 34794,
+      "sha256": "323bd63ea9d2549a226495e45350ebd10fc124f9b5a365287f875e775de60e76"
     },
     "assets/demo-preview-zh-light.webp": {
-      "bytes": 34040,
-      "sha256": "b3e1b9ce7fb03002217146f4678a3cc1b2a455af94a8d6786e098531f6615694"
+      "bytes": 35652,
+      "sha256": "26964b7e907bcb68691be47ff5ba767c9df4e3171e46ee65f34c4fb401e63352"
     },
     "assets/favicon.svg": {
       "bytes": 250,
@@ -74,8 +74,8 @@
       "sha256": "85b1d1dc5447b86c7f599e8912702480fb6c8bc0425f33ad7f54c819718b766e"
     },
     "assets/paper-figure.css": {
-      "bytes": 21120,
-      "sha256": "9c2ecfac50db97c2d5f1b06802c2a77200747063486bb880ae318dafb6093d5c"
+      "bytes": 21546,
+      "sha256": "49a8ee26977b7cd034d505a54f7ccdbd622218d11d9810ea001c25432040cd1c"
     },
     "assets/paper-figure.js": {
       "bytes": 11902,
@@ -450,32 +450,32 @@
       "sha256": "d15d2c1db282122b170697a44c1a87961d3266f8d803948d470218c22c652275"
     },
     "demo/demo.css": {
-      "bytes": 47761,
-      "sha256": "8cbbc003ba81351c60f4cd09f04861e2033268cbd068cea1682fec5d72daf1ad"
+      "bytes": 50224,
+      "sha256": "ed87d2a8b9eb3720a7422dfa2c69508d851227133d9a893dfda3f3cfb76fbf3a"
     },
     "demo/demo.js": {
-      "bytes": 56222,
-      "sha256": "cd512a7767b53b03a1aa0834395de5e241d91efd6f05946de622ff45414051b9"
+      "bytes": 66285,
+      "sha256": "d83bace3e4de98caad69115c206eb7f2ebbfdafbef3a140c302684bbd46f3531"
     },
     "demo/examples.json": {
       "bytes": 14622,
       "sha256": "03340a9801fb3a9aec19429149b4a496964dfe7bf77ac39018f5bf671ceb28fe"
     },
     "demo/index.html": {
-      "bytes": 21902,
-      "sha256": "598ca92342955d2daf5579145d3cbea1451ec5ac5af13ab8e56bb6c0ff76b530"
+      "bytes": 25090,
+      "sha256": "84bf2c9d687114758f6621aa3c2b44b64d25b84f3d0a9f47d9cdf17cb1d56c92"
     },
     "demo/rich-text.js": {
       "bytes": 8214,
       "sha256": "47eea724cc6ba28e49a49b2a86ccbd7e1fccbac002ada5f40d24911a7e339d96"
     },
     "downloads/lean-llm-opt-local.zip": {
-      "bytes": 1147423,
-      "sha256": "31562417bd0e0d53f85c15298c210702a6342cef2e42d4769a3931e9e97d7ef6"
+      "bytes": 1152155,
+      "sha256": "33cdb8cc1e8c47f375706a8a82a790e2d88da18e89bb586022c73c86fc6b01e1"
     },
     "index.html": {
-      "bytes": 29014,
-      "sha256": "49055d4a193b56be1eb76d902b947e8ac561d4a9ebdc9182baa66e97089ef86e"
+      "bytes": 29008,
+      "sha256": "b28a0aaa899990612917694c584059b355992d51d0e4c1621d8c09962ab3b863"
     }
   }
 }

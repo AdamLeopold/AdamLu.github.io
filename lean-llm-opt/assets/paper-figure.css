@@ -208,63 +208,61 @@
   background:transparent;box-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none;
   isolation:isolate;pointer-events:none;
 }
+.demo-launcher[data-peek-state="docked"]:not(.is-peeking) {bottom:var(--peek-dock-bottom)}
 .demo-launcher.is-peeking::before {content:"";position:absolute;inset:0;z-index:-1;border:1px solid var(--line-strong);border-radius:inherit;background:var(--glass);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);opacity:var(--peek-progress);pointer-events:none}
-.demo-launcher.is-peeking .demo-launcher-header {display:none}
+.demo-launcher.is-peeking .demo-launcher-header {display:flex;position:absolute;right:7px;top:50%;transform:translateY(-50%);z-index:2;opacity:var(--peek-controls);pointer-events:none}
+.demo-launcher.is-peeking[data-peek-state="docked"] .demo-launcher-header {pointer-events:auto}
 .demo-launcher.is-peeking .demo-launcher-body {display:block;width:100%;height:100%;margin:0}
 .demo-launcher.is-peeking .demo-launcher-description {display:none}
 .demo-launcher.is-peeking .demo-launcher-link {
   display:block;position:relative;width:100%;height:100%;min-height:44px;
-  padding:0;border:0;border-radius:inherit;overflow:hidden;
+  padding:0;border:0;border-radius:inherit;overflow:visible;
   background:transparent;color:var(--fg);pointer-events:auto;
 }
 .demo-launcher.is-peeking .demo-launcher-link:focus-visible {outline:2px solid var(--accent);outline-offset:3px}
 .demo-launcher.is-peeking .demo-peek-visual {
-  position:absolute;inset:0;display:block;overflow:hidden;perspective:1000px;
+  position:absolute;inset:calc(-8px*var(--peek-hover)) 0 0 calc(-56px*var(--peek-hover));display:block;overflow:hidden;perspective:1000px;
   opacity:var(--peek-page-opacity);pointer-events:none;
   /* Visible half: upper right. The feathered boundary runs top left to bottom right. */
-  -webkit-mask-image:linear-gradient(to bottom left,#000 42%,rgba(0,0,0,.88) 46%,transparent 54%),linear-gradient(to bottom,transparent,#000 6%,#000 93%,transparent),linear-gradient(to right,transparent,#000 6%,#000 96%,transparent);
-  mask-image:linear-gradient(to bottom left,#000 42%,rgba(0,0,0,.88) 46%,transparent 54%),linear-gradient(to bottom,transparent,#000 6%,#000 93%,transparent),linear-gradient(to right,transparent,#000 6%,#000 96%,transparent);
+  -webkit-mask-image:linear-gradient(to bottom left,#000 calc(24% + 13%*var(--peek-hover)),rgba(0,0,0,.97) calc(32% + 13%*var(--peek-hover)),rgba(0,0,0,.82) calc(40% + 13%*var(--peek-hover)),rgba(0,0,0,.5) calc(48% + 13%*var(--peek-hover)),rgba(0,0,0,.18) calc(56% + 13%*var(--peek-hover)),rgba(0,0,0,.03) calc(63% + 13%*var(--peek-hover)),transparent calc(70% + 13%*var(--peek-hover))),linear-gradient(to bottom,transparent,#000 12%,#000 84%,transparent),linear-gradient(to right,transparent,#000 18%,#000 91%,transparent);
+  mask-image:linear-gradient(to bottom left,#000 calc(24% + 13%*var(--peek-hover)),rgba(0,0,0,.97) calc(32% + 13%*var(--peek-hover)),rgba(0,0,0,.82) calc(40% + 13%*var(--peek-hover)),rgba(0,0,0,.5) calc(48% + 13%*var(--peek-hover)),rgba(0,0,0,.18) calc(56% + 13%*var(--peek-hover)),rgba(0,0,0,.03) calc(63% + 13%*var(--peek-hover)),transparent calc(70% + 13%*var(--peek-hover))),linear-gradient(to bottom,transparent,#000 12%,#000 84%,transparent),linear-gradient(to right,transparent,#000 18%,#000 91%,transparent);
   -webkit-mask-composite:source-in;mask-composite:intersect;
 }
 .demo-launcher.is-peeking .demo-peek-visual::before {content:"";position:absolute;inset:0 -15% 0 0;background:radial-gradient(ellipse at 75% 25%,rgba(151,165,248,.24),transparent 70%);filter:blur(16px)}
 .demo-launcher.is-peeking .demo-peek-visual::after {content:"";position:absolute;inset:62% 0 0;background:linear-gradient(transparent,var(--bg));pointer-events:none}
 .demo-page-window {
-  --page-scale:.92;--page-hover-scale:1.04;
+  --page-scale:.92;
   position:absolute;display:block;left:auto;right:10px;top:12px;width:max(650px,calc(var(--peek-source-height,440px)*1.5));
   border:1px solid rgba(187,200,246,.35);border-radius:15px;overflow:hidden;
   background:#1c233f;box-shadow:-15px 26px 72px rgba(0,0,0,.24),inset 0 1px rgba(255,255,255,.2);
-  transform:rotateY(-8deg) rotateZ(2deg) scale(var(--page-scale));
-  transform-origin:100% 0;transition:transform .5s cubic-bezier(.22,.75,.3,1);
+  transform:translate(calc(-12px*var(--peek-hover)),calc(-5px*var(--peek-hover))) rotateY(calc(-8deg + 7deg*var(--peek-hover))) rotateZ(calc(2deg - 1.5deg*var(--peek-hover))) scale(calc((var(--page-scale) + .18*var(--peek-hover))*var(--peek-image-scale)));
+  transform-origin:100% 0;
 }
 .demo-page-bar {height:26px;display:flex;align-items:center;justify-content:flex-end;gap:5px;padding:0 12px;background:#252c49;border-bottom:1px solid rgba(183,196,244,.14);color:#aebbdc;font:8px var(--mono)}
 .demo-page-bar i {display:block;width:4px;height:4px;border-radius:50%;background:#7887b3}
 .demo-page-bar>span {margin-left:12px;letter-spacing:.08em}
 .demo-page-content {display:block;overflow:hidden}
-.demo-launcher.is-peeking[data-peek-state="preview"] .demo-launcher-link:is(:hover,:focus-visible) .demo-page-window {transform:translateY(-3px) rotateY(-3deg) rotateZ(.5deg) scale(var(--page-hover-scale));transition-duration:.68s;transition-timing-function:cubic-bezier(.18,1.55,.36,1)}
 .demo-launcher.is-peeking .demo-peek-caption {
-  display:block;position:absolute;left:calc(12px + 20px*var(--peek-open));right:calc(35px + 3px*var(--peek-open));bottom:calc(10px + 18px*var(--peek-open));
+  display:block;position:absolute;left:var(--peek-caption-left);right:38px;bottom:var(--peek-caption-bottom);
   padding:0;line-height:1.5;pointer-events:none;
 }
 .demo-launcher.is-peeking .demo-peek-eyebrow {display:block;font:8px/1.5 var(--mono);letter-spacing:.13em;color:var(--accent);opacity:var(--peek-open);margin-bottom:calc(8px*var(--peek-open));max-height:calc(20px*var(--peek-open));overflow:hidden}
 .demo-launcher.is-peeking #demo-launcher-link-label {position:static;width:auto;height:auto;overflow:visible;clip-path:none;display:block;white-space:nowrap;font-size:calc(12px + 11px*var(--peek-open));font-weight:500}
 .demo-launcher.is-peeking .demo-peek-note {display:block;font-size:11px;line-height:1.7;color:var(--muted);opacity:var(--peek-open);margin-top:calc(8px*var(--peek-open));max-height:calc(42px*var(--peek-open));overflow:hidden}
-.demo-launcher.is-peeking .demo-peek-arrow {position:absolute;right:calc(16px + 5px*var(--peek-open));bottom:calc(11px + 52px*var(--peek-open));font-size:calc(15px + 13px*var(--peek-open));color:var(--accent);pointer-events:none}
+.demo-launcher.is-peeking .demo-peek-arrow {position:absolute;right:var(--peek-arrow-right);bottom:var(--peek-arrow-bottom);font-size:calc(15px + 13px*var(--peek-open));color:var(--accent);pointer-events:none}
 :root[data-theme="light"] .demo-page-window {background:#eef0fb;box-shadow:-15px 26px 64px rgba(70,80,130,.18);border-color:rgba(103,126,189,.33)}
 :root[data-theme="light"] .demo-page-bar {background:#e1e7f8;color:#5b6b93;border-bottom-color:rgba(103,126,189,.18)}
 :root[data-theme="light"] .demo-page-bar i {background:#9dadd1}
 @media (min-width:1700px){.demo-peek-slot {right:-42px;width:380px}}
 @media (max-width:1279px) and (min-width:761px){
   .demo-peek-slot {position:relative;grid-column:7 / -1;grid-row:2;justify-self:end;right:0;top:0;width:100%;max-width:330px;height:230px;margin-top:10px;margin-bottom:20px}
-  .demo-launcher.is-peeking .demo-page-window {--page-scale:.76;--page-hover-scale:.86;top:6px}
-  .demo-launcher.is-peeking .demo-peek-caption {bottom:16px}
+  .demo-launcher.is-peeking .demo-page-window {--page-scale:.76;top:6px}
   .demo-launcher.is-peeking .demo-peek-note {display:none}
 }
 @media(max-width:760px){
   .demo-peek-slot {position:relative;align-self:flex-end;right:0;top:0;width:calc(100% - 38px);height:240px;margin:0 18px 22px 20px}
-  .demo-launcher.is-peeking .demo-page-window {--page-scale:.76;--page-hover-scale:.86;top:6px}
+  .demo-launcher.is-peeking .demo-page-window {--page-scale:.76;top:6px}
   .demo-launcher.is-peeking .demo-peek-note {display:none}
-  .demo-launcher.is-peeking .demo-peek-caption {bottom:calc(10px + 8px*var(--peek-open))}
-  .demo-launcher.is-peeking .demo-peek-arrow {bottom:calc(11px + 15px*var(--peek-open))}
 }
 :root[data-motion="reduced"] .demo-launcher.is-peeking .demo-page-window,:root[data-motion="reduced"] .demo-launcher.is-peeking .demo-peek-visual {transition:none!important}
 @media(prefers-reduced-motion:reduce){.demo-launcher.is-peeking .demo-page-window,.demo-launcher.is-peeking .demo-peek-visual {transition:none!important}}

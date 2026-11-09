@@ -1,4 +1,4 @@
-import {createDemoPeek} from './demo-peek.js?v=hero-alignment-20261107-1';
+import {createDemoPeek} from './demo-peek.js?v=peek-motion-20261109-1';
 import {createFramework} from './paper-journey.js?v=editorial-hero-20261106-1';
 import {STAGES,NODE_BY_ID,JOURNEY_EXAMPLE,routeFromRunValue} from './framework-topology.js?v=vertical-side-20261104-1';
 const root = document.documentElement;
@@ -189,7 +189,7 @@ $('#graph-replay').addEventListener('click',()=>{state.flowPlaying=true;modelVie
 $('#graph-reset').addEventListener('click',()=>{modelView?.resetCamera();selectStage(0,true);});
 $('#graph-free').addEventListener('click',()=>{pageScrollIntentUntil=0;state.free=state.follow?true:!state.free;leaveLiveFollow();modelView?.setFree(state.free);renderStageDetail();});
 function syncDemoLinks(){
-  const url=new URL('demo/',location.href);url.searchParams.set('lang',state.lang);url.searchParams.set('theme',state.theme);
+  const url=new URL('demo/',location.href);url.searchParams.set('theme',state.theme);
   $$('[data-demo-link]').forEach(link=>{link.href=url.href;});
 }
 function syncDemoLauncher(){
@@ -209,7 +209,7 @@ const demoLauncherMedia=matchMedia('(max-width:760px)');
 setDemoLauncherCollapsed(true);
 demoLauncherMedia.addEventListener('change',event=>setDemoLauncherCollapsed(event.matches));
 $('#demo-launcher-toggle').addEventListener('click',()=>setDemoLauncherCollapsed(!$('#demo-launcher').classList.contains('is-collapsed')));
-demoPeek=createDemoPeek({hero:$('#home'),slot:$('.demo-peek-slot'),launcher:$('#demo-launcher'),isReduced:()=>state.reduced,collapse:()=>setDemoLauncherCollapsed(true)});
+demoPeek=createDemoPeek({hero:$('#home'),slot:$('.demo-peek-slot'),launcher:$('#demo-launcher'),avoid:$('#arch-track'),isReduced:()=>state.reduced,collapse:()=>setDemoLauncherCollapsed(true)});
 let demoChannel;
 function connectDemoChannel(){
   if(isStaticDeployment){$('#follow-run').hidden=true;return;}

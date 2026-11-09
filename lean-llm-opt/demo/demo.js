@@ -3,6 +3,7 @@ const $=(s,r=document)=>r.querySelector(s), $$=(s,r=document)=>[...r.querySelect
 const params=new URLSearchParams(location.search), API='/api/demo';
 const PUBLIC_HOME='https://adamleopold.github.io/AdamLu.github.io/lean-llm-opt/';
 const LOCAL_WORKSPACE='http://127.0.0.1:8097/demo/';
+const PUBLIC_ORIGIN='https://adamleopold.github.io',LOCAL_ORIGIN='http://127.0.0.1:8097',HANDOFF_TTL=120000;
 const EXAMPLE_IDS=new Set(['tp','nrm','ra','flp','ap']);
 const isLocalRuntime=['127.0.0.1','localhost','[::1]','::1'].includes(location.hostname)&&document.documentElement.dataset.deployment!=='static';
 const terminal=new Set(['completed','failed','cancelled','timeout']);
@@ -16,14 +17,89 @@ function store(k,v){try{localStorage.setItem(k,v);}catch{}}
 function read(k){try{return localStorage.getItem(k);}catch{return null;}}
 function createRunChannel(){try{return typeof BroadcastChannel==='function'?new BroadcastChannel('lean-demo-events'):null;}catch{return null;}}
 let runChannel=createRunChannel();
-function publishRunEvent(event){
- const secret=$('#api-key').value;
- const clean=value=>{if(typeof value==='string')return secret?value.replaceAll(secret,'[redacted]'):value;if(Array.isArray(value))return value.map(clean);if(value&&typeof value==='object')return Object.fromEntries(Object.entries(value).filter(([key])=>!['api_key','authorization','password','secret'].includes(key.toLowerCase())).map(([key,item])=>[key,clean(item)]));return value;};
- runChannel?.postMessage({type:'lean:run',event:clean(event)});
+// Credentials are kept outside serializable session/run state and browser storage.
+let openaiKey='',personalSettingsTrigger=null,pendingHandoff=null,credentialReceiver=null;
+function redactConfiguredKey(value){return openaiKey?value.replaceAll(openaiKey,'[redacted]'):value;}
+function redactSecrets(value){
+ if(typeof value==='string')return redactConfiguredKey(value).replace(/(?:bearer\s+[A-Za-z0-9._-]+|\bsk-[A-Za-z0-9_-]+)/gi,'[redacted]');
+ if(Array.isArray(value))return value.map(redactSecrets);
+ if(value&&typeof value==='object')return Object.fromEntries(Object.entries(value).filter(([key])=>!['api_key','authorization','password','secret','headers'].includes(key.toLowerCase())).map(([key,item])=>[key,redactSecrets(item)]));
+ return value;
+}
+function publishRunEvent(event){runChannel?.postMessage({type:'lean:run',event:redactSecrets(event)});}
+function renderPersonalSettings(){
+ const working=Boolean(state.activeRun||state.sending||pendingHandoff),hasKey=Boolean(openaiKey),openai=$('#provider').value==='openai';
+ $('#key-field').hidden=!openai;$('#model').textContent=openai?'GPT-4.1':'gpt-oss:20b';
+ $('#key-status').textContent=hasKey?t('已填写 · 本页会话','Added · this page session'):t('填写你的 API Key','Add your API key');
+ $('#personal-handoff-note').hidden=isLocalRuntime;
+ $('#personal-handoff-note').textContent=location.origin===PUBLIC_ORIGIN?t('点击“打开本机工作台”后，Key 可一次传入你的本机页面。连接和运行仍需在本机确认。','When you choose Open the local workspace, the key can be passed once to that local page. You still confirm the connection and run there.'):t('打开本机工作台后，请在那里重新填写 Key。','Enter the key again after opening the local workspace.');
+ $('#api-key').disabled=working;$('#api-key-clear').disabled=working||!hasKey;$('#api-key-visibility').disabled=working||!hasKey;
+ const shown=$('#api-key').type==='text';$('#api-key-visibility').textContent=shown?t('隐藏','Hide'):t('显示','Show');$('#api-key-visibility').setAttribute('aria-pressed',String(shown));
+ $('#personal-key-status').textContent=pendingHandoff?t('正在等待本机工作台接收 Key…','Waiting for the local workspace to receive the key…'):working?t('当前任务正在运行，完成后可修改或清除 Key。','A run is in progress. You can change or clear the key when it finishes.'):hasKey?t('已填写；关闭设置后仍在本页会话中保留。','Key added for this page session. Closing settings keeps it available.'):t('尚未填写 Key；可以继续浏览示例。','No key added. You can still browse the examples.');
+ $('#setup-key-status').textContent=isLocalRuntime?(hasKey?t('本页会话已填写 Key。','A key is available for this page session.'):t('可先连接并浏览，运行前请填写 Key。','Connect and browse now; add a key before running.')):location.origin===PUBLIC_ORIGIN?t('点击打开本机工作台后，可一次传入本页已填写的 Key。','Opening the local workspace can pass this page’s key to it once.'):t('本机工作台打开后需重新填写 Key。','Enter the key again after opening the local workspace.');
+}
+function openPersonalSettings(trigger=document.activeElement){
+ const dialog=$('#personal-settings');if(dialog.open)return;
+ personalSettingsTrigger=trigger;closeSettings(false);$('#api-key').value=openaiKey;$('#api-key').type='password';renderPersonalSettings();
+ for(const id of ['#personal-settings-open','#key-configure','#setup-personal-open'])$(id).setAttribute('aria-expanded','true');
+ dialog.showModal();($('#api-key').disabled?$('#personal-settings-close'):$('#api-key')).focus();
+}
+function closePersonalSettings(){
+ $('#api-key').value='';$('#api-key').type='password';
+ if($('#personal-settings').open)$('#personal-settings').close();
+}
+function clearOpenAIKey(){openaiKey='';$('#api-key').value='';$('#api-key').type='password';renderPersonalSettings();updateSetup();}
+function endHandoff(clearKey=false){
+ if(!pendingHandoff)return;window.removeEventListener('message',pendingHandoff.listener);clearTimeout(pendingHandoff.timer);clearInterval(pendingHandoff.closedTimer);pendingHandoff=null;
+ if(clearKey)clearOpenAIKey();else renderPersonalSettings();
+}
+function openLocalWorkspace(){
+ if(pendingHandoff){pendingHandoff.target.focus();return;}
+ const url=new URL(localWorkspaceURL(state.pendingExample)),canTransfer=location.origin===PUBLIC_ORIGIN&&$('#provider').value==='openai'&&Boolean(openaiKey);
+ if(!canTransfer){
+  const target=window.open(url.href,'_blank');
+  if(target){target.opener=null;}else notice(t('浏览器未打开新窗口。请允许本站弹出窗口后重试；也可手动打开本机工作台，在个人配置填写 Key。','The browser blocked the new window. Allow pop-ups and retry, or open the local workspace manually and add the key in Personal settings.'));
+  return;
+ }
+ const nonce=crypto.randomUUID(),expires=Date.now()+HANDOFF_TTL;
+ url.searchParams.set('handoff',nonce);url.searchParams.set('handoff_expires',String(expires));
+ // This user-initiated window is the only recipient. The key is never put in its URL.
+ const target=window.open(url.href,'_blank');
+ if(!target){notice(t('浏览器未打开新窗口，Key 仍保留在本页。请允许弹出窗口后重试，或手动打开本机工作台并重新填写。','The browser blocked the new window. The key remains in this page. Allow pop-ups and retry, or open the local workspace manually and enter it there.'));return;}
+ const handoff={target,nonce,expires,sent:false,timer:null,closedTimer:null,listener:null};pendingHandoff=handoff;
+ handoff.listener=event=>{
+  const data=event.data;if(pendingHandoff!==handoff||Date.now()>expires||event.origin!==LOCAL_ORIGIN||event.source!==target||!data||data.nonce!==nonce)return;
+  if(data.type==='lean:credential-ready'&&!handoff.sent){
+   if(!openaiKey){endHandoff();return;}handoff.sent=true;
+   target.postMessage({type:'lean:credential',nonce,key:openaiKey},LOCAL_ORIGIN);
+  }else if(data.type==='lean:credential-ack'&&handoff.sent){endHandoff(true);toast(t('Key 已交给本机工作台；请在那里确认连接。','Key passed to the local workspace. Confirm the connection there.'));}
+ };
+ window.addEventListener('message',handoff.listener);
+ handoff.closedTimer=setInterval(()=>{if(pendingHandoff===handoff&&target.closed)endHandoff(handoff.sent);},500);
+ handoff.timer=setTimeout(()=>{if(pendingHandoff!==handoff)return;const sent=handoff.sent;endHandoff(sent);notice(sent?t('本机页面未确认接收。请在本机个人配置检查 Key。','The local page did not confirm receipt. Check the key in its Personal settings.'):t('等待本机工作台超时，Key 仍在本页。启动本机服务后重试，或在那里重新填写。','The local workspace did not respond in time. The key remains in this page. Start the local service and retry, or enter it there.'));},HANDOFF_TTL);
+ renderPersonalSettings();
+}
+function stopCredentialReceiver(){
+ if(!credentialReceiver)return;window.removeEventListener('message',credentialReceiver.listener);clearTimeout(credentialReceiver.timer);credentialReceiver=null;
+}
+function receiveLocalCredential(){
+ const nonce=params.get('handoff'),expires=Number(params.get('handoff_expires')),opener=window.opener;
+ if(!nonce&&!params.has('handoff_expires'))return;
+ const cleaned=new URL(location.href);cleaned.searchParams.delete('handoff');cleaned.searchParams.delete('handoff_expires');history.replaceState(null,'',cleaned);params.delete('handoff');params.delete('handoff_expires');
+ if(!isLocalRuntime||location.origin!==LOCAL_ORIGIN||!state.connected||!opener||!/^[0-9a-f-]{36}$/i.test(nonce||'')||!Number.isFinite(expires)||expires<=Date.now()||expires>Date.now()+HANDOFF_TTL)return;
+ const receiver={listener:null,timer:null};credentialReceiver=receiver;
+ receiver.listener=event=>{
+  const data=event.data;if(credentialReceiver!==receiver||$('#provider').value!=='openai'||Date.now()>expires||event.origin!==PUBLIC_ORIGIN||event.source!==opener||!data||data.type!=='lean:credential'||data.nonce!==nonce||typeof data.key!=='string'||!data.key.trim()||data.key.length>512)return;
+  openaiKey=data.key.trim();stopCredentialReceiver();renderPersonalSettings();updateSetup();
+  opener.postMessage({type:'lean:credential-ack',nonce},PUBLIC_ORIGIN);
+  window.opener=null;
+ };
+ window.addEventListener('message',receiver.listener);receiver.timer=setTimeout(stopCredentialReceiver,Math.max(0,expires-Date.now()));
+ opener.postMessage({type:'lean:credential-ready',nonce},PUBLIC_ORIGIN);
 }
 function publishSession(id){runChannel?.postMessage({type:'lean:session',id});}
 function toast(text){$('#toast').textContent=text;$('#toast').classList.add('visible');clearTimeout(toast.timer);toast.timer=setTimeout(()=>$('#toast').classList.remove('visible'),2800);}
-function notice(text=''){$('#error-notice').textContent=text;$('#error-notice').hidden=!text;}
+function notice(text=''){$('#error-notice').textContent=redactSecrets(text);$('#error-notice').hidden=!text;}
 function nearBottom(){const e=$('#conversation');return e.scrollHeight-e.scrollTop-e.clientHeight<130;}
 function scrollBottom(force=false){if(force||nearBottom())requestAnimationFrame(()=>{$('#conversation').scrollTop=$('#conversation').scrollHeight;});}
 function translate(root=document){$$('[data-zh][data-en]',root).forEach(e=>{e.textContent=e.getAttribute(`data-${state.lang}`);});}
@@ -31,17 +107,18 @@ function researchHome(){const u=isLocalRuntime?new URL(PUBLIC_HOME):new URL('../
 function preferences(lang,theme,persist=false){
  state.lang=lang==='en'?'en':'zh';state.theme=theme==='light'?'light':'dark';document.documentElement.dataset.lang=state.lang;document.documentElement.dataset.theme=state.theme;document.documentElement.lang=state.lang==='en'?'en':'zh-CN';
  document.title=`LEAN-LLM-OPT · ${t('建模工作台','Modeling Studio')}`;translate();$('#language-toggle').textContent=state.lang==='en'?'中':'EN';$('#query').placeholder=t('描述目标、变量与约束；也可以追问或修改已有模型…','Describe the goal, decisions and constraints, or explain and revise the model…');
- if(persist){store('lean-lang',state.lang);store('lean-theme',state.theme);}renderHealth();renderFiles();renderVersions();renderConversation();renderArtifact();researchHome();updateSetup();if($('#conversation-history').open)renderHistory();
+ if(persist){store('lean-demo-lang',state.lang);store('lean-theme',state.theme);}renderHealth();renderFiles();renderVersions();renderConversation();renderArtifact();researchHome();renderPersonalSettings();updateSetup();if($('#conversation-history').open)renderHistory();
 }
 async function api(path,options={}){
  if(!isLocalRuntime)throw new Error(t('请在这台电脑的本机工作台运行。','Open the local workspace on this computer to run.'));
- const response=await fetch(API+path,{credentials:'same-origin',...options,headers:options.body instanceof FormData?options.headers:{'Content-Type':'application/json',...options.headers}});let data;
- try{data=await response.json();}catch{throw new Error(t('无法连接建模服务，请稍后重试。','Cannot connect to the modeling service. Try again later.'));}
+ const response=await fetch(API+path,{credentials:'same-origin',...options,redirect:'error',cache:'no-store',headers:options.body instanceof FormData?options.headers:{'Content-Type':'application/json',...options.headers}});let data;
+ try{data=redactSecrets(await response.json());}catch{throw new Error(t('无法连接建模服务，请稍后重试。','Cannot connect to the modeling service. Try again later.'));}
  if(!response.ok)throw new Error(typeof data.detail==='string'?data.detail:t('请求失败，请重试。','The request failed. Please try again.'));return data;
 }
 function busy(id){
  state.activeRun=id;const working=Boolean(id||state.sending||state.exampleLoading||state.changingSession||state.filesBusy);document.body.classList.toggle('busy',working);$('#cancel-button').hidden=!id;$('#cancel-button').disabled=false;$('#send-button').hidden=Boolean(id);$('#send-button').disabled=working;
- for(const selector of ['#new-session','#provider','#model','#api-key'])$(selector).disabled=working||state.changingSession;
+ for(const selector of ['#new-session','#provider'])$(selector).disabled=working||state.changingSession;
+ renderPersonalSettings();
  $$('[data-session-id]').forEach(element=>{element.disabled=working||state.changingSession;});
  for(const selector of ['#upload-button','#file-input','#drop-zone'])$(selector).disabled=working||!state.session||!state.setupConfirmed;
  $$('.file-remove,[data-example]').forEach(e=>{e.disabled=working;});$('#runtime-check').disabled=working||!isLocalRuntime||!state.connected;
@@ -54,7 +131,7 @@ function renderHealth(){
  $('#runtime-title').textContent=state.runtimeChecked?(ready?t('求解器就绪','Solver ready'):t('执行环境待配置','Execution setup needed')):t('Python / Gurobi · 本机执行','Python / Gurobi · local');
  $('#runtime-description').textContent=state.runtimeChecked?(ready?t('生成程序将在本机隔离运行。','Generated programs run locally in isolation.'):t('可继续查看模型与代码。','Formulations and code remain available.')):isLocalRuntime?t('运行任务时检测执行环境，也可手动检测。','Checked when running a task; a manual check is also available.'):t('启动本机工作台后运行程序。','Start the local workspace to run programs.');
  $('#query').readOnly=!isLocalRuntime;$('#query').placeholder=isLocalRuntime?t('描述目标、变量与约束；也可以追问或修改已有模型…','Describe the goal, decisions and constraints, or revise an existing model…'):t('选择示例预览问题与数据，打开本机工作台后运行。','Preview an example, then open the local workspace to run it.');
- $('#key-field').hidden=!isLocalRuntime||$('#provider').value!=='openai';
+ renderPersonalSettings();
  $('#model-location').textContent=$('#provider').value==='openai'?t('模型请求发送至 OpenAI，产物由本机工作台保存。','Model requests go to OpenAI; artifacts are saved by the local workspace.'):$('#provider').value==='ollama'?t('GPT-OSS 通过这台电脑的 Ollama 运行。','GPT-OSS uses Ollama on this computer.'):t('选择模型服务，查看安装与连接方式。','Choose a model service to view its setup instructions.');
 }
 async function health(){
@@ -69,14 +146,14 @@ function localWorkspaceURL(exampleId=null,provider=$('#provider').value){
 function selectedExample(){return state.catalog.find(e=>e.id===state.pendingExample);}
 function updateSetup(){
  const openai=$('#provider').value==='openai';$('#setup-title').textContent=openai?t('使用你自己的 OpenAI Key','Use your OpenAI key'):t('连接这台电脑的 GPT-OSS','Connect GPT-OSS on this computer');
- $('#setup-summary').textContent=openai?t('模型请求从你的电脑发往 OpenAI。API Key 请在本机工作台中输入。','Model requests go from your computer to OpenAI. Enter your API key in the local workspace.'):t('GPT-OSS 通过你的电脑上的 Ollama 运行。完成首次准备后，本机工作台会自动使用本机模型。','GPT-OSS runs through Ollama on your computer. After setup, the local workspace uses that computer’s model automatically.');
- $('#setup-provider-ollama').setAttribute('aria-pressed',String(!openai));$('#setup-provider-openai').setAttribute('aria-pressed',String(openai));$('#setup-ollama').hidden=openai;$('#setup-openai').hidden=!openai;$('#setup-public').hidden=isLocalRuntime;$('#setup-key-field').hidden=!openai||!isLocalRuntime;$('#setup-detect').hidden=!isLocalRuntime;
+ $('#setup-summary').textContent=openai?t('模型请求从你的电脑发往 OpenAI。可在个人配置提前填写 API Key；运行仍需在本机工作台确认。','Model requests go from your computer to OpenAI. Add your API key in Personal settings; confirm the run in the local workspace.'):t('GPT-OSS 通过你的电脑上的 Ollama 运行。完成首次准备后，本机工作台会自动使用本机模型。','GPT-OSS runs through Ollama on your computer. After setup, the local workspace uses that computer’s model automatically.');
+ $('#setup-provider-ollama').setAttribute('aria-pressed',String(!openai));$('#setup-provider-openai').setAttribute('aria-pressed',String(openai));$('#setup-ollama').hidden=openai;$('#setup-openai').hidden=!openai;$('#setup-public').hidden=isLocalRuntime;$('#setup-key-field').hidden=!openai;$('#setup-detect').hidden=!isLocalRuntime;
  const chosen=selectedExample();$('#setup-example').hidden=!chosen;$('#setup-example').textContent=chosen?`${chosen.id.toUpperCase()} · ${local(chosen.title)} · ${local(chosen.dimensions)}`:'';
  const status=$('#setup-status');status.dataset.ready='false';status.dataset.error='false';
  if(!isLocalRuntime)status.textContent=t('完成准备后，打开本机工作台开始建模。','Finish setup, then open the local workspace to start modeling.');
  else if(state.initializing)status.textContent=t('正在读取本机服务状态…','Reading local service status…');
  else if(!state.connected){status.textContent=t('未连接到本机服务。请在运行包目录启动 scripts/run_demo.py 后重新检测。','Local service unavailable. Start scripts/run_demo.py in the runtime folder and check again.');status.dataset.error='true';}
- else if(openai){status.textContent=t('已连接本机工作台。输入自己的 API Key 后即可继续。','The local workspace is connected. Enter your API key to continue.');status.dataset.ready='true';}
+ else if(openai){status.textContent=openaiKey?t('本机工作台已连接，当前页面已填写 API Key。','The local workspace is connected and a key is available in this page.'):t('本机工作台已连接。可先浏览，运行前请在个人配置填写 API Key。','The local workspace is connected. Browse now and add an API key in Personal settings before running.');status.dataset.ready='true';}
  else if(state.capabilities?.ollama?.ready){status.textContent=t('已检测到本机 gpt-oss:20b 和 nomic-embed-text。','Local gpt-oss:20b and nomic-embed-text are ready.');status.dataset.ready='true';}
  else{const models=state.capabilities?.ollama?.missing_models||['gpt-oss:20b','nomic-embed-text'];status.textContent=(state.capabilities?.ollama?.reachable?t('待下载模型：','Models to download: '):t('请打开本机 Ollama，并下载：','Open Ollama on this computer and download: '))+models.join(' · ');status.dataset.error='true';}
  $('#setup-confirm').textContent=!isLocalRuntime?(chosen?t('在本机打开此示例 ↗','Open this example locally ↗'):t('打开本机工作台 ↗','Open the local workspace ↗')):chosen?t('使用本机服务运行此示例','Run this example locally'):t('连接并开始建模','Connect and start modeling');
@@ -85,17 +162,17 @@ function updateSetup(){
 }
 function openSetup(exampleId=state.pendingExample){
  if(state.changingSession||state.filesBusy)return;
- state.setupError='';if(!$('#provider').value){$('#provider').value='ollama';$('#model').value='gpt-oss:20b';$('#model').readOnly=true;}
+ state.setupError='';if(!$('#provider').value){$('#provider').value='openai';renderPersonalSettings();}
  if(EXAMPLE_IDS.has(exampleId))state.pendingExample=exampleId;closeSettings(false);updateSetup();if(!$('#local-setup').open)$('#local-setup').showModal();
 }
 async function confirmSetup(){
  if(state.setupBusy)return;if(state.activeRun){$('#setup-status').textContent=t('当前任务正在运行，完成后可更改连接设置。','Wait for the current run before changing the connection.');return;}
- if(!isLocalRuntime){location.assign(localWorkspaceURL(state.pendingExample));return;}
+ if(!isLocalRuntime){openLocalWorkspace();return;}
  state.setupBusy=true;state.setupError='';updateSetup();
  try{
   await health();if(!state.connected)return;
   if($('#provider').value==='ollama'&&!state.capabilities?.ollama?.ready){updateSetup();return;}
-  if($('#provider').value==='openai'){const key=$('#setup-api-key').value.trim()||$('#api-key').value.trim();if(!key){state.setupError=t('请输入你的 OpenAI API Key。','Enter your OpenAI API key.');$('#setup-status').textContent=state.setupError;$('#setup-api-key').focus();return;}$('#api-key').value=key;$('#setup-api-key').value='';}
+  if($('#provider').value==='openai'&&!openaiKey&&(state.pendingExample||state.pendingSend)){state.setupError=t('请在个人配置填写你的 OpenAI API Key，然后确认运行。','Add your OpenAI API key in Personal settings, then confirm the run.');updateSetup();openPersonalSettings($('#setup-personal-open'));return;}
   if(!state.session){const saved=params.get('session')||read('lean-demo-session');try{await openSession(saved||undefined);}catch{await openSession();}}
   state.setupConfirmed=true;$('#local-setup').close();renderHealth();busy(state.activeRun);const id=state.pendingExample;state.pendingExample=null;
   const shouldSend=state.pendingSend;state.pendingSend=false;if(id)await example(id);else if(shouldSend){await send();}else $('#query').focus();
@@ -126,7 +203,7 @@ function refreshArtifactButtons(id){
  for(const group of $$('.run-artifact-actions'))if(group.dataset.runId===id)for(const button of $$('[data-open-artifact]',group))button.disabled=!values[button.dataset.openArtifact];
 }
 function messageNode(message){const e=node('section',`message message-${message.role}`),h=node('div','message-header'),body=node('div','message-body');h.append(node('i','',message.role==='user'?'↑':'L'),node('span','',message.role==='user'?t('你','YOU'):'LEAN-LLM-OPT'));body.append(markdown(message.content));e.append(h,body);if(message.role==='assistant'&&message.run_id)e.append(artifactButtons(message.run_id));math(body);return e;}
-function renderConversation(){const box=$('#conversation'),bottom=nearBottom(),top=box.scrollTop;state.processNodes.clear();state.stageNodes.clear();box.replaceChildren();const messages=state.session?.messages||[];if(!messages.length||!state.examplesCollapsed){const welcome=welcomeTemplate.cloneNode(true);translate(welcome);box.append(welcome);renderExampleCards();}for(const message of messages){box.append(messageNode(message));if(message.role==='user'&&message.run_id)box.append(processNode(message.run_id));}if(bottom)scrollBottom(true);else box.scrollTop=top;}
+function renderConversation(){const box=$('#conversation'),bottom=nearBottom(),top=box.scrollTop;state.processNodes.clear();state.stageNodes.clear();box.replaceChildren();const messages=state.session?.messages||[];if(!messages.length||!state.examplesCollapsed){const welcome=welcomeTemplate.cloneNode(true);translate(welcome);box.append(welcome);renderExampleCards();}for(const message of messages){box.append(messageNode(message));if(message.role==='user'&&message.run_id)box.append(processNode(message.run_id));}if(messages.length&&bottom)scrollBottom(true);else box.scrollTop=top;}
 function processNode(id){const run=state.runs.get(id)||{id,status:'queued',events:[]},e=node('div','run-process'),caption=node('div','process-caption');e.dataset.runId=id;caption.append(node('span','',`${t('运行','RUN')} ${String(Math.max(0,(state.session?.runs||[]).indexOf(id))+1).padStart(2,'0')}`),node('span','process-state',label(run.status)));e.append(caption);if(!terminal.has(run.status)||!state.session?.messages?.some(message=>message.role==='assistant'&&message.run_id===id))e.append(artifactButtons(id));state.processNodes.set(id,e);state.stageNodes.set(id,new Map());if(run.events?.length){for(const event of run.events)stageEvent(id,event);}else if(run.result){const r=run.result;for(const [stage,payload]of[['classification',r.classification],['workflow',r.workflow],['data',r.data],['model',r.model?{formulation:r.model}:null],['code',r.code?{code:r.code}:null],['execution',r.execution]])if(payload)stageEvent(id,{stage,type:'completed',payload});}if(terminal.has(run.status))for(const card of state.stageNodes.get(id).values())if(card.classList.contains('running')){card.classList.remove('running');$('.stage-state',card).textContent=label(run.status);$('.stage-token',card).textContent='';}return e;}
 const stageCopy={classification:['理解当前请求','Reading your request'],workflow:['匹配参考示例','Matching reference examples'],data:['准备建模数据','Preparing model data'],model:['组织变量、目标与约束','Defining variables, objective and constraints'],code:['生成求解代码','Generating solver code'],execution:['提交求解','Submitting the solve'],output:['生成回复','Preparing the response']};
 function summary(stage,p,type){if(p.message){if(type==='started'&&stageCopy[stage])return t(...stageCopy[stage]);if(p.name==='code-repair')return t('根据诊断修复代码','Repairing code from the diagnostic');return p.message;}if(stage==='classification')return p.label?p.label:p.intent==='explain'?t('说明当前模型。','Explaining the current model.'):p.intent==='clarify'?t('待补充信息。','Clarification needed.'):'';if(stage==='workflow'&&p.mode)return `${p.mode==='type-tailored'?t('类型定制工作流','Type-tailored workflow'):p.mode==='type-agnostic'?t('通用工作流','Type-agnostic workflow'):p.mode} · ${p.route||''} · ${p.examples?.length||0} ${t('个参考示例','references')}`;if(stage==='data'&&p.tables)return p.tables.map(f=>`${f.name} · ${f.row_count??'?'} ${t('行','rows')}`).join('\n');if(stage==='model'&&(p.formulation||p.content))return t('模型已生成。','Model generated.');if(stage==='code'&&(p.code||p.content))return t('求解程序已生成。','Solver code generated.');if(stage==='execution'&&p.status==='execution_unavailable')return t('求解器不可用，模型与代码已保留。','Solver unavailable; the model and code are retained.');if(stage==='execution'&&p.status)return `${label(p.status)}${p.objective!=null?` · ${t('目标值','Objective')} ${number(p.objective)}`:''}${p.error?`\n${p.error}`:''}`;if(stage==='output'&&p.answer)return t('回复已生成。','Response ready.');if(p.error)return p.error;return type==='completed'?t('已完成','Completed'):'';}
@@ -148,7 +225,7 @@ async function removeFile(id){
 }
 function closeSettings(restoreFocus=true){const wasOpen=document.body.classList.contains('settings-open');document.body.classList.remove('settings-open');$('#drawer-backdrop').hidden=true;$('#settings-open').setAttribute('aria-expanded','false');$('#settings-panel').removeAttribute('role');$('#settings-panel').removeAttribute('aria-modal');if(wasOpen&&restoreFocus)$('#settings-open').focus();}
 function openSettings(){document.body.classList.add('settings-open');$('#drawer-backdrop').hidden=false;$('#settings-open').setAttribute('aria-expanded','true');$('#settings-panel').setAttribute('role','dialog');$('#settings-panel').setAttribute('aria-modal','true');$('#settings-close').focus();}
-function drawerKeys(event){if(!document.body.classList.contains('settings-open')||$('#file-preview').open||$('#local-setup').open)return;if(event.key==='Escape'){event.preventDefault();closeSettings();return;}if(event.key!=='Tab')return;const items=$$('button:not(:disabled),input:not(:disabled),select:not(:disabled),a[href],[tabindex="0"]',$('#settings-panel')).filter(element=>!element.hidden&&element.getClientRects().length);if(!items.length)return;const first=items[0],last=items.at(-1);if(!$('#settings-panel').contains(document.activeElement)){event.preventDefault();first.focus();return;}if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus();}else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus();}}
+function drawerKeys(event){if(!document.body.classList.contains('settings-open')||$('#file-preview').open||$('#local-setup').open||$('#personal-settings').open)return;if(event.key==='Escape'){event.preventDefault();closeSettings();return;}if(event.key!=='Tab')return;const items=$$('button:not(:disabled),input:not(:disabled),select:not(:disabled),a[href],[tabindex="0"]',$('#settings-panel')).filter(element=>!element.hidden&&element.getClientRects().length);if(!items.length)return;const first=items[0],last=items.at(-1);if(!$('#settings-panel').contains(document.activeElement)){event.preventDefault();first.focus();return;}if(event.shiftKey&&document.activeElement===first){event.preventDefault();last.focus();}else if(!event.shiftKey&&document.activeElement===last){event.preventDefault();first.focus();}}
 
 async function example(id){
  if(state.activeRun||state.sending||state.exampleLoading||state.changingSession||state.filesBusy)return;const item=state.catalog.find(e=>e.id===id);if(!item){notice(t('示例目录尚未载入，请刷新后重试。','The example catalog is not ready. Refresh to retry.'));return;}
@@ -188,10 +265,10 @@ async function selectedVersion(id){state.selectedRun=id;if(id&&!state.runs.get(i
 async function finish(id,event){const run=state.runs.get(id);if(!run)return;run.status=event.type;run.result=event.payload?.result||run.result;run.artifacts=event.payload?.artifacts||run.artifacts||[];if(event.payload?.error)run.error=event.payload.error;state.source?.close();state.source=null;try{Object.assign(run,await api(`/runs/${id}`));}catch{}if(state.session&&!state.session.messages.some(m=>m.role==='assistant'&&m.run_id===id))state.session.messages.push({role:'assistant',content:run.result?.answer||run.error||label(run.status),run_id:id});if(state.activeRun===id)busy(null);renderConversation();renderVersions();renderArtifact();scrollBottom(true);if(run.error)notice(run.error);}
 function watch(id,after=0){
  state.source?.close();const source=new EventSource(`${API}/runs/${id}/events?after=${after}`,{withCredentials:true});state.source=source;
- source.onmessage=event=>{let record;try{record=JSON.parse(event.data);}catch{return;}if(record.run_id!==id||record.seq<=(state.lastSeq.get(id)||0))return;state.lastSeq.set(id,record.seq);publishRunEvent(record);const run=state.runs.get(id);if(!run)return;run.events||=[];run.events.push(record);const bottom=nearBottom();if(record.stage==='run'){if(record.type==='queued')run.status='queued';if(record.type==='started')run.status='running';const p=state.processNodes.get(id);if(p)$('.process-state',p).textContent=label(record.type==='started'?'running':record.type);if(terminal.has(record.type)){finish(id,record);return;}}else{stageEvent(id,record);artifactEvent(run,record);if(record.type==='artifact'||record.type==='completed')refreshArtifactButtons(id);if(state.selectedRun===id&&(record.type==='artifact'||(record.type==='completed'&&['model','code','execution'].includes(record.stage))))renderArtifact();}if(bottom)scrollBottom(true);renderVersions();};
+ source.onmessage=event=>{let record;try{record=redactSecrets(JSON.parse(event.data));}catch{return;}if(record.run_id!==id||record.seq<=(state.lastSeq.get(id)||0))return;state.lastSeq.set(id,record.seq);publishRunEvent(record);const run=state.runs.get(id);if(!run)return;run.events||=[];run.events.push(record);const bottom=nearBottom();if(record.stage==='run'){if(record.type==='queued')run.status='queued';if(record.type==='started')run.status='running';const p=state.processNodes.get(id);if(p)$('.process-state',p).textContent=label(record.type==='started'?'running':record.type);if(terminal.has(record.type)){finish(id,record);return;}}else{stageEvent(id,record);artifactEvent(run,record);if(record.type==='artifact'||record.type==='completed')refreshArtifactButtons(id);if(state.selectedRun===id&&(record.type==='artifact'||(record.type==='completed'&&['model','code','execution'].includes(record.stage))))renderArtifact();}if(bottom)scrollBottom(true);renderVersions();};
  source.onerror=async()=>{if(state.source!==source)return;try{const run=await api(`/runs/${id}`);if(terminal.has(run.status)){finish(id,{type:run.status,payload:{result:run.result,error:run.error,artifacts:run.artifacts}});return;}}catch{}const p=state.processNodes.get(id);if(p)$('.process-state',p).textContent=t('重新连接中','Reconnecting');};
 }
-async function send(fromExample=false){if(state.changingSession||state.filesBusy||state.exampleLoading&&!fromExample)return;if(!isLocalRuntime||!state.setupConfirmed||!state.session||!state.connected||$('#provider').value==='ollama'&&!state.capabilities?.ollama?.ready){state.pendingSend=true;openSetup();return;}const query=$('#query').value.trim();if(!query||!state.session||state.activeRun||state.sending)return;if($('#provider').value==='openai'&&!$('#api-key').value.trim()){notice(t('请填写 OpenAI API key。','Enter your OpenAI API key.'));$('#api-key').focus();return;}notice();const session=state.session;state.sending=true;busy(state.activeRun);try{const p=await api(`/sessions/${session.id}/messages`,{method:'POST',body:JSON.stringify({content:query,provider:$('#provider').value,model:$('#model').value,api_key:$('#api-key').value.trim(),language:state.lang})}),id=p.run_id;if(state.session?.id!==session.id)return;state.runs.set(id,{...p.run,id,status:p.status,events:[],result:null});session.runs.push(id);session.messages.push({role:'user',content:query,run_id:id});state.selectedRun=id;$('#query').value='';resizeQuery();busy(id);examplesView(false,false);renderVersions();renderArtifact();scrollBottom(true);watch(id);}catch(e){notice(e.message);busy(null);}finally{state.sending=false;busy(state.activeRun);}}
+async function send(fromExample=false){if(state.changingSession||state.filesBusy||state.exampleLoading&&!fromExample)return;if(!isLocalRuntime||!state.setupConfirmed||!state.session||!state.connected||$('#provider').value==='ollama'&&!state.capabilities?.ollama?.ready){state.pendingSend=true;openSetup();return;}const query=redactConfiguredKey($('#query').value.trim());if(!query||!state.session||state.activeRun||state.sending)return;if($('#provider').value==='openai'&&!openaiKey){notice(t('请在个人配置填写 OpenAI API Key。','Add your OpenAI API key in Personal settings.'));openPersonalSettings($('#key-configure'));return;}notice();const session=state.session;state.sending=true;busy(state.activeRun);try{const p=await api(`/sessions/${session.id}/messages`,{method:'POST',body:JSON.stringify({content:query,provider:$('#provider').value,model:$('#provider').value==='openai'?'gpt-4.1':'gpt-oss:20b',...($('#provider').value==='openai'?{api_key:openaiKey}:{}),language:state.lang})}),id=p.run_id;if(state.session?.id!==session.id)return;state.runs.set(id,{...p.run,id,status:p.status,events:[],result:null});session.runs.push(id);session.messages.push({role:'user',content:query,run_id:id});state.selectedRun=id;$('#query').value='';resizeQuery();busy(id);examplesView(false,false);renderVersions();renderArtifact();scrollBottom(true);watch(id);}catch(e){notice(e.message);busy(null);}finally{state.sending=false;busy(state.activeRun);}}
 async function cancel(){if(!state.activeRun)return;$('#cancel-button').disabled=true;try{await api(`/runs/${state.activeRun}/cancel`,{method:'POST'});toast(t('正在停止运行…','Stopping the run…'));}catch(e){notice(e.message);$('#cancel-button').disabled=false;}}
 async function openSession(id){state.source?.close();state.source=null;const session=id?await api(`/sessions/${encodeURIComponent(id)}`):await api('/sessions',{method:'POST'});state.session={...session,id:session.id||session.session_id};state.runs.clear();state.lastSeq.clear();state.selectedRun=null;store('lean-demo-session',state.session.id);const url=new URL(location.href);url.searchParams.set('session',state.session.id);history.replaceState(null,'',url);publishSession(state.session.id);for(const runId of session.runs||[])state.runs.set(runId,{id:runId,status:'saved',result:null,events:[]});await Promise.all((session.runs||[]).slice(-8).map(async runId=>{try{state.runs.set(runId,{...await api(`/runs/${runId}`),events:[]});}catch{}}));state.selectedRun=(session.runs||[]).at(-1)||null;const active=[...state.runs.values()].find(r=>['queued','running'].includes(r.status));busy(active?.id||active?.run_id||null);renderFiles();renderVersions();renderConversation();renderArtifact();researchHome();if(active)watch(active.id||active.run_id);}
 function resizeQuery(){const e=$('#query');e.style.height='auto';e.style.height=Math.min(e.scrollHeight,170)+'px';}
@@ -237,7 +314,7 @@ async function openArtifact(id,tab,trigger=document.activeElement){
  state.tab=tab;await selectedVersion(id);artifactsView(true,trigger);
 }
 function artifactKeys(event){
- if(!document.body.classList.contains('artifacts-open')||$('#file-preview').open||$('#local-setup').open)return;
+ if(!document.body.classList.contains('artifacts-open')||$('#file-preview').open||$('#local-setup').open||$('#personal-settings').open)return;
  if(event.key==='Escape'){event.preventDefault();artifactsView(false);return;}
  if(event.key!=='Tab')return;
  const panel=$('#inspector-panel'),items=$$('button:not(:disabled),input:not(:disabled),select:not(:disabled),a[href]:not([aria-disabled="true"]),[tabindex="0"]',panel).filter(element=>!element.hidden&&element.getClientRects().length);
@@ -245,7 +322,7 @@ function artifactKeys(event){
  if(!panel.contains(active)){event.preventDefault();first.focus();}else if(event.shiftKey&&active===first){event.preventDefault();last.focus();}else if(!event.shiftKey&&active===last){event.preventDefault();first.focus();}
 }
 $('#composer').addEventListener('submit',e=>{e.preventDefault();send();});$('#query').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing){e.preventDefault();send();}});$('#query').addEventListener('input',resizeQuery);$('#cancel-button').addEventListener('click',cancel);
-$('#provider').addEventListener('change',()=>{const openai=$('#provider').value==='openai';state.setupConfirmed=false;$('#key-field').hidden=!openai||!isLocalRuntime;$('#model').value=openai?'gpt-4.1':'gpt-oss:20b';$('#model').readOnly=!openai;if(!openai)$('#api-key').value='';renderHealth();openSetup();});
+$('#provider').addEventListener('change',()=>{endHandoff();stopCredentialReceiver();state.setupConfirmed=false;renderHealth();updateSetup();});
 $('#upload-button').addEventListener('click',()=>$('#file-input').click());$('#drop-zone').addEventListener('click',()=>$('#file-input').click());$('#file-input').addEventListener('change',()=>upload([...$('#file-input').files]));
 for(const name of ['dragenter','dragover'])$('#drop-zone').addEventListener(name,e=>{e.preventDefault();$('#drop-zone').classList.add('dragging');});for(const name of ['dragleave','drop'])$('#drop-zone').addEventListener(name,e=>{e.preventDefault();$('#drop-zone').classList.remove('dragging');if(name==='drop')upload([...e.dataTransfer.files]);});
 document.addEventListener('click',e=>{const button=e.target.closest('[data-example]');if(button)example(button.dataset.example);const action=e.target.closest('[data-open-artifact]');if(action&&!action.disabled)openArtifact(action.dataset.runId,action.dataset.openArtifact,action);if(e.target.closest('#examples-hide'))examplesView(false);});
@@ -260,17 +337,30 @@ $('#preview-close').addEventListener('click',()=>$('#file-preview').close());$('
 $$('[role="tab"][data-tab]').forEach(e=>e.addEventListener('click',()=>{state.tab=e.dataset.tab;renderArtifact();}));$('.artifact-tabs').addEventListener('keydown',e=>{if(!['ArrowLeft','ArrowRight','Home','End'].includes(e.key))return;e.preventDefault();const keys=['model','code','execution'],i=keys.indexOf(state.tab);state.tab=e.key==='Home'?keys[0]:e.key==='End'?keys.at(-1):keys[(i+(e.key==='ArrowRight'?1:2))%3];renderArtifact();$(`#${state.tab}-tab`).focus();});$('#version-select').addEventListener('change',e=>selectedVersion(e.target.value));
 $('#copy-artifact').addEventListener('click',async()=>{const value=artifact();if(!value)return;try{await navigator.clipboard.writeText(typeof value==='string'?value:JSON.stringify(value,null,2));toast(t('已复制','Copied'));}catch{notice(t('复制不可用，请使用下载。','Clipboard unavailable; use the download link.'));}});
 $('#language-toggle').addEventListener('click',()=>preferences(state.lang==='en'?'zh':'en',state.theme,true));$('#theme-toggle').addEventListener('click',()=>preferences(state.lang,state.theme==='dark'?'light':'dark',true));
-window.addEventListener('pagehide',()=>{state.source?.close();runChannel?.close();runChannel=null;$('#api-key').value='';$('#setup-api-key').value='';state.setupConfirmed=false;if(state.downloadUrl)URL.revokeObjectURL(state.downloadUrl);});
+window.addEventListener('pagehide',()=>{state.source?.close();runChannel?.close();runChannel=null;endHandoff();stopCredentialReceiver();openaiKey='';$('#api-key').value='';$('#api-key').type='password';state.setupConfirmed=false;renderPersonalSettings();if(state.downloadUrl)URL.revokeObjectURL(state.downloadUrl);});
 window.addEventListener('pageshow',event=>{if(!event.persisted)return;runChannel=createRunChannel();if(state.session)publishSession(state.session.id);if(state.activeRun)watch(state.activeRun,state.lastSeq.get(state.activeRun)||0);renderArtifact();});
 $('#local-setup-open').addEventListener('click',()=>openSetup());$('#model-setup-open').addEventListener('click',()=>openSetup());
 $('#setup-close').addEventListener('click',()=>$('#local-setup').close());$('#setup-confirm').addEventListener('click',confirmSetup);$('#setup-detect').addEventListener('click',async()=>{state.setupError='';await health();updateSetup();});$('#runtime-check').addEventListener('click',checkRuntime);
-$('#local-setup').addEventListener('close',()=>{$('#setup-api-key').value='';});
+for(const id of ['#personal-settings-open','#key-configure','#setup-personal-open'])$(id).addEventListener('click',event=>openPersonalSettings(event.currentTarget));
+$('#personal-settings-close').addEventListener('click',closePersonalSettings);$('#personal-settings-done').addEventListener('click',closePersonalSettings);
+$('#api-key').addEventListener('input',()=>{if(state.activeRun||state.sending||pendingHandoff)return;openaiKey=$('#api-key').value.trim();renderPersonalSettings();updateSetup();});
+$('#api-key-visibility').addEventListener('click',()=>{$('#api-key').type=$('#api-key').type==='password'?'text':'password';renderPersonalSettings();});
+$('#api-key-clear').addEventListener('click',()=>{if(state.activeRun||state.sending||pendingHandoff)return;openaiKey='';$('#api-key').value='';$('#api-key').type='password';renderPersonalSettings();updateSetup();$('#api-key').focus();});
+$('#personal-settings').addEventListener('cancel',()=>{$('#api-key').value='';$('#api-key').type='password';});
+$('#personal-settings').addEventListener('close',()=>{
+ $('#api-key').value='';$('#api-key').type='password';renderPersonalSettings();
+ for(const id of ['#personal-settings-open','#key-configure','#setup-personal-open'])$(id).setAttribute('aria-expanded','false');
+ const target=personalSettingsTrigger;personalSettingsTrigger=null;
+ if(target?.isConnected&&target.getClientRects().length&&!target.disabled)target.focus({preventScroll:true});else $('#personal-settings-open').focus({preventScroll:true});
+});
+$('#personal-settings').addEventListener('click',event=>{if(event.target!==event.currentTarget)return;const r=event.currentTarget.getBoundingClientRect();if(event.clientX<r.left||event.clientX>r.right||event.clientY<r.top||event.clientY>r.bottom)closePersonalSettings();});
 $$('[data-copy-command]').forEach(button=>button.addEventListener('click',async()=>{try{await navigator.clipboard.writeText(document.getElementById(button.dataset.copyCommand).textContent);toast(t('命令已复制','Command copied'));}catch{toast(t('请选中命令复制。','Select the command text to copy it.'));}}));
 $('#setup-provider-ollama').addEventListener('click',()=>{$('#provider').value='ollama';$('#provider').dispatchEvent(new Event('change'));});$('#setup-provider-openai').addEventListener('click',()=>{$('#provider').value='openai';$('#provider').dispatchEvent(new Event('change'));});
-if(params.get('provider')==='openai'){$('#provider').value='openai';$('#model').value='gpt-4.1';$('#model').readOnly=false;}else if(isLocalRuntime||params.get('provider')==='ollama'){$('#provider').value='ollama';}else{$('#provider').value='';$('#model').value='';}
+$('#provider').value=params.get('provider')==='ollama'?'ollama':'openai';
 preferences(state.lang,state.theme);
 try{await loadCatalog();}catch(error){notice(error.message);}
 await health();
+receiveLocalCredential();
 if(EXAMPLE_IDS.has(params.get('example'))){state.pendingExample=params.get('example');const cleanURL=new URL(location.href);cleanURL.searchParams.delete('example');cleanURL.searchParams.delete('autorun');history.replaceState(null,'',cleanURL);await example(state.pendingExample);}
 else if(isLocalRuntime)openSetup();
 // Local polling reads model/service metadata only; it never warms a solver or model.

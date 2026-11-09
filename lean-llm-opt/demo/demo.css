@@ -2403,3 +2403,35 @@ select option {
 @media (prefers-reduced-motion: reduce) {
   .history-drawer[open] { animation: none; }
 }
+
+
+/* Session-only personal credentials, separate from connection consent. */
+.personal-settings-button svg {width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.35;stroke-linejoin:round}
+.field-label {display:block;margin-bottom:7px;font-size:12px;font-weight:500;color:var(--muted)}
+.key-configure {display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--surface);text-align:left;font-size:12px;line-height:1.6}
+.key-configure:hover {border-color:var(--accent)}
+.fixed-model {display:flex;flex-wrap:wrap;gap:4px;margin:-1px 0 12px;font-size:11px;color:var(--muted)}
+.fixed-model output {font-weight:600;color:var(--fg)}
+.personal-settings {width:min(560px,calc(100vw - 32px));max-height:calc(100dvh - 40px);padding:26px;border:1px solid var(--line);border-radius:22px;background:var(--dialog);color:var(--fg);box-shadow:var(--shadow);overflow:auto}
+.personal-settings::backdrop {background:var(--backdrop);backdrop-filter:blur(5px)}
+.personal-settings .preview-heading {margin-bottom:18px}
+.personal-settings .field-hint {font-size:12px;line-height:1.8}
+.personal-key-field {margin-top:22px}
+.personal-key-input {display:flex;gap:8px;align-items:stretch}
+.personal-key-input input {flex:1;min-width:0}
+.personal-key-input button {flex:none;min-width:56px;padding:8px 10px;border:1px solid var(--line);border-radius:10px;background:var(--surface);font-size:12px}
+.personal-handoff-note {margin-top:12px;padding:12px 14px;border-left:2px solid var(--accent);background:var(--surface);border-radius:0 9px 9px 0}
+.personal-key-status {margin-top:16px;min-height:2em;font-size:12px;line-height:1.75;color:var(--muted)}
+.personal-settings-actions {display:flex;align-items:center;justify-content:space-between;gap:14px;margin-top:18px;padding-top:16px;border-top:1px solid var(--line)}
+.personal-settings-actions .setup-primary {padding:10px 24px;border-radius:11px;background:var(--primary-gradient);color:#fff}
+@media(max-width:600px){
+ .studio-header .studio-brand>span {font-size:15px}
+ .personal-settings {padding:20px;width:calc(100vw - 24px);border-radius:18px}
+ .personal-key-input button {min-width:49px;padding-inline:8px}
+}
+@media(max-width:380px){
+ .studio-header .studio-brand>span {font-size:12.5px}
+ .studio-header {gap:4px;padding-inline:8px}
+ .header-actions {gap:2px}
+ .studio-header .icon-button,#history-open {width:25px}
+}
