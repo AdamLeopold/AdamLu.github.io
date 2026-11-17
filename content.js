@@ -83,7 +83,9 @@ window.HOMEPAGE_CONTENT = {
     links: [
       { label: { en: "Email", zh: "邮箱" }, url: "mailto:lu012933@126.com" },
       { label: { en: "GitHub", zh: "GitHub" }, url: "https://github.com/AdamLeopold" },
-      { label: { en: "CV", zh: "简历" }, url: "assets/LuYuhang-CV-NTU.pdf" },
+      { label: { en: "LinkedIn", zh: "LinkedIn" }, url: "https://www.linkedin.com/in/yuhang-adam-lu-144ab8285/" },
+      { label: { en: "CV", zh: "英文简历" }, url: "assets/LuYuhang-CV-NTU.pdf" },
+      { label: { en: "CV (Chinese)", zh: "中文简历" }, url: "assets/LuYuhang-CV-NTU-ZH.pdf" },
     ],
   },
 
@@ -184,8 +186,8 @@ window.HOMEPAGE_CONTENT = {
     category: { en: "AI for Optimization", zh: "智能优化" },
     title: "LEAN-LLM-OPT",
     fullTitle: {
-      en: "Large-Scale Optimization Model Auto-Formulation: Harnessing LLM Flexibility via Structured Workflow",
-      zh: "大规模优化模型自动建模：通过结构化工作流利用大语言模型的灵活性",
+      en: "LLM for Large-Scale Optimization Model Auto-Formulation: Bridging Flexibility and Standardization via Agentic Workflow",
+      zh: "面向大规模优化模型自动建模的大语言模型：以智能体工作流兼顾灵活性与标准化",
     },
     period: { en: "2023 - present", zh: "2023 年至今" },
     status: { en: "Major Revision, Operations Research", zh: "Operations Research 大修" },
@@ -389,7 +391,7 @@ window.HOMEPAGE_CONTENT = {
 
   platforms: [
     {
-      title: "Economic World Model Challenge (SimuWorld)",
+      title: "Economic World Model Challenge",
       status: { en: "Tracks scheduled to open on 18 November 2026", zh: "赛道计划于 2026 年 11 月 18 日开启" },
       role: { en: "Co-lead; Challenge Coordinator", zh: "共同负责人；比赛协调人" },
       description: {
@@ -468,7 +470,7 @@ window.HOMEPAGE_CONTENT = {
       },
     },
     {
-      period: { en: "2024 - 2025", zh: "2024 - 2025 年" },
+      period: { en: "Sep 2024 - Mar 2026", zh: "2024.09 - 2026.03" },
       institution: { en: "National University of Singapore", zh: "新加坡国立大学" },
       detail: {
         en: "Research Assistant, Department of Industrial Systems Engineering and Management. Advisor: Prof. Hanzhang Qin.",
