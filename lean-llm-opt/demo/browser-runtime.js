@@ -7,7 +7,7 @@
 export const BROWSER_SERVICE = 'lean-browser-demo';
 export const OPENAI_MODEL = 'gpt-4.1', EMBEDDING_MODEL = 'text-embedding-3-small';
 const OPENAI_URL = 'https://api.openai.com/v1';
-const ASSET_VERSION = 'browser-highs-20261119-2';
+const ASSET_VERSION = 'browser-highs-20261119-3';
 const WORKER_URL = new URL(`browser/pyodide-worker.js?v=${ASSET_VERSION}`, import.meta.url);
 const REFERENCE_URL = new URL(`browser/reference-library.json?v=${ASSET_VERSION}`, import.meta.url);
 const TERMINAL = new Set(['completed', 'failed', 'cancelled', 'timeout']);

@@ -2,11 +2,11 @@
   "format": "lean-llm-opt-static-v1",
   "deployment": "static",
   "demo": "in-browser-gpt-4.1-highs+visitor-local-gpt-oss",
-  "builtAt": "2026-11-19T06:41:14.471Z",
+  "builtAt": "2026-11-19T07:27:33.070Z",
   "runtimeFileCount": 106,
   "fileCount": 108,
-  "payloadBytes": 7058865,
-  "totalBytes": 7076457,
+  "payloadBytes": 7070762,
+  "totalBytes": 7088355,
   "hashAlgorithm": "sha256",
   "files": {
     ".nojekyll": {
@@ -391,15 +391,15 @@
     },
     "demo/browser-runtime.js": {
       "bytes": 54843,
-      "sha256": "1d75b70102a9491649bfbe485579d8be24a0bdfe481b966eeb96e7aad8948131"
+      "sha256": "660050087cadc968d08efaaa1be33dee695e8881f7ba3ea246aaf4f0c7865b7b"
     },
     "demo/browser/gurobipy_shim.py": {
       "bytes": 43546,
       "sha256": "8799c6c9aaf62a342978e5ad260a1c60110eba055ab02adb3fa0a57ff0b7aa00"
     },
     "demo/browser/pyodide-worker.js": {
-      "bytes": 2112,
-      "sha256": "b387d70a75e2cb4f6a1696a0f1c850ac8a9ef1a2cd1f6cd0fbc72c6cde5b8995"
+      "bytes": 2466,
+      "sha256": "602031df1e884d97d21533ab866365782e579729ce35ce14ea51445053907e9c"
     },
     "demo/browser/reference-library.json": {
       "bytes": 192962,
@@ -410,28 +410,28 @@
       "sha256": "3c9b4fe4c575242538ff55a2caabd95e5e9029bd9c0c396bea28a04eec4d80d8"
     },
     "demo/demo.css": {
-      "bytes": 46860,
-      "sha256": "11c38744f41e86d1c40accd6941db7f30ff36c6f76bb231654671084b30a920f"
+      "bytes": 48929,
+      "sha256": "85872e4576147fbddae62c838b13a5247dded3661211483fc615cf9d8f6728b8"
     },
     "demo/demo.js": {
-      "bytes": 98433,
-      "sha256": "146f3c113e29720e8ddaa38760d5bbeb45ac58141349859b32af698b3bdaba47"
+      "bytes": 104521,
+      "sha256": "aaf6578e9bbccdafb18fe1f4a03a57c7bca423f5d62329738d9d38b7b666f3a7"
     },
     "demo/examples.json": {
       "bytes": 14622,
       "sha256": "03340a9801fb3a9aec19429149b4a496964dfe7bf77ac39018f5bf671ceb28fe"
     },
     "demo/index.html": {
-      "bytes": 20205,
-      "sha256": "bc27f950ed14d9ebb6d432d0b338e1ae71267bc8090190a32e761eb2e743a64d"
+      "bytes": 20860,
+      "sha256": "e379301d1e1010ae9202a014145caab7598d4e6a77360697189d1c7c482f06fb"
     },
     "demo/rich-text.js": {
       "bytes": 8214,
       "sha256": "47eea724cc6ba28e49a49b2a86ccbd7e1fccbac002ada5f40d24911a7e339d96"
     },
     "downloads/lean-llm-opt-local.zip": {
-      "bytes": 1166591,
-      "sha256": "97009675069d5e094fd9d9dacdce80c7d772c34eed352a1af5b0045f5d5e92ba"
+      "bytes": 1169322,
+      "sha256": "8f9a14162a2b9e7cc3214dbaa7b43d0893ec5793e1e62e1d9dc3b83f2aee5796"
     },
     "index.html": {
       "bytes": 26069,

@@ -5,6 +5,13 @@ const PYODIDE_VERSION = '0.27.7';
 const PYODIDE_URL = `https://cdn.jsdelivr.net/pyodide/v${PYODIDE_VERSION}/full/`;
 let boot = null;
 
+// Pyodide 0.27 reads the time-zone name by splitting this string on a space;
+// Safari in Chinese and some other locales returns it without one.
+const localeTime = Date.prototype.toLocaleTimeString;
+Date.prototype.toLocaleTimeString = function (locales, options) {
+  return localeTime.call(this, options?.timeZoneName ? 'en-US' : locales, options);
+};
+
 async function start() {
   importScripts(`${PYODIDE_URL}pyodide.js`);
   const pyodide = await self.loadPyodide({indexURL: PYODIDE_URL, stdout: () => {}, stderr: () => {}});
