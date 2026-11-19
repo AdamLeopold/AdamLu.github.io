@@ -644,9 +644,9 @@ $$('[data-copy-command]').forEach(button=>button.addEventListener('click',async(
 $('#setup-provider-ollama').addEventListener('click',()=>{$('#provider').value='ollama';$('#provider').dispatchEvent(new Event('change'));});$('#setup-provider-openai').addEventListener('click',()=>{$('#provider').value='openai';$('#provider').dispatchEvent(new Event('change'));});
 $('#provider').value=params.get('provider')==='ollama'?'ollama':'openai';
 preferences(state.theme);
+autoloadPython();
 try{await loadCatalog();}catch(error){notice(error.message);}
 await health();
-autoloadPython();
 if((isCloudRuntime||isBrowserRuntime)&&state.connected&&$('#provider').value==='openai')await ensureCloudSession();
 if(EXAMPLE_IDS.has(params.get('example'))){state.pendingExample=params.get('example');const cleanURL=new URL(location.href);cleanURL.searchParams.delete('example');cleanURL.searchParams.delete('autorun');history.replaceState(null,'',cleanURL);await example(state.pendingExample,{previewOnly:true});}
 else if(isLocalRuntime)openSetup();
