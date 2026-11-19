@@ -2,11 +2,11 @@
   "format": "lean-llm-opt-static-v1",
   "deployment": "static",
   "demo": "in-browser-gpt-4.1-highs+visitor-local-gpt-oss",
-  "builtAt": "2026-11-19T06:00:23.676Z",
+  "builtAt": "2026-11-19T06:41:14.471Z",
   "runtimeFileCount": 106,
   "fileCount": 108,
-  "payloadBytes": 7058030,
-  "totalBytes": 7075622,
+  "payloadBytes": 7058865,
+  "totalBytes": 7076457,
   "hashAlgorithm": "sha256",
   "files": {
     ".nojekyll": {
@@ -58,8 +58,8 @@
       "sha256": "79d9b047ffe9975bc2dd3dff8d6737ebe48d226e4cd00136cf964e9ab8e97444"
     },
     "assets/site.css": {
-      "bytes": 47880,
-      "sha256": "615221b3ce687611e7e0719ef7bd8ef86a12356ed35feccb897c02905f39a25d"
+      "bytes": 48566,
+      "sha256": "1cadaa3dc75789f0c99279dcbd22cfae68ea0d87012d73d7044df28ca81ae1f7"
     },
     "assets/site.js": {
       "bytes": 49854,
@@ -434,8 +434,8 @@
       "sha256": "97009675069d5e094fd9d9dacdce80c7d772c34eed352a1af5b0045f5d5e92ba"
     },
     "index.html": {
-      "bytes": 25920,
-      "sha256": "6fead234261a00973d6af0adca9a67b531168c023e8f3f71e79be4eb52e17c2c"
+      "bytes": 26069,
+      "sha256": "9708bbcd36c367ffcc456a57fd1a59f856bb70032937c1da02dc74499b49106f"
     }
   }
 }

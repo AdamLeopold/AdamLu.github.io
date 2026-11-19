@@ -104,6 +104,16 @@ h1, h2, h3, p { margin: 0; }
 .tool-lang { font: 800 13px var(--sans); }
 .pill { display: inline-flex; align-items: center; gap: 8px; margin-left: 4px; height: 38px; padding: 0 18px; border-radius: 99px; background: var(--navy); color: var(--bg); font-size: 14px; font-weight: 900; box-shadow: 0 8px 18px -10px rgba(30 63 120 / .7); transition: transform .35s var(--spring), translate .5s var(--glide), scale .18s var(--ease); }
 .pill:hover { transform: translateY(-2px); }
+/* The Demo button is wide, and its letters breathe in turn: a small rise and swell, then rest. */
+.pill { min-width: 132px; justify-content: center; padding: 0 30px; letter-spacing: .03em; }
+.breath b { display: inline-block; font-weight: inherit; transform-origin: 50% 80%; animation: letter-breathe 3.4s cubic-bezier(.45, 0, .3, 1) infinite; animation-delay: calc(var(--i) * .13s); }
+@keyframes letter-breathe {
+  0%, 58%, 100% { transform: none; }
+  18% { transform: translateY(-2.5px) scale(1.14); }
+  32% { transform: translateY(.5px) scale(.97); }
+  42% { transform: translateY(-.5px) scale(1.02); }
+}
+:root[data-motion="reduced"] .breath b { animation: none; }
 
 /* Scene */
 .scene { position: fixed; inset: 0; width: 100vw; height: 100vh; height: 100lvh; z-index: 0; pointer-events: none; display: block; }
@@ -570,7 +580,7 @@ details summary::-webkit-details-marker { display: none; }
   .bar { grid-template-columns: 74px 1fr 64px; }
   .air-metric { grid-template-columns: 1fr auto; }
   .air-metric > span { grid-column: 1 / -1; }
-  .pill { padding: 0 14px; }
+  .pill { min-width: 92px; padding: 0 18px; }
   .tool { width: 34px; height: 34px; }
   .dock { display: none; }
   .journey-head h2 { display: inline; padding: 2px 8px; border-radius: 12px; background: color-mix(in srgb, var(--bg) 82%, transparent); box-decoration-break: clone; -webkit-box-decoration-break: clone; }
