@@ -2,11 +2,11 @@
   "format": "lean-llm-opt-static-v1",
   "deployment": "static",
   "demo": "in-browser-gpt-4.1-highs+visitor-local-gpt-oss",
-  "builtAt": "2026-11-19T07:27:33.070Z",
+  "builtAt": "2026-11-19T07:40:13.254Z",
   "runtimeFileCount": 106,
   "fileCount": 108,
-  "payloadBytes": 7070762,
-  "totalBytes": 7088355,
+  "payloadBytes": 7071011,
+  "totalBytes": 7088604,
   "hashAlgorithm": "sha256",
   "files": {
     ".nojekyll": {
@@ -410,28 +410,28 @@
       "sha256": "3c9b4fe4c575242538ff55a2caabd95e5e9029bd9c0c396bea28a04eec4d80d8"
     },
     "demo/demo.css": {
-      "bytes": 48929,
-      "sha256": "85872e4576147fbddae62c838b13a5247dded3661211483fc615cf9d8f6728b8"
+      "bytes": 49030,
+      "sha256": "80adda3e71af5432c09621e379ded18e764c596a1296f60b40489cc5469a48a3"
     },
     "demo/demo.js": {
-      "bytes": 104521,
-      "sha256": "aaf6578e9bbccdafb18fe1f4a03a57c7bca423f5d62329738d9d38b7b666f3a7"
+      "bytes": 104699,
+      "sha256": "5b428875ad1a8ec734695fa60947b4a3882c0a8a141a3fb8257783ee33940702"
     },
     "demo/examples.json": {
       "bytes": 14622,
       "sha256": "03340a9801fb3a9aec19429149b4a496964dfe7bf77ac39018f5bf671ceb28fe"
     },
     "demo/index.html": {
-      "bytes": 20860,
-      "sha256": "e379301d1e1010ae9202a014145caab7598d4e6a77360697189d1c7c482f06fb"
+      "bytes": 20755,
+      "sha256": "6777cd408a81497826ba7b9f73c250cfb040a6050cb8cac0eaa54c4d63d9416e"
     },
     "demo/rich-text.js": {
       "bytes": 8214,
       "sha256": "47eea724cc6ba28e49a49b2a86ccbd7e1fccbac002ada5f40d24911a7e339d96"
     },
     "downloads/lean-llm-opt-local.zip": {
-      "bytes": 1169322,
-      "sha256": "8f9a14162a2b9e7cc3214dbaa7b43d0893ec5793e1e62e1d9dc3b83f2aee5796"
+      "bytes": 1169397,
+      "sha256": "f7497ce48310d5f2fc4077d9149333aab460e4cc48f5fe563be1059fa126e716"
     },
     "index.html": {
       "bytes": 26069,

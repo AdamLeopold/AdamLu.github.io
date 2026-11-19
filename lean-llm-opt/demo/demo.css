@@ -379,7 +379,8 @@ input[readonly] { color: var(--mute); }
 .send-button.is-pressed { transform: translateY(1px) scale(.95); filter: brightness(.9); }
 .python-setup { width: min(470px, calc(100vw - 32px)); }
 .python-setup::backdrop { background: color-mix(in srgb, var(--bg) 42%, transparent); -webkit-backdrop-filter: blur(14px) saturate(1.2); backdrop-filter: blur(14px) saturate(1.2); }
-.python-setup-status { min-height: 1.7em; margin-top: 14px; font: 600 12px/1.7 var(--mono); color: var(--mute); overflow-wrap: anywhere; }
+.python-setup-row { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 14px; }
+.python-setup-status { min-height: 1.7em; font: 600 12px/1.7 var(--mono); color: var(--mute); overflow-wrap: anywhere; }
 .python-setup-status.loading { color: var(--blue); }
 .python-setup-status.loading b { display: inline-block; font-weight: inherit; transform-origin: 50% 80%; animation: letter-breathe 1.6s cubic-bezier(.45, 0, .3, 1) infinite; animation-delay: calc(var(--i) * .08s); }
 .python-setup-status.ready { color: var(--success); }

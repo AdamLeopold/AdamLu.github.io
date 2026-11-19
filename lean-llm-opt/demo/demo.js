@@ -102,20 +102,18 @@ function openPersonalSettings(trigger=document.activeElement){
  for(const id of ['#personal-settings-open','#key-configure','#setup-personal-open'])$(id).setAttribute('aria-expanded','true');
  showDialog(dialog);focusQuietly($('#api-key').disabled?$('#personal-settings-close'):$('#api-key'));
 }
-let pythonPrompted=false;
-function needsPythonSetup(){return isBrowserRuntime&&$('#provider').value==='openai'&&!pythonPrompted&&browserService?.runtime().state==='idle'&&read('lean-python-ready')!=='1';}
-function openPythonSetup(){pythonPrompted=true;renderPythonSetup();showDialog($('#python-setup'));focusQuietly($('#python-setup-install'));}
+let pythonPrompted=false,pythonSetupClosing=false;
+// Python loads as soon as the in-browser OpenAI workspace is in use, unless the browser asks to save data.
+function autoloadPython(){if(isBrowserRuntime&&$('#provider').value==='openai'&&browserService?.runtime().state==='idle'&&!navigator.connection?.saveData)browserService.prepareRuntime().catch(()=>{});}
+function needsPythonSetup(){return isBrowserRuntime&&$('#provider').value==='openai'&&!pythonPrompted&&browserService?.runtime().state!=='ready'&&read('lean-python-ready')!=='1';}
+function openPythonSetup(){pythonPrompted=true;if(browserService?.runtime().state==='idle')browserService.prepareRuntime().catch(()=>{});renderPythonSetup();showDialog($('#python-setup'));focusQuietly($('#python-setup-close'));}
 function renderPythonSetup(){
- const python=browserService?.runtime()||{},versions=python.versions||{},status=$('#python-setup-status'),install=$('#python-setup-install');
- status.className=`python-setup-status ${python.state||'idle'}`;status.replaceChildren(...(python.state==='loading'?breathingLetters(t('正在安装…','Installing…')):[]));
+ const python=browserService?.runtime()||{},versions=python.versions||{},status=$('#python-setup-status');
+ status.className=`python-setup-status ${python.state||'idle'}`;status.replaceChildren(...(['idle','loading'].includes(python.state)?breathingLetters(t('正在安装…','Installing…')):[]));
  if(python.state==='ready')status.textContent=`Python ${versions.python} · SciPy ${versions.scipy} · HiGHS`;else if(python.state==='failed')status.textContent=python.error;
- install.disabled=['loading','ready'].includes(python.state);install.textContent=python.state==='failed'?t('重试','Try again'):python.state==='ready'?t('已就绪','Ready'):t('安装 Python','Install Python');
+ $('#python-setup-retry').hidden=python.state!=='failed';
+ if(python.state==='ready'&&$('#python-setup').open&&!pythonSetupClosing){pythonSetupClosing=true;pause(900).then(()=>{pythonSetupClosing=false;if($('#python-setup').open)closeDialog($('#python-setup'));});}
 }
-async function installPython(){
- const intent=pendingRunIntent;await checkRuntime();renderPythonSetup();if(browserService?.runtime().state!=='ready')return;
- await pause(600);if($('#python-setup').open)closeDialog($('#python-setup'),()=>{if(intent&&intent===pendingRunIntent)resumeRunIntent();});
-}
-function closePythonSetup(){invalidateRunIntent();closeDialog($('#python-setup'));}
 function closePersonalSettings(continueIntent=false,complete){
  if(!continueIntent)invalidateRunIntent();
  $('#api-key').value='';$('#api-key').type='password';
@@ -218,7 +216,7 @@ function renderHealth(){
  $('#runtime-dot').style.background=cloud?(ready?'var(--success)':'var(--dim)'):state.runtimeChecked&&isLocalRuntime?(ready?'var(--success)':'var(--error)'):'var(--dim)';
  $('#runtime-title').textContent=cloud?(ready?t('Python / Gurobi · 在线就绪','Python / Gurobi · server ready'):t('在线求解环境未就绪','Server execution unavailable')):state.runtimeChecked&&isLocalRuntime?(ready?t('求解器就绪','Solver ready'):t('执行环境待配置','Execution setup needed')):t('Python / Gurobi · 本机执行','Python / Gurobi · local');
  $('#runtime-description').textContent=cloud?(ready?t('生成的 Python 在服务器上运行。','Generated Python runs on the server.'):t('服务就绪前可先浏览示例与数据。','Examples and data stay available meanwhile.')):state.runtimeChecked&&isLocalRuntime?(ready?t('生成程序将在本机隔离运行。','Generated programs run locally in isolation.'):t('可继续查看模型与代码。','Formulations and code remain available.')):isLocalRuntime?t('运行时自动检测。','Checked when you run.'):t('启动本机工作台后运行程序。','Start the local workspace to run programs.');
- $('#runtime-check').textContent=isCloudRuntime?t('刷新服务状态','Refresh service status'):t('检测 Python / Gurobi','Check Python / Gurobi');
+ $('#runtime-check').hidden=false;$('#runtime-check').textContent=isCloudRuntime?t('刷新服务状态','Refresh service status'):t('检测 Python / Gurobi','Check Python / Gurobi');
  $('#query').readOnly=false;$('#query').placeholder=t('输入你自己的问题、目标与约束，也可修改示例问题…','Enter your own question, objective and constraints, or edit an example…');
  $('#local-setup-open').hidden=cloud;$('#local-setup-open').textContent=t('本机运行','Run on this computer');
  $('#model-setup-open').hidden=openai&&!isLocalRuntime;
@@ -231,7 +229,7 @@ function renderHealth(){
   $('#runtime-dot').style.background=python.state==='ready'?'var(--success)':python.state==='failed'?'var(--error)':'var(--dim)';
   $('#runtime-title').textContent=python.state==='loading'?t('正在浏览器中载入 Python…','Loading Python in this browser…'):python.state==='failed'?t('浏览器内 Python 不可用','In-browser Python unavailable'):t('Python + HiGHS · 浏览器内','Python + HiGHS · in this browser');
   $('#runtime-description').textContent=python.state==='loading'?t('正在下载 Pyodide、pandas 与 SciPy（仅首次）。','Downloading Pyodide, pandas and SciPy (first run only).'):python.state==='failed'?python.error:python.state==='ready'?t(`Python ${versions.python} · SciPy ${versions.scipy}。生成的 gurobipy 代码由 HiGHS 求解。`,`Python ${versions.python} · SciPy ${versions.scipy}. Generated gurobipy code is solved with HiGHS.`):t('生成的 gurobipy 代码由 HiGHS 求解。首次运行约下载 35 MB。','Generated gurobipy code is solved with HiGHS. The first run downloads about 35 MB.');
-  $('#runtime-check').textContent=python.state==='ready'?t('重新检查 Python','Check Python again'):t('预先载入 Python','Load Python now');
+  $('#runtime-check').hidden=['loading','ready'].includes(python.state);$('#runtime-check').textContent=python.state==='failed'?t('重试','Try again'):t('载入 Python','Load Python now');
   $('.history-footer').textContent=t('对话只保存在本页，刷新或关闭后清除。','Conversations stay in this page until you refresh or close it.');
  }
  renderPersonalSettings();renderWelcomeDescription();
@@ -540,7 +538,7 @@ async function send(fromExample=false,resumedIntent=null){
  try{
   const openai=$('#provider').value==='openai';
   if(openai&&!openaiKey){notice(t('请在个人配置填写 OpenAI API Key。','Add your OpenAI API key in Personal settings.'),'missing-key');openPersonalSettings($('#key-configure'));return;}
-  if(openai&&needsPythonSetup()){openPythonSetup();return;}
+  if(openai&&needsPythonSetup())openPythonSetup();
   const hosted=isCloudRuntime||isBrowserRuntime;
   if(!hosted||!openai){if(!isLocalRuntime||!state.setupConfirmed||!state.session||!state.connected||!openai&&!state.capabilities?.ollama?.ready){openSetup();return;}}
   if(hosted&&openai){if(!await ensureCloudSession())return;if(!cloudExecutionReady()){notice(t('服务器求解环境尚未就绪，请刷新服务状态后重试。尚未提交模型请求。','Server execution is not ready. Refresh service status and try again. No model request has been submitted.'));return;}}
@@ -603,7 +601,7 @@ function artifactKeys(event){
  if(!panel.contains(active)){event.preventDefault();first.focus();}else if(event.shiftKey&&active===first){event.preventDefault();last.focus();}else if(!event.shiftKey&&active===last){event.preventDefault();first.focus();}
 }
 $('#composer').addEventListener('submit',e=>{e.preventDefault();send();});$('#query').addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.shiftKey&&!e.isComposing){e.preventDefault();send();}});$('#query').addEventListener('input',()=>{invalidateRunIntent();resizeQuery();});$('#cancel-button').addEventListener('click',cancel);
-$('#provider').addEventListener('change',()=>{endHandoff();stopCredentialReceiver();invalidateRunIntent();state.setupConfirmed=(isCloudRuntime||isBrowserRuntime)&&state.connected&&Boolean(state.session);renderHealth();updateSetup();busy(state.activeRun);if(isCloudRuntime&&$('#provider').value==='ollama')openSetup();else if(isCloudRuntime){if($('#local-setup').open)closeDialog($('#local-setup'));ensureCloudSession();}else if(isBrowserRuntime&&$('#provider').value==='openai'){ensureCloudSession();if(needsPythonSetup())openPythonSetup();}});
+$('#provider').addEventListener('change',()=>{endHandoff();stopCredentialReceiver();invalidateRunIntent();state.setupConfirmed=(isCloudRuntime||isBrowserRuntime)&&state.connected&&Boolean(state.session);renderHealth();updateSetup();busy(state.activeRun);if(isCloudRuntime&&$('#provider').value==='ollama')openSetup();else if(isCloudRuntime){if($('#local-setup').open)closeDialog($('#local-setup'));ensureCloudSession();}else if(isBrowserRuntime&&$('#provider').value==='openai'){ensureCloudSession();autoloadPython();if(needsPythonSetup())openPythonSetup();}});
 $('#restore-custom-task').addEventListener('click',restoreCustomTask);
 $('#upload-button').addEventListener('click',()=>$('#file-input').click());$('#drop-zone').addEventListener('click',()=>$('#file-input').click());$('#file-input').addEventListener('change',()=>upload([...$('#file-input').files]));
 for(const name of ['dragenter','dragover'])$('#drop-zone').addEventListener(name,e=>{e.preventDefault();$('#drop-zone').classList.add('dragging');});for(const name of ['dragleave','drop'])$('#drop-zone').addEventListener(name,e=>{e.preventDefault();$('#drop-zone').classList.remove('dragging');if(name==='drop')upload([...e.dataTransfer.files]);});
@@ -624,7 +622,7 @@ window.addEventListener('pageshow',event=>{if(!event.persisted)return;runChannel
 $('#local-setup-open').addEventListener('click',()=>openSetup());$('#model-setup-open').addEventListener('click',()=>openSetup());
 $('#setup-close').addEventListener('click',()=>$('#local-setup').close());$('#setup-confirm').addEventListener('click',confirmSetup);$('#setup-detect').addEventListener('click',async()=>{state.setupError='';await health();updateSetup();});$('#runtime-check').addEventListener('click',checkRuntime);
 for(const id of ['#personal-settings-open','#key-configure','#setup-personal-open'])$(id).addEventListener('click',event=>openPersonalSettings(event.currentTarget));
-$('#personal-settings-close').addEventListener('click',()=>closePersonalSettings());$('#python-setup-install').addEventListener('click',installPython);$('#python-setup-later').addEventListener('click',closePythonSetup);$('#python-setup-close').addEventListener('click',closePythonSetup);$('#python-setup').addEventListener('cancel',event=>{event.preventDefault();closePythonSetup();});$('#python-setup').addEventListener('close',()=>{if(!state.sending&&!state.activeRun)focusQuietly($('#query'));});
+$('#personal-settings-close').addEventListener('click',()=>closePersonalSettings());$('#python-setup-retry').addEventListener('click',()=>browserService?.prepareRuntime().catch(()=>{}));$('#python-setup-close').addEventListener('click',()=>closeDialog($('#python-setup')));$('#python-setup').addEventListener('cancel',event=>{event.preventDefault();closeDialog($('#python-setup'));});$('#python-setup').addEventListener('close',()=>{if(!state.sending&&!state.activeRun)focusQuietly($('#query'));});
 $('#personal-settings-done').addEventListener('click',()=>{if(pendingRunIntent&&!openaiKey){focusQuietly($('#api-key'));return;}closePersonalSettings(true,resumeRunIntent);});
 $('#api-key').addEventListener('input',()=>{if(state.activeRun||state.sending||state.changingSession||state.exampleLoading||state.filesBusy||pendingFiles.some(f=>f.reading)||pendingHandoff)return;openaiKey=$('#api-key').value.trim();renderPersonalSettings();updateSetup();});
 $('#api-key-visibility').addEventListener('click',()=>{$('#api-key').type=$('#api-key').type==='password'?'text':'password';renderPersonalSettings();});
@@ -648,6 +646,7 @@ $('#provider').value=params.get('provider')==='ollama'?'ollama':'openai';
 preferences(state.theme);
 try{await loadCatalog();}catch(error){notice(error.message);}
 await health();
+autoloadPython();
 if((isCloudRuntime||isBrowserRuntime)&&state.connected&&$('#provider').value==='openai')await ensureCloudSession();
 if(EXAMPLE_IDS.has(params.get('example'))){state.pendingExample=params.get('example');const cleanURL=new URL(location.href);cleanURL.searchParams.delete('example');cleanURL.searchParams.delete('autorun');history.replaceState(null,'',cleanURL);await example(state.pendingExample,{previewOnly:true});}
 else if(isLocalRuntime)openSetup();

@@ -11,12 +11,12 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap">
   <link rel="stylesheet" href="../assets/vendor/katex/katex.min.css">
-  <link rel="stylesheet" href="demo.css?v=demo-process-20261119-1">
+  <link rel="stylesheet" href="demo.css?v=demo-process-20261119-3">
   <script defer src="../assets/vendor/katex/katex.min.js"></script>
   <script defer src="../assets/vendor/katex/auto-render.min.js"></script>
   <link rel="preconnect" href="https://api.openai.com">
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
-  <script type="module" src="demo.js?v=demo-process-20261119-1"></script>
+  <script type="module" src="demo.js?v=demo-process-20261119-3"></script>
 </head>
 <body>
   <a href="#composer" class="skip-link" data-en="Skip to question">Skip to question</a>
@@ -74,10 +74,9 @@
   </dialog>
 
   <dialog id="python-setup" class="python-setup" aria-labelledby="python-setup-title" aria-describedby="python-setup-summary">
-    <div class="preview-heading"><div><p class="eyebrow" data-en="FIRST RUN">FIRST RUN</p><h2 id="python-setup-title" data-en="Set up Python in this browser">Set up Python in this browser</h2></div><button id="python-setup-close" class="icon-button" type="button" aria-label="Close">×</button></div>
-    <p id="python-setup-summary" class="field-hint" data-en="Generated code is solved in this page with Python and HiGHS. The first setup downloads about 35 MB; later visits load it from the browser cache.">Generated code is solved in this page with Python and HiGHS. The first setup downloads about 35 MB; later visits load it from the browser cache.</p>
-    <p id="python-setup-status" class="python-setup-status" role="status" aria-live="polite"></p>
-    <div class="personal-settings-actions"><button id="python-setup-later" class="text-button" type="button" data-en="Later">Later</button><button id="python-setup-install" class="setup-primary" type="button" data-en="Install Python">Install Python</button></div>
+    <div class="preview-heading"><div><p class="eyebrow" data-en="FIRST RUN">FIRST RUN</p><h2 id="python-setup-title" data-en="Setting up Python in this browser">Setting up Python in this browser</h2></div><button id="python-setup-close" class="icon-button" type="button" aria-label="Close">×</button></div>
+    <p id="python-setup-summary" class="field-hint" data-en="Generated code is solved in this page with Python and HiGHS. This first setup downloads about 35 MB; later visits load it from the browser cache.">Generated code is solved in this page with Python and HiGHS. This first setup downloads about 35 MB; later visits load it from the browser cache.</p>
+    <div class="python-setup-row"><p id="python-setup-status" class="python-setup-status" role="status" aria-live="polite"></p><button id="python-setup-retry" class="setup-primary" type="button" hidden data-en="Try again">Try again</button></div>
   </dialog>
 
   <dialog id="local-setup" class="local-setup" aria-labelledby="setup-title" aria-describedby="setup-summary">
