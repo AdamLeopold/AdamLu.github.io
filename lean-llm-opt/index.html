@@ -1,133 +1,269 @@
 <!doctype html>
-<html data-deployment="static" lang="zh-CN" data-theme="dark">
+<html data-deployment="static" lang="zh-CN" data-theme="light" data-lang="zh">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="color-scheme" content="dark light">
-  <meta name="theme-color" content="#070b12">
-  <meta name="description" content="LEAN-LLM-OPT：基于大语言模型的多智能体优化建模框架，展示架构、运输规划案例、基准结果与交互式 Demo。">
-  <title>LEAN-LLM-OPT — 从语言到优化模型</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#f5f8fc">
+  <meta name="description" content="LEAN-LLM-OPT：基于大语言模型的多智能体框架，从问题描述与数据表生成大规模优化模型和可执行代码。">
+  <title>LEAN-LLM-OPT</title>
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
   <script>
     {
-      const readPreference = key => { try { return localStorage.getItem(key); } catch (_) { return null; } };
+      const read = key => { try { return localStorage.getItem(key); } catch (_) { return null; } };
       const p = new URLSearchParams(location.search);
-      const theme = p.get('theme') || readPreference('lean-theme') || 'dark';
-      const lang = p.get('lang') || readPreference('lean-lang') || 'zh';
-      document.documentElement.dataset.theme = theme === 'light' ? 'light' : 'dark';
-      document.documentElement.lang = lang === 'en' ? 'en' : 'zh-CN';
-      document.documentElement.dataset.lang = lang === 'en' ? 'en' : 'zh';
-      if (readPreference('lean-motion') === 'reduced' || matchMedia('(prefers-reduced-motion: reduce)').matches) document.documentElement.dataset.motion = 'reduced';
+      const theme = p.get('theme') || read('lean-theme') || 'light';
+      const lang = p.get('lang') || read('lean-lang') || 'zh';
+      const root = document.documentElement;
+      root.dataset.theme = theme === 'dark' ? 'dark' : 'light';
+      root.dataset.lang = lang === 'en' ? 'en' : 'zh';
+      root.lang = lang === 'en' ? 'en' : 'zh-CN';
+      if (matchMedia('(prefers-reduced-motion: reduce)').matches) root.dataset.motion = 'reduced';
     }
   </script>
-  <link rel="stylesheet" href="assets/style.css?v=global-motion-20261110-1">
-  <link rel="stylesheet" href="assets/framework-3d.css?v=fixed-right-20261104-1">
-  <link rel="stylesheet" href="assets/redesign.css?v=paper-journey-20261106-1">
-  <link rel="stylesheet" href="assets/paper-figure.css?v=demo-english-20261110-1">
-  <script type="module" src="assets/app.js?v=demo-english-20261110-1"></script>
-  <script type="module" src="assets/paper-figure.js?v=global-motion-20261110-1"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap">
+  <link rel="stylesheet" href="assets/site.css?v=20261119-5">
+  <script type="module" src="assets/site.js?v=20261119-5"></script>
 </head>
 <body>
-  <a class="skip-link" href="#main" data-zh="跳转到正文" data-en="Skip to content">跳转到正文</a>
-  <header class="topbar">
-    <a class="brand" href="#home" aria-label="LEAN-LLM-OPT"><svg viewBox="0 0 30 30" aria-hidden="true"><path d="m15 2 13 7.5v15L15 17 2 24.5v-15Z"/><path d="m2 9.5 13 7.5 13-7.5M15 2v15"/></svg><span>LEAN<span class="brand-divider">/</span><span class="brand-small">LLM OPT</span></span></a>
-    <nav id="primary-navigation" class="nav-links" aria-label="主导航" data-zh-aria="主导航" data-en-aria="Main navigation">
+  <a class="skip" href="#main" data-zh="跳到正文" data-en="Skip to content">跳到正文</a>
+
+  <header class="nav">
+    <a class="brand" href="#top" aria-label="LEAN-LLM-OPT">
+      <svg viewBox="0 0 28 28" aria-hidden="true"><rect x="1.5" y="1.5" width="25" height="25" rx="8"/><path d="M8 19.5 14 8l6 11.5M10.4 15.2h7.2"/></svg>
+      <span>LEAN-LLM-OPT</span>
+    </a>
+    <nav class="nav-links" aria-label="Sections">
       <a href="#architecture" data-zh="模型架构" data-en="Architecture">模型架构</a>
-      <a href="demo/?lang=en" data-demo-link target="_blank" rel="noopener" data-zh="建模 Demo" data-en="Modeling demo">建模 Demo</a>
       <a href="#replay" data-zh="案例回放" data-en="Case study">案例回放</a>
       <a href="#experiments" data-zh="实验结果" data-en="Results">实验结果</a>
       <a href="#resources" data-zh="论文与代码" data-en="Resources">论文与代码</a>
     </nav>
-    <div class="preferences">
-      <button id="motion-toggle" class="icon-button motion-button" type="button" aria-pressed="false" data-zh-title="减少动效" data-en-title="Reduce motion" title="减少动效"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 2.4 6.6L21 12l-6.6 2.4L12 21l-2.4-6.6L3 12l6.6-2.4Z"/></svg></button>
-      <button id="theme-toggle" class="icon-button" type="button" data-zh-title="切换明暗主题" data-en-title="Toggle color theme" title="切换明暗主题"><svg class="sun-icon" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2m0 16v2M2 12h2m16 0h2M5 5l1.5 1.5m11 11L19 19M5 19l1.5-1.5m11-11L19 5"/></svg><svg class="moon-icon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.7 14.5A9 9 0 0 1 9.5 3.3 9 9 0 1 0 20.7 14.5Z"/></svg></button>
-      <button id="lang-toggle" type="button" class="lang-button" aria-label="Switch to English">EN <span>↗</span></button>
-      <button id="menu-toggle" class="icon-button menu-button" type="button" aria-expanded="false" aria-controls="primary-navigation" aria-label="切换导航菜单" data-zh-aria="切换导航菜单" data-en-aria="Toggle navigation menu" title="切换导航菜单" data-zh-title="切换导航菜单" data-en-title="Toggle navigation menu"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+    <div class="nav-tools">
+      <button class="tool" id="theme-toggle" type="button" aria-label="Theme" data-zh-label="切换明暗" data-en-label="Toggle theme">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="7.5"/><path d="M12 4.5a7.5 7.5 0 0 1 0 15Z" fill="currentColor"/></svg>
+      </button>
+      <button class="tool tool-lang" id="lang-toggle" type="button" aria-label="Switch to English">EN</button>
+      <a class="pill" href="demo/?lang=en" data-demo-link target="_blank" rel="noopener">Demo</a>
     </div>
-    <div class="reading-track"><i id="reading-progress"></i></div>
   </header>
 
+  <canvas id="scene" class="scene" aria-hidden="true"></canvas>
+  <div class="scene-scrim" aria-hidden="true"></div>
+
   <main id="main">
-    <section id="home" class="hero hero-graph hero-paper">
-      <div class="hero-composition wrap">
-        <div class="graph-hero-head">
-          <p class="eyebrow"><i class="live-dot"></i><span data-zh="大语言模型驱动的优化建模" data-en="LANGUAGE MODELS FOR OPTIMIZATION">大语言模型驱动的优化建模</span></p>
-          <h1 aria-label="LEAN-LLM-OPT"><span class="hero-title-line">LEAN<span class="title-dash">–</span></span><span class="hero-title-line">LLM<span class="title-dash">–</span>OPT<span class="title-period">.</span></span></h1>
-          <div class="graph-hero-intro">
-            <p class="hero-statement" data-zh="从问题描述与数据，<br>到数学模型与求解程序。" data-en="From problems and data<br>to models and solver code.">从问题描述与数据，<br>到数学模型与求解程序。</p>
-            <p class="hero-description" data-zh="分类、工作流与建模智能体协作，连接自然语言、表格数据和优化求解。" data-en="Classification, workflow, and modeling agents connect natural language, tabular data, and optimization solvers.">分类、工作流与建模智能体协作，连接自然语言、表格数据和优化求解。</p>
-          </div>
-          <div class="hero-actions"><a class="hero-primary-link" href="#architecture"><span data-zh="探索建模流程" data-en="Explore the workflow">探索建模流程</span><span aria-hidden="true">↘</span></a><a class="hero-demo-link" href="demo/?lang=en" data-demo-link target="_blank" rel="noopener"><span data-zh="试用 Demo" data-en="Try the demo">试用 Demo</span><span aria-hidden="true">↗</span></a></div>
-          <div class="hero-method" aria-label="建模步骤" data-zh-aria="建模步骤" data-en-aria="Modeling stages"><span data-zh="问题分类" data-en="Classify">问题分类</span><i aria-hidden="true"></i><span data-zh="工作流生成" data-en="Plan">工作流生成</span><i aria-hidden="true"></i><span data-zh="模型生成" data-en="Formulate">模型生成</span></div>
+    <section id="top" class="hero">
+      <div class="hero-copy">
+        <p class="hero-eyebrow"><i aria-hidden="true"></i><span data-zh="大语言模型驱动的优化建模" data-en="Language models for optimization">大语言模型驱动的优化建模</span></p>
+        <h1 class="hero-title" aria-label="LEAN-LLM-OPT"><span><span class="w w1">LEAN</span><i>–</i></span><span><em class="w w2">LLM</em><i>–</i><span class="w w3">OPT</span><b>.</b></span></h1>
+        <div class="hero-intro">
+          <p class="hero-lede" data-zh="从问题描述与数据，<br>到数学模型与求解程序。" data-en="From problems and data<br>to models and solver code.">从问题描述与数据，<br>到数学模型与求解程序。</p>
+          <p class="hero-desc" data-zh="分类、工作流与建模智能体协作，连接自然语言、表格数据和优化求解。" data-en="Classification, workflow and modeling agents connect natural language, tabular data and optimization solvers.">分类、工作流与建模智能体协作，连接自然语言、表格数据和优化求解。</p>
         </div>
-      <figure id="paper-figure" class="paper-figure" aria-labelledby="paper-caption">
-        <figcaption id="paper-caption" class="paper-caption"><span class="paper-number">FIGURE 3</span><span class="paper-caption-title" data-zh="模型架构" data-en="MODEL ARCHITECTURE">模型架构</span><a class="paper-source" href="https://arxiv.org/pdf/2601.09635v3#page=12" target="_blank" rel="noopener" data-zh="arXiv v3 · 第 12 页 ↗" data-en="arXiv v3 · p. 12 ↗">arXiv v3 · 第 12 页 ↗</a></figcaption>
-        <div class="paper-toolbar" role="group" aria-label="论文图查看控件" data-zh-aria="论文图查看控件" data-en-aria="Paper figure controls">
-          <div class="paper-view-controls" role="group" aria-label="视角" data-zh-aria="视角" data-en-aria="View"><button type="button" data-paper-view="spatial" aria-pressed="true" aria-controls="paper-viewport" data-zh="空间视图" data-en="Spatial">空间视图</button><button type="button" data-paper-view="front" aria-pressed="false" aria-controls="paper-viewport" data-zh="正视图" data-en="Front">正视图</button></div>
-          <label class="paper-sections"><span data-zh="查看局部" data-en="Inspect">查看局部</span><select data-paper-section aria-controls="paper-viewport">
-            <option value="" data-zh="完整框图" data-en="Full framework">完整框图</option>
-            <option value="input" data-zh="问题与数据" data-en="Problem and data">问题与数据</option>
-            <option value="classifier" data-zh="分类智能体" data-en="Classification agent">分类智能体</option>
-            <option value="workflow" data-zh="工作流生成智能体" data-en="Workflow generation agent">工作流生成智能体</option>
-            <option value="model" data-zh="模型生成智能体" data-en="Model generation agent">模型生成智能体</option>
-            <option value="output" data-zh="模型与可执行代码" data-en="Model and executable code">模型与可执行代码</option>
-            <option value="routes" data-zh="两类工作流" data-en="Both workflow variants">两类工作流</option>
-            <option value="tailored" data-zh="类型定制工作流" data-en="Type-tailored workflow">类型定制工作流</option>
-            <option value="agnostic" data-zh="通用工作流" data-en="Type-agnostic workflow">通用工作流</option>
-          </select></label>
-          <div class="paper-zoom-controls" role="group" aria-label="取景" data-zh-aria="取景" data-en-aria="Camera tools"><button type="button" data-paper-action="pan" aria-controls="paper-viewport" aria-pressed="false" data-zh="平移" data-en="Pan">平移</button><button type="button" data-paper-action="zoom-out" aria-controls="paper-viewport" aria-label="缩小" data-zh-aria="缩小" data-en-aria="Zoom out" title="缩小" data-zh-title="缩小" data-en-title="Zoom out">−</button><button type="button" data-paper-action="zoom-in" aria-controls="paper-viewport" aria-label="放大" data-zh-aria="放大" data-en-aria="Zoom in" title="放大" data-zh-title="放大" data-en-title="Zoom in">＋</button><button type="button" data-paper-action="reset" aria-controls="paper-viewport" data-zh="复位" data-en="Reset">复位</button></div>
+        <div class="hero-actions">
+          <a class="btn btn-solid" href="#architecture"><span data-zh="探索建模流程" data-en="Explore the workflow">探索建模流程</span></a>
+          <a class="btn btn-line" href="demo/?lang=en" data-demo-link target="_blank" rel="noopener"><span data-zh="试用 Demo" data-en="Try the demo">试用 Demo</span></a>
         </div>
-        <div id="paper-viewport" class="paper-viewport" tabindex="0" role="img" aria-label="论文图 3。用户上传问题和数据，经分类、工作流生成和模型生成智能体得到数学模型与代码。下方放大图展示类型定制与通用工作流。" data-zh-aria="论文图 3。用户上传问题和数据，经分类、工作流生成和模型生成智能体得到数学模型与代码。下方放大图展示类型定制与通用工作流。" data-en-aria="Paper Figure 3. Uploaded problems and datasets pass through classification, workflow generation and model generation to produce a formulation and code. The inset shows type-tailored and type-agnostic workflows."><img class="paper-fallback paper-spatial" src="assets/paper-figure/spatial.webp?v=paper-journey-20261106-1" alt="" lang="en" width="1582" height="1632" draggable="false" decoding="async" fetchpriority="high"><img class="paper-fallback paper-front" src="assets/paper-figure/front.webp" width="1582" height="1632" alt="" draggable="false" decoding="async" loading="lazy"></div>
-        <div class="paper-figure-footer"><a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="license noopener">Liang et al. · CC BY-NC-SA 4.0</a><span class="paper-rotate-hint" data-zh="拖动旋转 · 点击模块查看局部" data-en="Drag to rotate · Select a module to inspect">拖动旋转 · 点击模块查看局部</span><a href="assets/paper-figure/figure3.webp" target="_blank" rel="noopener" data-zh="查看原图 ↗" data-en="Open original ↗">查看原图 ↗</a></div>
-      </figure>
-        <div class="demo-peek-slot" aria-hidden="true"></div>
+        <p class="hero-steps"><span data-zh="问题分类" data-en="Classify">问题分类</span><i aria-hidden="true"></i><span data-zh="工作流生成" data-en="Plan">工作流生成</span><i aria-hidden="true"></i><span data-zh="模型生成" data-en="Formulate">模型生成</span></p>
       </div>
-      <div class="hero-bottom wrap"><a href="#architecture" class="scroll-invitation"><i></i><span data-zh="滚动缩放与移动视角" data-en="SCROLL TO ZOOM AND MOVE THE VIEW">滚动缩放与移动视角</span></a><a href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=5329027" target="_blank" rel="noopener" class="mono" data-zh="研究论文 ↗" data-en="READ THE PAPER ↗">研究论文 ↗</a></div>
+      <div class="hero-figure" id="hero-figure" aria-hidden="true"><img class="hero-fallback" src="assets/paper-figure/spatial.webp" alt="" width="1582" height="1632" decoding="async" fetchpriority="high"></div>
+      <p class="hero-caption"><span class="mono">FIGURE 3</span><span data-zh="模型架构" data-en="Model architecture">模型架构</span><a href="assets/figure3.webp" target="_blank" rel="noopener" data-zh="论文原图" data-en="Original figure">论文原图</a></p>
+      <p class="hero-hint" data-zh="拖动旋转" data-en="Drag to rotate">拖动旋转</p>
+      <div class="hero-bottom">
+        <a class="hero-scroll" href="#architecture"><i aria-hidden="true"></i><span data-zh="向下滚动，逐站拼出框架" data-en="Scroll to build it station by station">向下滚动，逐站拼出框架</span></a>
+        <a class="mono" href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=5329027" target="_blank" rel="noopener" data-zh="研究论文" data-en="Read the paper">研究论文</a>
+      </div>
     </section>
 
-    <div class="research-strip"><div class="wrap strip-inner"><span class="strip-label" data-zh="实验规模" data-en="EVALUATION OVERVIEW">实验规模</span><div><b>101</b><span data-zh="大规模基准问题" data-en="large-scale instances">大规模基准问题</span></div><div><b>303</b><span data-zh="参数扰动变体" data-en="parameter perturbations">参数扰动变体</span></div><div><b>36</b><span data-zh="结构变体测试" data-en="structural variants">结构变体测试</span></div><a href="#experiments" data-zh-title="查看实验" data-en-title="View experiments" title="查看实验">↘</a></div></div>
-
-    <section class="overview section-pad wrap" id="overview">
-      <div class="section-heading reveal"><p class="section-index">RESEARCH APPROACH</p><h2 data-zh="面向优化建模的<br>多智能体协作框架。" data-en="A multi-agent framework<br>for optimization modeling.">面向优化建模的<br>多智能体协作框架。</h2></div>
-      <div class="overview-copy reveal"><p class="large-copy" data-zh="自然语言中的业务规则与表格中的数值共同决定模型的变量、目标和约束。LEAN-LLM-OPT 通过问题分类、类型相关工作流和按需数据访问，组织这一建模过程。" data-en="Business rules in natural language and numerical data in tables jointly define the variables, objective, and constraints. LEAN-LLM-OPT organizes model construction through classification, type-specific workflows, and data access tools.">自然语言中的业务规则与表格中的数值共同决定模型的变量、目标和约束。LEAN-LLM-OPT 通过问题分类、类型相关工作流和按需数据访问，组织这一建模过程。</p><div class="idea-list"><div><span>01</span><p><b data-zh="少样本示例" data-en="Few-shot examples">少样本示例</b><small data-zh="检索示例提供问题结构、建模步骤和代码参考。" data-en="Retrieved examples provide reference structures, modeling steps, and code.">检索示例提供问题结构、建模步骤和代码参考。</small></p></div><div><span>02</span><p><b data-zh="按需访问数据" data-en="Data through tools">按需访问数据</b><small data-zh="CSVQA 按建模步骤提取表格结构与数值。" data-en="CSVQA retrieves table structure and numerical values for each modeling step.">CSVQA 按建模步骤提取表格结构与数值。</small></p></div><div><span>03</span><p><b data-zh="模型与代码" data-en="Models and code">模型与代码</b><small data-zh="输出数学模型或建模计划、Python 程序与求解结果。" data-en="Outputs include a formulation or modeling plan, Python code, and solver results.">输出数学模型或建模计划、Python 程序与求解结果。</small></p></div></div></div>
+    <section class="strip" aria-label="Evaluation overview">
+      <div class="wrap strip-inner">
+        <p class="kicker mono" data-zh="实验规模" data-en="EVALUATION OVERVIEW">实验规模</p>
+        <div class="card stat"><b class="num">101</b><span data-zh="大规模基准问题" data-en="large-scale instances">大规模基准问题</span></div>
+        <div class="card stat"><b class="num">303</b><span data-zh="参数扰动变体" data-en="parameter perturbations">参数扰动变体</span></div>
+        <div class="card stat"><b class="num">36</b><span data-zh="结构变体测试" data-en="structural variants">结构变体测试</span></div>
+      </div>
     </section>
 
-    <section id="architecture" class="architecture architecture-graph">
-      <div class="arch-track" id="arch-track"><div class="arch-pin"><div class="wrap">
-        <div class="arch-heading"><div><p class="section-index">01 / QUERY + DATA FLOW</p><h2 data-zh="从查询与数据到求解结果。" data-en="From query and data to a solution.">从查询与数据到求解结果。</h2></div><div class="graph-toolbar"><button id="graph-play" type="button" aria-pressed="true">暂停演示</button><button id="graph-replay" type="button" data-zh="重播流程" data-en="Replay flow">重播流程</button><button id="graph-free" type="button" aria-pressed="false" data-zh="平移查看" data-en="Pan view">平移查看</button><button id="graph-zoom-out" type="button" data-zh-title="缩小" data-en-title="Zoom out">−</button><button id="graph-zoom-in" type="button" data-zh-title="放大" data-en-title="Zoom in">＋</button><button hidden disabled aria-hidden="true" tabindex="-1" id="follow-run" type="button" aria-pressed="false" data-zh="跟随 Demo" data-en="Follow demo">跟随 Demo</button><button id="graph-reset" type="button" data-zh="回到全图" data-en="Full view">回到全图</button></div></div>
-        <div class="arch-body"><div class="graph-stage-wrap"><details class="flow-live-status" id="flow-live-status">
-          <summary><span class="flow-live-heading"><span class="flow-indicator" aria-hidden="true"></span><span id="flow-mode-label">流程演示</span><span id="flow-count" class="mono"></span></span><span id="flow-live-label">查询、检索与数据访问</span></summary>
-          <div class="flow-live-body"><p id="flow-live-description">两组输入依次经过分类、建模和求解。</p><div id="flow-streams" class="flow-streams"></div></div>
-        </details><div id="framework-stage" class="framework-host detail-framework" aria-label="可交互三维框架" data-zh-aria="可交互三维框架" data-en-aria="Interactive 3D framework"></div><div class="graph-stage-caption"><span id="graph-mode">步骤聚焦</span><span class="flow-key" data-zh="蓝色：查询 · 绿色：数据 · 金色：产物" data-en="Blue: query · Green: data · Gold: artifacts">蓝色：查询 · 绿色：数据 · 金色：产物</span><span id="graph-route" class="route-badge">TP · 类型定制工作流</span></div></div><aside class="arch-detail" id="arch-detail" aria-live="polite"></aside></div>
-        <div class="arch-controls" id="arch-controls" role="group" aria-label="架构阶段" data-zh-aria="架构阶段" data-en-aria="Architecture stages"></div>
-      </div></div></div>
+    <section id="overview" class="overview">
+      <div class="wrap overview-grid">
+        <header class="sec-head">
+          <p class="kicker mono">RESEARCH APPROACH</p>
+          <h2 data-zh="面向优化建模的<br>多智能体协作框架。" data-en="A multi-agent framework<br>for optimization modeling.">面向优化建模的<br>多智能体协作框架。</h2>
+        </header>
+        <div>
+          <p class="lede" data-zh="自然语言中的业务规则与表格中的数值共同决定模型的变量、目标和约束。LEAN-LLM-OPT 通过问题分类、类型相关工作流和按需数据访问，组织这一建模过程。" data-en="Business rules in natural language and numerical data in tables jointly define the variables, objective, and constraints. LEAN-LLM-OPT organizes model construction through classification, type-specific workflows, and data access tools.">自然语言中的业务规则与表格中的数值共同决定模型的变量、目标和约束。LEAN-LLM-OPT 通过问题分类、类型相关工作流和按需数据访问，组织这一建模过程。</p>
+          <ol class="ideas">
+            <li class="card"><span class="mono">01</span><div><h3 class="u" data-zh="少样本示例" data-en="Few-shot examples">少样本示例</h3><p data-zh="检索示例提供问题结构、建模步骤和代码参考。" data-en="Retrieved examples provide reference structures, modeling steps, and code.">检索示例提供问题结构、建模步骤和代码参考。</p></div></li>
+            <li class="card"><span class="mono">02</span><div><h3 class="u" data-zh="按需访问数据" data-en="Data through tools">按需访问数据</h3><p data-zh="CSVQA 按建模步骤提取表格结构与数值。" data-en="CSVQA retrieves table structure and numerical values for each modeling step.">CSVQA 按建模步骤提取表格结构与数值。</p></div></li>
+            <li class="card"><span class="mono">03</span><div><h3 class="u" data-zh="模型与代码" data-en="Models and code">模型与代码</h3><p data-zh="输出数学模型、可执行的 Python 程序与求解结果。" data-en="Outputs include the formulation, executable Python code, and solver results.">输出数学模型、可执行的 Python 程序与求解结果。</p></div></li>
+          </ol>
+        </div>
+      </div>
     </section>
 
-
-    <section id="replay" class="replay section-pad wrap">
-      <div class="section-head reveal"><div><p class="section-index">02 / TRANSPORTATION CASE STUDY</p><h2 data-zh="运输规划案例" data-en="Transportation planning case">运输规划案例</h2></div><p data-zh="18 个配送中心、18 个客户、324 个运输变量。案例展示原始数据、数学模型、生成代码和运输方案。" data-en="18 distribution centers, 18 customers, and 324 shipment variables. The case includes source data, the mathematical formulation, generated code, and the shipping plan.">18 个配送中心、18 个客户、324 个运输变量。案例展示原始数据、数学模型、生成代码和运输方案。</p></div>
-      <div class="replay-shell reveal"><div class="replay-top"><span class="window-dots"><i></i><i></i><i></i></span><span class="mono">TRANSPORTATION PLANNING</span><span class="recorded-badge"><i></i><span data-zh="实验记录" data-en="RECORDED RUN">实验记录</span></span></div><div class="replay-tabs" id="replay-tabs" role="tablist" aria-label="案例回放步骤" data-zh-aria="案例回放步骤" data-en-aria="Case replay steps"></div><div class="replay-content" id="replay-content" role="tabpanel" tabindex="0"></div><div class="replay-bottom"><div class="replay-status"><span id="replay-count" class="mono">01 / 06</span><span id="replay-stage-title"></span></div><div class="replay-buttons"><button id="replay-prev" class="icon-button" type="button" data-zh-title="上一步" data-en-title="Previous step" title="上一步">←</button><button id="replay-play" class="play-button" type="button"><span>▶</span><span data-zh="自动播放" data-en="Play replay">自动播放</span></button><button id="replay-next" class="icon-button" type="button" data-zh-title="下一步" data-en-title="Next step" title="下一步">→</button></div></div></div>
-      <p class="replay-note" data-zh="案例数据、生成程序与运输方案均可下载。" data-en="Case data, generated code, and the shipping plan are available for download.">案例数据、生成程序与运输方案均可下载。</p>
+    <section id="architecture" class="journey" aria-label="Architecture">
+      <header class="journey-head">
+        <p class="kicker mono">01 / QUERY + DATA FLOW</p>
+        <h2 data-zh="从查询与数据到求解结果。" data-en="From query and data to a solution.">从查询与数据到求解结果。</h2>
+      </header>
+      <ol class="rail" aria-hidden="true">
+        <li></li><li></li><li></li><li></li><li></li>
+      </ol>
+      <article class="stage" data-stage="1">
+        <div class="stage-card">
+          <p class="stage-no mono">01</p>
+          <h2 data-zh="问题与数据" data-en="Problem and data">问题与数据</h2>
+          <p data-zh="用户上传一段自然语言的问题描述，以及一份或多份 CSV 数据表。" data-en="A problem written in plain language, uploaded with one or more CSV tables.">用户上传一段自然语言的问题描述，以及一份或多份 CSV 数据表。</p>
+        </div>
+      </article>
+      <article class="stage" data-stage="2">
+        <div class="stage-card">
+          <p class="stage-no mono">02</p>
+          <h2 data-zh="分类智能体" data-en="Classification agent">分类智能体</h2>
+          <p data-zh="先判断问题属于哪一类优化模型：用 RAG 工具 FileQA 从参考库 Ref-Data 检索最相似的问题，对照示例逐步推理，给出问题类型。" data-en="It first decides which kind of optimization model the problem calls for: the RAG tool FileQA retrieves the most similar problems from the reference library Ref-Data, and the agent reasons through them step by step to name the problem type.">先判断问题属于哪一类优化模型：用 RAG 工具 FileQA 从参考库 Ref-Data 检索最相似的问题，对照示例逐步推理，给出问题类型。</p>
+        </div>
+      </article>
+      <article class="stage" data-stage="3">
+        <div class="stage-card">
+          <p class="stage-no mono">03</p>
+          <h2 data-zh="工作流生成智能体" data-en="Workflow generation agent">工作流生成智能体</h2>
+          <p data-zh="根据问题类型，从 Ref-Data 取出最相关的同类示例，把它的建模过程整理成分步工作流，作为本题建模的路线。" data-en="Given the problem type, it retrieves the most relevant example of that type from Ref-Data and turns its modeling process into a step-by-step workflow for the new problem.">根据问题类型，从 Ref-Data 取出最相关的同类示例，把它的建模过程整理成分步工作流，作为本题建模的路线。</p>
+        </div>
+      </article>
+      <article class="stage" data-stage="4">
+        <div class="stage-card">
+          <p class="stage-no mono">04</p>
+          <h2 data-zh="两类工作流" data-en="Two workflows">两类工作流</h2>
+          <p data-zh="工作流按问题类型定制，把建模拆成清楚的几步：先识别模型需要的数据类别，再用 RAG 工具 CSVQA 检索相关数据，最后写出目标与约束。" data-en="The workflow is tailored to the problem type and breaks modeling into clear steps: identify the data categories the model needs, retrieve the relevant data with the RAG tool CSVQA, then write the objective and constraints.">工作流按问题类型定制，把建模拆成清楚的几步：先识别模型需要的数据类别，再用 RAG 工具 CSVQA 检索相关数据，最后写出目标与约束。</p>
+          <p class="stage-note" data-zh="预设类型之外的问题（Others / Mixture）使用类型无关工作流：先读出表结构，再写出抽象的建模计划。" data-en="Problems outside the predefined types (Others / Mixture) follow a type-agnostic workflow: read the table schema, then write an abstract model plan.">预设类型之外的问题（Others / Mixture）使用类型无关工作流：先读出表结构，再写出抽象的建模计划。</p>
+        </div>
+      </article>
+      <article class="stage" data-stage="5">
+        <div class="stage-card">
+          <p class="stage-no mono">05</p>
+          <h2 data-zh="模型生成智能体" data-en="Model generation agent">模型生成智能体</h2>
+          <p data-zh="按照工作流，用 RAG 从嵌入后的数据中检索相关数据，输出优化模型与可执行代码，交给 Gurobi 求解。" data-en="Following the workflow, it retrieves the relevant data from the embedded datasets with RAG and writes the optimization model and executable code for Gurobi to solve.">按照工作流，用 RAG 从嵌入后的数据中检索相关数据，输出优化模型与可执行代码，交给 Gurobi 求解。</p>
+        </div>
+      </article>
+      <article class="stage stage-end" data-stage="6">
+        <div class="stage-card">
+          <h2 data-zh="三个智能体，<br>一条结构化的推理路径。" data-en="Three agents,<br>one structured path of reasoning.">三个智能体，<br>一条结构化的推理路径。</h2>
+          <a class="link" href="assets/figure3.webp" target="_blank" rel="noopener" data-zh="论文原图 · Figure 3" data-en="Original figure · Figure 3">论文原图 · Figure 3</a>
+        </div>
+      </article>
     </section>
 
-    <section id="experiments" class="experiments section-pad">
-      <div class="wrap"><div class="section-head reveal"><div><p class="section-index">03 / EVALUATION RESULTS</p><h2 data-zh="基准测试与扩展实验。" data-en="Benchmarks and additional experiments.">基准测试与扩展实验。</h2></div><p data-zh="比较两种基座模型在基准、参数扰动与结构修复测试中的表现。组件实验另行考察示例与数据访问方式。" data-en="Compare the two base models on benchmarks, parameter perturbations, and structural repair. Separate component experiments examine the use of examples and data access.">比较两种基座模型在基准、参数扰动与结构修复测试中的表现。组件实验另行考察示例与数据访问方式。</p></div>
-      <div class="experiment-controls"><div class="experiment-tabs" id="experiment-tabs" role="tablist" aria-label="实验类别" data-zh-aria="实验类别" data-en-aria="Experiments"></div><button id="study-play" class="play-button" type="button" aria-pressed="true" data-zh="暂停切换" data-en="Pause rotation">暂停切换</button></div><div class="experiment-panel" id="experiment-panel" role="tabpanel" tabindex="0"></div>
-      <details class="metric-details"><summary><span data-zh="指标与实验设置" data-en="Metrics and evaluation settings">指标与实验设置</span><span>+</span></summary><div><p data-zh="目标值匹配率：程序取得最优解，且目标值在指定容差内匹配参考最优值的比例；运行失败计入分母。数学表述等价性（EM）评估生成模型与参考模型是否等价。" data-en="Objective match rate is the share of programs that reach optimality and match the reference optimum within the specified tolerance; failed runs remain in the denominator. Formulation equivalence (EM) assesses whether the generated and reference models are mathematically equivalent.">目标值匹配率：程序取得最优解，且目标值在指定容差内匹配参考最优值的比例；运行失败计入分母。数学表述等价性（EM）评估生成模型与参考模型是否等价。</p><p data-zh="图表保留来源报告的指标与精度。各实验的样本量、设置及来源见图表说明与资料入口。" data-en="Charts retain the metrics and precision of the source results. Sample sizes, evaluation settings, and sources are listed with each chart and in the source notes.">图表保留来源报告的指标与精度。各实验的样本量、设置及来源见图表说明与资料入口。</p></div></details></div>
+    <section id="replay" class="replay">
+      <div class="wrap">
+        <header class="sec-head sec-split">
+          <div><p class="kicker mono">02 / TRANSPORTATION CASE STUDY</p><h2 data-zh="运输规划案例" data-en="Transportation planning case">运输规划案例</h2></div>
+          <p data-zh="18 个配送中心、18 个客户、324 个运输变量。案例展示原始数据、数学模型、生成代码和运输方案。" data-en="18 distribution centers, 18 customers, and 324 shipment variables. The case includes source data, the mathematical formulation, generated code, and the shipping plan.">18 个配送中心、18 个客户、324 个运输变量。案例展示原始数据、数学模型、生成代码和运输方案。</p>
+        </header>
+        <div class="replay-deck">
+          <i class="deck-sheet deck-b" aria-hidden="true"></i><i class="deck-sheet deck-a" aria-hidden="true"></i>
+          <div class="card replay-card">
+            <div class="tabs" id="replay-tabs" role="tablist" aria-label="案例回放步骤" data-zh-label="案例回放步骤" data-en-label="Case replay steps"></div>
+            <div class="replay-content" id="replay-content" role="tabpanel"></div>
+            <div class="replay-bar">
+              <p class="mono"><span id="replay-count">01 / 06</span><span id="replay-stage-title"></span></p>
+              <div class="replay-buttons">
+                <button class="round" id="replay-prev" type="button" aria-label="上一步" data-zh-label="上一步" data-en-label="Previous step">←</button>
+                <button class="btn btn-line btn-small" id="replay-play" type="button"></button>
+                <button class="round" id="replay-next" type="button" aria-label="下一步" data-zh-label="下一步" data-en-label="Next step">→</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <p class="footnote" data-zh="案例数据、生成程序与运输方案均可下载。" data-en="Case data, generated code, and the shipping plan are available for download.">案例数据、生成程序与运输方案均可下载。</p>
+      </div>
     </section>
 
-    <section id="airline" class="airline section-pad wrap"><div class="airline-visual reveal" aria-hidden="true"><svg viewBox="0 0 580 420"><defs><radialGradient id="mapGlow"><stop stop-color="currentColor" stop-opacity=".14"/><stop offset="1" stop-color="currentColor" stop-opacity="0"/></radialGradient></defs><ellipse cx="290" cy="220" rx="270" ry="190" fill="url(#mapGlow)"/><g class="globe-grid"><ellipse cx="290" cy="220" rx="215" ry="160"/><ellipse cx="290" cy="220" rx="125" ry="160"/><ellipse cx="290" cy="220" rx="44" ry="160"/><path d="M75 220h430M95 155h390M95 285h390M142 107h296M142 333h296"/></g><g class="flight-paths"><path d="M312 254Q155 100 123 167M312 254Q341 83 432 140M312 254Q434 218 470 286M312 254Q206 225 177 310M312 254Q302 188 266 145"/></g><g class="map-points"><circle cx="123" cy="167" r="4"/><circle cx="432" cy="140" r="4"/><circle cx="470" cy="286" r="4"/><circle cx="177" cy="310" r="4"/><circle cx="266" cy="145" r="4"/><circle cx="312" cy="254" r="7"/><circle class="hub-ring" cx="312" cy="254" r="17"/></g><g class="map-labels"><text x="329" y="279">SIN</text><text x="78" y="150">CAPACITY</text><text x="387" y="120">NETWORK</text><text x="90" y="385">SCHEMATIC / SIMULATED AIRLINE CASE</text></g></svg></div><div class="airline-copy reveal"><p class="section-index">04 / AIRLINE CASE STUDY</p><h2 data-zh="航空收益管理。" data-en="Airline revenue management.">航空收益管理。</h2><p class="airline-description" data-zh="在模拟航空网络上，评估票价类别的容量分配，以及容量分配与航班选择的联合规划。" data-en="The airline case studies evaluate fare-type capacity allocation and joint capacity allocation and flight selection on a simulated network.">在模拟航空网络上，评估票价类别的容量分配，以及容量分配与航班选择的联合规划。</p><div id="airline-results"></div><p class="manuscript-note" data-zh="来源：研究稿件 · 模拟航空案例" data-en="Source: manuscript · simulated airline case studies">来源：研究稿件 · 模拟航空案例</p></div></section>
+    <section id="experiments" class="experiments">
+      <div class="wrap">
+        <header class="sec-head sec-split">
+          <div><p class="kicker mono">03 / EVALUATION RESULTS</p><h2 data-zh="基准测试与扩展实验。" data-en="Benchmarks and additional experiments.">基准测试与扩展实验。</h2></div>
+          <p data-zh="比较两种基座模型在基准、参数扰动与结构修复测试中的表现。组件实验另行考察示例与数据访问方式。" data-en="Compare the two base models on benchmarks, parameter perturbations, and structural repair. Separate component experiments examine the use of examples and data access.">比较两种基座模型在基准、参数扰动与结构修复测试中的表现。组件实验另行考察示例与数据访问方式。</p>
+        </header>
+        <div class="study-controls">
+          <div class="tabs" id="experiment-tabs" role="tablist" aria-label="实验类别" data-zh-label="实验类别" data-en-label="Experiments"></div>
+          <button class="btn btn-line btn-small" id="study-play" type="button"></button>
+        </div>
+        <div class="card study-card" id="experiment-panel" role="tabpanel"></div>
+        <details class="card metric-details">
+          <summary><span data-zh="指标与实验设置" data-en="Metrics and evaluation settings">指标与实验设置</span><i aria-hidden="true">+</i></summary>
+          <p data-zh="目标值匹配率：程序取得最优解，且目标值在指定容差内匹配参考最优值的比例；运行失败计入分母。数学表述等价性（EM）评估生成模型与参考模型是否等价。" data-en="Objective match rate is the share of programs that reach optimality and match the reference optimum within the specified tolerance; failed runs remain in the denominator. Formulation equivalence (EM) assesses whether the generated and reference models are mathematically equivalent.">目标值匹配率：程序取得最优解，且目标值在指定容差内匹配参考最优值的比例；运行失败计入分母。数学表述等价性（EM）评估生成模型与参考模型是否等价。</p>
+          <p data-zh="图表保留来源报告的指标与精度。各实验的样本量、设置及来源见图表说明与资料入口。" data-en="Charts retain the metrics and precision of the source results. Sample sizes, evaluation settings, and sources are listed with each chart and in the source notes.">图表保留来源报告的指标与精度。各实验的样本量、设置及来源见图表说明与资料入口。</p>
+        </details>
+      </div>
+    </section>
 
-    <section id="resources" class="resources section-pad"><div class="wrap"><p class="section-index">05 / RESEARCH RESOURCES</p><div class="resource-heading"><h2 data-zh="论文、代码<br>与实验数据。" data-en="Paper, code,<br>and datasets.">论文、代码<br>与实验数据。</h2><p data-zh="获取方法细节、实现代码和实验资料。" data-en="Methods, implementation, and evaluation resources.">获取方法细节、实现代码和实验资料。</p></div><div class="resource-links"><a href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=5329027" target="_blank" rel="noopener"><span class="mono">01 / PAPER</span><h3 data-zh="阅读完整论文" data-en="Read the paper">阅读完整论文</h3><span class="resource-arrow">↗</span><p>SSRN · 5329027</p></a><a href="https://github.com/CoraLiang01/lean-llm-opt" target="_blank" rel="noopener"><span class="mono">02 / CODE</span><h3 data-zh="官方代码" data-en="Source code">官方代码</h3><span class="resource-arrow">↗</span><p>GitHub · CoraLiang01 / lean-llm-opt</p></a><a href="https://github.com/CoraLiang01/lean-llm-opt/tree/main/Test_Dataset" target="_blank" rel="noopener"><span class="mono">03 / DATA</span><h3 data-zh="查看测试数据" data-en="Datasets">查看测试数据</h3><span class="resource-arrow">↗</span><p>Large-scale-or · Air-NRM · Small-scale</p></a></div><div class="citation-block"><div><span class="mono" data-zh="论文引用" data-en="CITATION">论文引用</span><button id="copy-citation" type="button" class="text-link" data-zh="复制引用 ↗" data-en="Copy citation ↗">复制引用 ↗</button></div><p id="citation"></p></div></div></section>
+    <section id="airline" class="airline">
+      <div class="wrap">
+        <header class="sec-head sec-split">
+          <div><p class="kicker mono">04 / AIRLINE CASE STUDY</p><h2 data-zh="航空收益管理。" data-en="Airline revenue management.">航空收益管理。</h2></div>
+          <p data-zh="在模拟航空网络上，评估票价类别的容量分配，以及容量分配与航班选择的联合规划。" data-en="The airline case studies evaluate fare-type capacity allocation and joint capacity allocation and flight selection on a simulated network.">在模拟航空网络上，评估票价类别的容量分配，以及容量分配与航班选择的联合规划。</p>
+        </header>
+        <div class="airline-grid">
+          <figure class="card air-map">
+            <p class="air-tag mono" data-zh="示意航线网络" data-en="SCHEMATIC NETWORK">示意航线网络</p>
+            <svg id="air-map" role="img" aria-label="Singapore Airlines network, schematic"></svg>
+            <figcaption class="air-scales">
+              <div class="air-scale is-medium"><p class="mono" data-zh="中规模" data-en="MEDIUM SCALE">中规模</p><b data-zh="新加坡 · 香港 · 马尼拉" data-en="Singapore · Hong Kong · Manila">新加坡 · 香港 · 马尼拉</b><span data-zh="19 个 OD 与出发时刻组合 · 2 种票价" data-en="19 OD–departure combinations · 2 fare types">19 个 OD 与出发时刻组合 · 2 种票价</span></div>
+              <div class="air-scale"><p class="mono" data-zh="大规模" data-en="LARGE SCALE">大规模</p><b data-zh="44 个城市 · 90 个 OD 市场" data-en="44 cities · 90 OD markets">44 个城市 · 90 个 OD 市场</b><span data-zh="268 个 OD 与出发时刻组合 · 4 种票价" data-en="268 OD–departure combinations · 4 fare types">268 个 OD 与出发时刻组合 · 4 种票价</span></div>
+            </figcaption>
+          </figure>
+          <div class="air-side">
+            <article class="card air-model">
+              <h3 class="u" data-zh="基于销售的线性规划（SBLP）" data-en="Sales-based linear program (SBLP)">基于销售的线性规划（SBLP）</h3>
+              <p class="air-model-sub" data-zh="一般吸引力模型下的选择型收益管理，刻画升舱需求与跨航班再捕获。" data-en="Choice-based revenue management under the general attraction model, capturing upsell demand and cross-flight recapture.">一般吸引力模型下的选择型收益管理，刻画升舱需求与跨航班再捕获。</p>
+              <div class="air-formula" aria-label="SBLP formulation">
+                <p><em>max</em><span>Σ<sub>l</sub> Σ<sub>k</sub> Σ<sub>j</sub> p<sub>lkj</sub> x<sub>lkj</sub></span><small></small></p>
+                <p><em>s.t.</em><span>Σ<sub>j</sub> A<sub>lkj</sub> x<sub>lkj</sub> ≤ c<sub>lk</sub></span><small data-zh="容量" data-en="capacity">容量</small></p>
+                <p><em></em><span>ṽ<sub>l0</sub>⁄v<sub>l0</sub> · x<sub>l0</sub> + Σ<sub>k,j</sub> ṽ<sub>lkj</sub>⁄v<sub>lkj</sub> · x<sub>lkj</sub> = Λ<sub>l</sub></span><small data-zh="平衡" data-en="balance">平衡</small></p>
+                <p><em></em><span>x<sub>lkj</sub>⁄v<sub>lkj</sub> − x<sub>l0</sub>⁄v<sub>l0</sub> ≤ 0</span><small data-zh="比例" data-en="scale">比例</small></p>
+              </div>
+              <p class="air-model-note" data-zh="联合规划另加航班选择变量 y<sub>lk</sub> ∈ {0, 1}：x<sub>lkj</sub> ≤ M y<sub>lk</sub>，Σ y<sub>lk</sub> ≤ Z。" data-en="Joint planning adds flight-selection variables y<sub>lk</sub> ∈ {0, 1}: x<sub>lkj</sub> ≤ M y<sub>lk</sub>, Σ y<sub>lk</sub> ≤ Z.">联合规划另加航班选择变量 y<sub>lk</sub> ∈ {0, 1}：x<sub>lkj</sub> ≤ M y<sub>lk</sub>，Σ y<sub>lk</sub> ≤ Z。</p>
+            </article>
+            <div id="airline-results"></div>
+            <p class="footnote" data-zh="来源：研究稿件 · 模拟航空案例" data-en="Source: manuscript · simulated airline case studies">来源：研究稿件 · 模拟航空案例</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="resources" class="resources">
+      <div class="wrap">
+        <header class="sec-head sec-split">
+          <div><p class="kicker mono">05 / RESEARCH RESOURCES</p><h2 data-zh="论文、代码<br>与实验数据。" data-en="Paper, code,<br>and datasets.">论文、代码<br>与实验数据。</h2></div>
+          <p data-zh="获取方法细节、实现代码和实验资料。" data-en="Methods, implementation, and evaluation resources.">获取方法细节、实现代码和实验资料。</p>
+        </header>
+        <div class="paper-links">
+          <a class="card" href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=5329027" target="_blank" rel="noopener"><small class="mono">01 / PAPER</small><span data-zh="阅读完整论文" data-en="Read the paper">阅读完整论文</span><small>SSRN · 5329027</small></a>
+          <a class="card" href="https://github.com/CoraLiang01/lean-llm-opt" target="_blank" rel="noopener"><small class="mono">02 / CODE</small><span data-zh="官方代码" data-en="Source code">官方代码</span><small>GitHub · CoraLiang01 / lean-llm-opt</small></a>
+          <a class="card" href="https://github.com/CoraLiang01/lean-llm-opt/tree/main/Test_Dataset" target="_blank" rel="noopener"><small class="mono">03 / DATA</small><span data-zh="查看测试数据" data-en="Datasets">查看测试数据</span><small>Large-scale-or · Air-NRM · Small-scale</small></a>
+        </div>
+        <div class="card paper-card">
+          <div class="authors-row">
+            <p class="kicker mono" data-zh="论文引用" data-en="CITATION">论文引用</p>
+            <button class="btn btn-line btn-small" id="copy-citation" type="button" data-zh="复制引用" data-en="Copy citation">复制引用</button>
+          </div>
+          <p class="citation" id="citation"></p>
+        </div>
+      </div>
+    </section>
   </main>
 
-  <aside id="demo-launcher" class="demo-launcher" data-collapsed="false" aria-labelledby="demo-launcher-title">
-    <span id="demo" class="demo-launcher-anchor" aria-hidden="true"></span>
-    <div class="demo-launcher-header"><h2 id="demo-launcher-title" class="demo-launcher-heading" data-zh="试用 Demo" data-en="Try the demo">试用 Demo</h2><button id="demo-launcher-toggle" class="demo-launcher-toggle" type="button" aria-controls="demo-launcher-description" aria-expanded="true" aria-label="收起 Demo 说明"><span class="demo-launcher-toggle-label" data-zh="展开说明" data-en="Expand description">展开说明</span><span class="demo-launcher-toggle-icon" aria-hidden="true">−</span></button></div>
-    <div id="demo-launcher-body" class="demo-launcher-body"><p id="demo-launcher-description" data-zh="从五类示例开始" data-en="Start with five examples">从五类示例开始</p><a id="demo-fullscreen" class="demo-launcher-link" href="demo/?lang=en" data-demo-link target="_blank" rel="noopener"><span class="demo-peek-visual" aria-hidden="true"><span class="demo-page-window"><span class="demo-page-bar"><i></i><i></i><i></i><span>LEAN–LLM–OPT / DEMO</span></span><span class="demo-page-content"><img class="demo-preview demo-preview-en-dark" src="assets/demo-preview-en-dark.webp?v=demo-english-20261110-1" alt="" width="1100" height="800" decoding="async"><img class="demo-preview demo-preview-en-light" src="assets/demo-preview-en-light.webp?v=demo-english-20261110-1" alt="" width="1100" height="800" decoding="async"></span></span></span><span class="demo-peek-caption"><span class="demo-peek-eyebrow" data-zh="交互式建模工作台" data-en="INTERACTIVE WORKSPACE">交互式建模工作台</span><span id="demo-launcher-link-label" data-zh="打开工作台" data-en="Open workspace">打开工作台</span><span class="demo-peek-note" data-zh="从五类问题开始，查看建模与求解过程。" data-en="Explore five problem types, from modeling to solving.">从五类问题开始，查看建模与求解过程。</span></span><span class="demo-peek-arrow" aria-hidden="true">↗</span></a></div>
-  </aside>
-  <footer class="footer wrap"><a class="footer-brand" href="#home">LEAN–LLM–OPT<span>↗</span></a><div><p data-zh="语言 × 数据 × 优化" data-en="LANGUAGE × DATA × OPTIMIZATION">语言 × 数据 × 优化</p><p data-zh="多智能体优化建模研究" data-en="Multi-agent optimization modeling">多智能体优化建模研究</p></div><a href="#home" class="back-top" data-zh-title="回到顶部" data-en-title="Back to top" title="回到顶部">↑</a></footer>
-  <div id="toast" class="toast" role="status"></div>
-  <noscript><p class="noscript">请启用 JavaScript 体验双语切换、建模流程与实验图表。Enable JavaScript for the interactive architecture, replay, and results. <a href="data/research.json">Research data</a> · <a href="data/case.json">Recorded case</a></p></noscript>
+  <footer class="foot">
+    <div class="wrap">
+      <a class="foot-brand" href="#top">LEAN-LLM-OPT</a>
+      <p><span data-zh="语言 × 数据 × 优化" data-en="LANGUAGE × DATA × OPTIMIZATION">语言 × 数据 × 优化</span><span data-zh="多智能体优化建模研究" data-en="Multi-agent optimization modeling">多智能体优化建模研究</span></p>
+      <a href="data/SOURCES.md" target="_blank" rel="noopener" data-zh="数据来源" data-en="Sources">数据来源</a>
+      <a class="round" href="#top" aria-label="Top">↑</a>
+    </div>
+  </footer>
+  <a class="dock" id="demo-dock" href="demo/?lang=en" data-demo-link target="_blank" rel="noopener"><span data-zh="试用 Demo" data-en="Try the demo">试用 Demo</span><small data-zh="五类示例" data-en="Five examples">五类示例</small></a>
+  <div class="toast" id="toast" role="status"></div>
 </body>
 </html>

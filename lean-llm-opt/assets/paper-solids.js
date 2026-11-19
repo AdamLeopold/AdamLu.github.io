@@ -278,24 +278,30 @@ function librarySupports(parent,material) {
   }
   reify(parent,'workflow-example-tree',data.pos,data.col,data.indices,material,'library-rack');
 }
-function printIslands(parent,texture) {
-  const pos=[],uv=[],idx=[];
-  for(const [,x,y,w,h,z] of printAreas) {
-    const index=pos.length/3;
+// One ink mesh per group, so a group can carry its own print. All groups share the atlas.
+function printIslands(parent,texture,groupOf=()=>'') {
+  const groups=new Map();
+  for(const [id,x,y,w,h,z] of printAreas) {
+    const key=groupOf(id)||'';
+    if(!groups.has(key))groups.set(key,{pos:[],uv:[],idx:[]});
+    const {pos,uv,idx}=groups.get(key), index=pos.length/3;
     for(const [u,v] of [[x,y],[x,y+h],[x+w,y+h],[x+w,y]]){
       pos.push(...world(u,v,z+INK_LIFT));uv.push(u/W,1-v/H);
     }
     idx.push(index,index+1,index+2,index,index+2,index+3);
   }
-  const geometry=new THREE.BufferGeometry();
-  geometry.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));geometry.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));
-  geometry.setIndex(idx);
   texture.colorSpace=THREE.SRGBColorSpace;
   const material=new THREE.MeshBasicMaterial({map:texture,transparent:true,depthWrite:false,toneMapped:false});
-  const ink=new THREE.Mesh(geometry,material);ink.name='diagram-typesetting';ink.userData.part='typesetting';ink.renderOrder=1;
-  parent.add(ink);
+  for(const [key,{pos,uv,idx}] of groups){
+    const geometry=new THREE.BufferGeometry();
+    geometry.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));geometry.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));
+    geometry.setIndex(idx);
+    const ink=new THREE.Mesh(geometry,material);ink.name=key?'diagram-typesetting:'+key:'diagram-typesetting';
+    Object.assign(ink.userData,{part:'typesetting',group:key});ink.renderOrder=1;
+    parent.add(ink);
+  }
 }
-export function buildDiagramPlates(printTexture) {
+export function buildDiagramPlates(printTexture,{printGroup}={}) {
   const group=new THREE.Group();group.name='Figure 3 · apparatus';
   const surface=new THREE.MeshStandardMaterial({vertexColors:true,roughness:.64,metalness:.09});
   const conduitMaterial=new THREE.MeshStandardMaterial({vertexColors:true,roughness:.47,metalness:.22});
@@ -303,6 +309,6 @@ export function buildDiagramPlates(printTexture) {
   for(const t of tables) table(group,t,surface);
   for(const path of paths) connector(group,path,conduitMaterial);
   librarySupports(group,conduitMaterial);
-  if(printTexture) printIslands(group,printTexture);
+  if(printTexture) printIslands(group,printTexture,printGroup);
   return group;
 }

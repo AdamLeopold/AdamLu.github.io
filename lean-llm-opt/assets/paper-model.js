@@ -1,6 +1,7 @@
 import * as THREE from './vendor/three/three.module.js';
 import { GLTFLoader } from './vendor/three/GLTFLoader.js';
-import { buildDiagramPlates, iconPlacements } from './paper-solids.js?v=paper-journey-20261106-1';
+import { buildDiagramPlates, iconPlacements } from './paper-solids.js?v=unit-lift-20261119-2';
+import { assembleUnits, unitOf } from './paper-units.js?v=unit-lift-20261119-2';
 
 export const PAPER_SIZE = {width: 1582, height: 1632};
 export const PAPER_OVERVIEW = {yaw: .37, pitch: -.34};
@@ -11,7 +12,7 @@ export function buildPaperFigure(printTexture, iconLibrary) {
   const art = new THREE.Group();
   art.name = 'Figure 3';
   art.rotation.order = 'YXZ';
-  art.add(buildDiagramPlates(printTexture));
+  art.add(buildDiagramPlates(printTexture, {printGroup: unitOf}));
   const templates = new Map();
   for (const slot of iconPlacements) {
     if (!templates.has(slot.kind)) {
@@ -35,6 +36,7 @@ export function buildPaperFigure(printTexture, iconLibrary) {
     mount.add(sculpture);
     art.add(mount);
   }
+  assembleUnits(art);
   art.traverse(object => {
     if (!object.isMesh) return;
     const materials = Array.isArray(object.material) ? object.material : [object.material];
