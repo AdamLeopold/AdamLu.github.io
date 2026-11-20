@@ -2,11 +2,11 @@
   "format": "lean-llm-opt-static-v1",
   "deployment": "static",
   "demo": "in-browser-gpt-4.1-highs+visitor-local-gpt-oss",
-  "builtAt": "2026-11-19T07:42:41.458Z",
-  "runtimeFileCount": 106,
-  "fileCount": 108,
-  "payloadBytes": 7071009,
-  "totalBytes": 7088602,
+  "builtAt": "2026-11-20T08:17:33.110Z",
+  "runtimeFileCount": 108,
+  "fileCount": 114,
+  "payloadBytes": 73156389,
+  "totalBytes": 73174873,
   "hashAlgorithm": "sha256",
   "files": {
     ".nojekyll": {
@@ -24,6 +24,10 @@
     "assets/figure3.webp": {
       "bytes": 389712,
       "sha256": "04a0a64a3aec85d395bd6e0cc79839b01efa97bac1c6ad9a7b59efd2dcbc9773"
+    },
+    "assets/film-scene.js": {
+      "bytes": 5873,
+      "sha256": "9c31361c692a3cfabed5594671688e0b6910e54207d8eb12cddb9b4aa905d4ab"
     },
     "assets/hero-figure.js": {
       "bytes": 9275,
@@ -58,12 +62,12 @@
       "sha256": "79d9b047ffe9975bc2dd3dff8d6737ebe48d226e4cd00136cf964e9ab8e97444"
     },
     "assets/site.css": {
-      "bytes": 48566,
-      "sha256": "1cadaa3dc75789f0c99279dcbd22cfae68ea0d87012d73d7044df28ca81ae1f7"
+      "bytes": 55770,
+      "sha256": "95777e8bc428b6828a3cb7deb2bbc5a720811aacc0949fd6791adec7085b6213"
     },
     "assets/site.js": {
-      "bytes": 49854,
-      "sha256": "c822c29f423a40661ea47848e31793e8ca879a332956b91e6e07eac3988c7f04"
+      "bytes": 54492,
+      "sha256": "94af490e8ce2b6622e41f792a9736bf631ade7936cab58919c73b63378b9ab0d"
     },
     "assets/vendor/dompurify/LICENSE": {
       "bytes": 11358,
@@ -365,6 +369,10 @@
       "bytes": 54713,
       "sha256": "d584f9d6ee6327fe56b1fb767f76cfa0a39d346e77ab7e55303a441295c9cad6"
     },
+    "data/film.json": {
+      "bytes": 701,
+      "sha256": "9f6a4554c69807e79ed39152973604ff7f348373be6685676652ebfb45e4c8a9"
+    },
     "data/research.json": {
       "bytes": 14001,
       "sha256": "100a89ed758228eeefd4038a552fa37ac0622124d2a53799526c6e5aad726095"
@@ -434,8 +442,24 @@
       "sha256": "be45ceaa2b552573403b37d5c9e4766238acb2e6868f3dc4fdbbab07e0f53b83"
     },
     "index.html": {
-      "bytes": 26069,
-      "sha256": "9708bbcd36c367ffcc456a57fd1a59f856bb70032937c1da02dc74499b49106f"
+      "bytes": 28963,
+      "sha256": "ee19d184d56bbc3a547e8fbd114faae77e8d3f18e1cf6ecdc8d0a734cd9c27d7"
+    },
+    "media/lean-llm-opt-demo-en.jpg": {
+      "bytes": 58547,
+      "sha256": "fa0640af50159c623ae03fa92d9c108a20b54f15b33ef053e03f429c47aacee9"
+    },
+    "media/lean-llm-opt-demo-en.mp4": {
+      "bytes": 32764822,
+      "sha256": "ec796e10700b1f293d72ac17512d99eb951d34ec784f9359582b8837091a478d"
+    },
+    "media/lean-llm-opt-demo-zh.jpg": {
+      "bytes": 57042,
+      "sha256": "c7e765066ed8acd6114dc8cee2cf9ba08c88ef5846a333d1c7e5cfdfe37f4f60"
+    },
+    "media/lean-llm-opt-demo-zh.mp4": {
+      "bytes": 33183659,
+      "sha256": "aed6befe33f0a160129a0e035365de419edc50a34dc4856806e78bab5d9a1bd4"
     }
   }
 }

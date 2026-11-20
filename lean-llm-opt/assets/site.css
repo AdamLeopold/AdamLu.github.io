@@ -591,3 +591,73 @@ details summary::-webkit-details-marker { display: none; }
 }
 
 ::view-transition-old(root), ::view-transition-new(root) { animation-duration: .45s; animation-timing-function: cubic-bezier(.2, .7, .1, 1); }
+
+/* Demo video: a dark panel over the Figure 3 model seen from several angles (assets/film-scene.js) */
+.hero-links { display: flex; gap: 26px; }
+.film { position: relative; background: var(--bg); padding: clamp(28px, 5vh, 64px) var(--gut) clamp(12px, 2vh, 28px); }
+.film-panel {
+  --ink: #e3ebf6; --ink-2: #b8c5d8; --mute: #8d9bb0; --line: #3f6797; --line-soft: #22324b; --navy: #a6c8ef; --blue: #6aa5ee; --surface: #15223a;
+  position: relative; isolation: isolate; overflow: clip; max-width: 1480px; margin: 0 auto; border-radius: 36px; color: var(--ink);
+  background: radial-gradient(90% 70% at 16% 0%, #15305a 0%, rgba(21 48 90 / 0) 62%), radial-gradient(80% 70% at 100% 100%, #13264b 0%, rgba(19 38 75 / 0) 60%), #081120;
+  box-shadow: 0 0 0 1.5px rgba(166 200 239 / .12) inset, 0 44px 90px -54px rgba(8 17 32 / .8);
+}
+:root[data-theme="dark"] .film-panel { box-shadow: 0 0 0 1.5px #22324b inset, 0 44px 90px -54px rgba(0 0 0 / .9); }
+/* The stage stays on screen while the panel passes and takes no room of its own. */
+.film-stage { position: sticky; top: 0; z-index: 0; height: 100vh; margin-bottom: -100vh; pointer-events: none; }
+.film-stage::after { content: ""; position: absolute; inset: 0; background: radial-gradient(ellipse 46% 40% at 32% 22%, rgba(8 17 32 / .55), rgba(8 17 32 / 0) 80%), linear-gradient(180deg, rgba(8 17 32 / .3), rgba(8 17 32 / 0) 22%, rgba(8 17 32 / 0) 78%, rgba(8 17 32 / .45)); }
+.film-canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; animation: film-in 1.8s var(--ease) both; transition: opacity .8s var(--ease); }
+@keyframes film-in { from { opacity: 0; } }
+.film.is-playing .film-canvas { opacity: .5; }
+.film-fallback { position: absolute; inset: 0; display: none; }
+.film-stage.is-static .film-fallback { display: block; }
+.film-stage.is-static .film-canvas { display: none; }
+.film-fallback img { position: absolute; width: min(46%, 640px); height: auto; opacity: .2; filter: saturate(.7) brightness(.75); }
+.film-fallback img:first-child { left: -8%; top: 4%; transform: perspective(1400px) rotateY(26deg) rotateX(16deg) rotate(-5deg); }
+.film-fallback img:last-child { right: -9%; top: 34%; transform: perspective(1400px) rotateY(-30deg) rotateX(10deg) rotate(4deg); }
+.film-inner { position: relative; z-index: 1; padding: clamp(72px, 13vh, 150px) clamp(20px, 5vw, 80px) clamp(64px, 12vh, 130px); }
+.film-head { display: grid; grid-template-columns: 1.15fr 1fr; gap: clamp(24px, 5vw, 72px); align-items: end; max-width: 1040px; margin: 0 auto clamp(32px, 6vh, 64px); }
+/* A soft dark halo keeps the copy legible when a lit part of the model passes behind it. */
+.film-head { text-shadow: 0 1px 2px rgba(8 17 32 / .9), 0 0 22px rgba(8 17 32 / .85); }
+.film-head h2 { font-size: clamp(32px, 3.7vw, 56px); font-weight: 900; line-height: 1.08; letter-spacing: -.025em; color: #f2f6fc; }
+.film-copy > p:first-child { font-size: 17px; font-weight: 600; line-height: 1.75; color: var(--ink-2); }
+.film-note { margin-top: 14px; color: var(--mute); }
+.film-frame { position: relative; max-width: 1040px; aspect-ratio: 16 / 9; margin: 0 auto; overflow: hidden; border-radius: 24px; background: #050a14; border: 1.5px solid rgba(166 200 239 / .3); box-shadow: 0 0 0 10px rgba(106 165 238 / .06), 0 50px 100px -50px rgba(0 0 0 / .9); transform-origin: 50% 20%; }
+.film-frame video { position: absolute; inset: 0; width: 100%; height: 100%; display: block; object-fit: contain; }
+/* The poster is the light title card, so the play control sits in its lower left, clear of the title. */
+.film-play { position: absolute; inset: 0; display: flex; align-items: flex-end; justify-content: flex-start; gap: 18px; padding: clamp(16px, 3.6%, 40px); background: linear-gradient(200deg, rgba(8 17 32 / 0) 60%, rgba(8 17 32 / .16)); transition: opacity .45s var(--ease), visibility .45s; }
+.film-play i { position: relative; display: grid; place-items: center; width: 78px; height: 78px; border-radius: 50%; background: #1e3f78; color: #fff; box-shadow: 0 0 0 8px rgba(30 63 120 / .14), 0 18px 36px -14px rgba(8 17 32 / .7); transition: transform .45s var(--spring), box-shadow .3s; }
+.film-play i::after { content: ""; position: absolute; inset: -8px; border-radius: 50%; border: 2px solid rgba(30 63 120 / .4); animation: film-ring 2.6s var(--ease) infinite; }
+@keyframes film-ring { from { transform: scale(1); opacity: .9; } to { transform: scale(1.45); opacity: 0; } }
+.film-play svg { width: 30px; height: 30px; margin-left: 4px; fill: currentColor; }
+.film-play:hover i { transform: scale(1.07); box-shadow: 0 0 0 13px rgba(30 63 120 / .12), 0 22px 42px -14px rgba(8 17 32 / .75); }
+.film-play > span { display: grid; gap: 2px; padding-bottom: 6px; text-align: left; color: #1e3f78; font-size: 20px; font-weight: 900; line-height: 1.2; }
+.film-play small { color: #3d495d; }
+.film.is-started .film-play { opacity: 0; visibility: hidden; }
+.film-chapters { list-style: none; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; max-width: 1040px; margin: clamp(18px, 3vh, 28px) auto 0; padding: 0; }
+.film-chapters button { position: relative; overflow: hidden; display: grid; gap: 3px; width: 100%; padding: 12px 14px 13px; border-radius: 14px; text-align: left; color: #d6e1ef; font-size: 14.5px; font-weight: 800; line-height: 1.3; background: rgba(21 34 58 / .72); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); border: 1.5px solid rgba(166 200 239 / .26); transition: border-color .3s, background .3s, color .3s, transform .4s var(--spring); }
+.film-chapters button .mono { color: var(--mute); }
+.film-chapters button:hover { transform: translateY(-2px); color: #fff; border-color: rgba(166 200 239 / .45); }
+.film-chapters button.is-on { color: #fff; background: rgba(30 63 120 / .6); border-color: var(--blue); }
+.film-chapters button i { position: absolute; left: 0; bottom: 0; height: 3px; width: calc(var(--p, 0) * 100%); background: var(--blue); }
+:root[data-motion="reduced"] .film-play i::after, :root[data-motion="reduced"] .film-canvas { animation: none; }
+@media (max-width: 1080px) {
+  .film-head { grid-template-columns: 1fr; align-items: start; }
+  .film-chapters { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
+@media (max-width: 720px) {
+  .film { padding: 18px 12px 8px; }
+  .film-panel { border-radius: 26px; }
+  .film-inner { padding: 40px 16px 24px; }
+  .film-head h2 { font-size: 28px; }
+  .film-copy > p:first-child { font-size: 15px; }
+  .film-frame { border-radius: 16px; box-shadow: 0 0 0 6px rgba(106 165 238 / .06), 0 30px 60px -30px rgba(0 0 0 / .9); }
+  .film-play { padding: 10px; }
+  .film-play i { width: 42px; height: 42px; box-shadow: 0 0 0 5px rgba(30 63 120 / .14), 0 12px 24px -10px rgba(8 17 32 / .7); }
+  .film-play i::after { inset: -5px; }
+  .film-play svg { width: 18px; height: 18px; margin-left: 3px; }
+  /* The poster is small here; the button alone keeps its subtitle clear, and the chapters below give the length. */
+  .film-play > span { display: none; }
+  .film-chapters { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+  .film-chapters button { padding: 10px 12px 11px; font-size: 13.5px; }
+  .hero-links { gap: 16px; }
+}

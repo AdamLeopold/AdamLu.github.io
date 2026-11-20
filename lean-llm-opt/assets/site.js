@@ -65,6 +65,7 @@ function renderAll() {
   renderReplay();
   renderExperiments();
   renderAirline();
+  renderFilm();
   $('#citation').textContent = state.research.paper.citation;
 }
 
@@ -468,6 +469,76 @@ import('./hero-figure.js?v=20261119-2').then(({ createHeroFigure }) => {
   heroFigure.setLifted(state.lifted, { now: true });
 }).catch(error => { $('#hero-figure').classList.add('is-static'); console.warn('Cover figure disabled:', error.message); });
 
+/* Demo video: the narrated walkthrough in the reader's language, over the Figure 3 model seen from several angles */
+const film = $('#film'), filmFrame = $('#film-frame'), filmVideo = $('#film-video'), filmChapters = $('#film-chapters');
+let filmBackdrop = null, filmLang = null;
+const clockTime = seconds => `${Math.floor(seconds / 60)}:${String(Math.floor(seconds % 60)).padStart(2, '0')}`;
+function filmChapterAt(time) {
+  let index = 0;
+  state.film.chapters.forEach((chapter, i) => { if (chapter.at[filmLang] <= time + .05) index = i; });
+  return index;
+}
+function seekFilm(at) {
+  if (filmVideo.readyState >= 1) filmVideo.currentTime = at;
+  else filmVideo.addEventListener('loadedmetadata', () => { filmVideo.currentTime = at; }, { once: true });
+}
+function renderFilm() {
+  const data = state.film;
+  if (!data) return;
+  if (filmLang !== state.lang) {
+    // The other language opens at the chapter the reader was in, paused.
+    const started = film.classList.contains('is-started');
+    const chapter = started && filmLang ? filmChapterAt(filmVideo.currentTime) : 0;
+    filmLang = state.lang;
+    filmVideo.poster = data.poster[filmLang];
+    if (started) { filmVideo.pause(); filmVideo.src = data.src[filmLang]; seekFilm(data.chapters[chapter].at[filmLang]); }
+  }
+  $('#film-duration').textContent = clockTime(Math.round(data.duration[filmLang]));
+  filmChapters.innerHTML = data.chapters.map((chapter, i) => `<li><button type="button" data-chapter="${i}"><span class="mono">${clockTime(chapter.at[filmLang])}</span>${esc(chapter[filmLang])}<i aria-hidden="true"></i></button></li>`).join('');
+  syncFilmChapter();
+}
+function syncFilmChapter() {
+  const data = state.film;
+  if (!data) return;
+  const time = filmVideo.currentTime || 0, current = film.classList.contains('is-started') ? filmChapterAt(time) : -1;
+  $$('button', filmChapters).forEach((button, i) => {
+    const on = i === current;
+    button.classList.toggle('is-on', on);
+    button.toggleAttribute('aria-current', on);
+    const from = data.chapters[i].at[filmLang], to = data.chapters[i + 1]?.at[filmLang] ?? data.duration[filmLang];
+    button.style.setProperty('--p', on ? clamp((time - from) / (to - from)).toFixed(3) : '0');
+  });
+}
+function startFilm(at = null) {
+  if (!state.film) return;
+  // Once the reader has started it, the video may buffer, and a language switch loads the other version's position.
+  filmVideo.preload = 'auto';
+  if (!filmVideo.getAttribute('src')) filmVideo.src = state.film.src[filmLang];
+  film.classList.add('is-started');
+  filmVideo.controls = true;
+  if (at !== null) seekFilm(at);
+  filmVideo.play().catch(() => {});
+}
+$('#film-play').addEventListener('click', () => startFilm());
+filmChapters.addEventListener('click', event => {
+  const button = event.target.closest('button[data-chapter]');
+  if (button) startFilm(state.film.chapters[Number(button.dataset.chapter)].at[filmLang]);
+});
+filmVideo.addEventListener('play', () => { film.classList.add('is-playing'); filmBackdrop?.setPlaying(true); });
+// A new source discards the queued pause event, so 'emptied' also counts as stopping.
+for (const type of ['pause', 'ended', 'emptied']) filmVideo.addEventListener(type, () => { film.classList.toggle('is-playing', false); filmBackdrop?.setPlaying(false); });
+filmVideo.addEventListener('timeupdate', syncFilmChapter);
+// The backdrop loads once the section comes near.
+const filmWake = new IntersectionObserver(entries => {
+  if (!entries.some(entry => entry.isIntersecting)) return;
+  filmWake.disconnect();
+  import('./film-scene.js?v=20261120-1')
+    .then(({ createFilmBackdrop }) => createFilmBackdrop($('#film-stage'), { reduced }))
+    .then(backdrop => { filmBackdrop = backdrop; backdrop.setPlaying(!filmVideo.paused); onScroll(); })
+    .catch(error => { $('#film-stage').classList.add('is-static'); console.warn('Video backdrop disabled:', error.message); });
+}, { rootMargin: '600px 0px' });
+filmWake.observe(film);
+
 /* Motion */
 // Numbers count up from zero; the box keeps its final width so the text beside it stays put.
 function countUp(el, ms = 1300) {
@@ -517,6 +588,8 @@ document.addEventListener('click', event => {
 // Positive depth lags behind the page (further away); negative depth runs slightly ahead.
 const LAYERS = [
   ['.strip .stat', [0, .025, .05]],
+  ['.film-head', [.05]],
+  ['.film-chapters', [-.02]],
   ['.overview .sec-head', [.05]],
   ['.ideas li', [-.01, -.025, -.04]],
   ['.journey-head', [.12]],
@@ -669,6 +742,13 @@ function onScroll() {
       heroCopy.style.translate = `0 ${(y * .15).toFixed(1)}px`;
       heroCopy.style.opacity = (1 - clamp(y / (vh * .65))).toFixed(3);
     }
+    // The video's backdrop follows the panel through the window, and the player settles to full size as it arrives.
+    const filmBox = film.getBoundingClientRect();
+    if (!reduced && filmBox.bottom > -vh * .2 && filmBox.top < vh * 1.2) {
+      filmBackdrop?.setProgress((vh - filmBox.top) / (vh + filmBox.height));
+      const k = clamp((vh - filmFrame.getBoundingClientRect().top) / (vh * .7));
+      filmFrame.style.scale = (.9 + .1 * (1 - (1 - k) ** 3)).toFixed(4);
+    }
     parallax(vh);
   });
 }
@@ -699,16 +779,18 @@ async function startScene() {
 }
 
 /* Boot */
-for (const el of $$('.strip .stat, .overview .sec-head, .ideas li, .journey-head, .sec-head, .replay-deck, .study-controls, .study-card, .metric-details, .air-map, .air-side, .paper-links, .paper-card')) el.classList.add('rv');
+for (const el of $$('.strip .stat, .film-head > div, .film-chapters, .overview .sec-head, .ideas li, .journey-head, .sec-head, .replay-deck, .study-controls, .study-card, .metric-details, .air-map, .air-side, .paper-links, .paper-card')) el.classList.add('rv');
 syncDemoLinks();
 measure();
 onScroll();
-const [research, caseData] = await Promise.all([
+const [research, caseData, filmData] = await Promise.all([
   fetch('data/research.json').then(r => r.json()),
   fetch('data/case.json').then(r => r.json()),
+  fetch('data/film.json').then(r => r.json()).catch(() => null),
 ]);
 state.research = research;
 state.caseData = caseData;
+state.film = filmData;
 if (state.intro && deck.getBoundingClientRect().top > innerHeight * .74) { state.replay = STEPS.length - 1; deck.dataset.left = '2'; } else stopIntro();
 applyLanguage();
 observeReveals();

@@ -24,8 +24,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap">
-  <link rel="stylesheet" href="assets/site.css?v=20261119-6">
-  <script type="module" src="assets/site.js?v=20261119-5"></script>
+  <link rel="stylesheet" href="assets/site.css?v=20261120-1">
+  <script type="module" src="assets/site.js?v=20261120-1"></script>
 </head>
 <body>
   <a class="skip" href="#main" data-zh="跳到正文" data-en="Skip to content">跳到正文</a>
@@ -36,6 +36,7 @@
       <span>LEAN-LLM-OPT</span>
     </a>
     <nav class="nav-links" aria-label="Sections">
+      <a href="#film" data-zh="演示视频" data-en="Video">演示视频</a>
       <a href="#architecture" data-zh="模型架构" data-en="Architecture">模型架构</a>
       <a href="#replay" data-zh="案例回放" data-en="Case study">案例回放</a>
       <a href="#experiments" data-zh="实验结果" data-en="Results">实验结果</a>
@@ -73,7 +74,7 @@
       <p class="hero-hint" data-zh="拖动旋转" data-en="Drag to rotate">拖动旋转</p>
       <div class="hero-bottom">
         <a class="hero-scroll" href="#architecture"><i aria-hidden="true"></i><span data-zh="向下滚动，逐站拼出框架" data-en="Scroll to build it station by station">向下滚动，逐站拼出框架</span></a>
-        <a class="mono" href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=5329027" target="_blank" rel="noopener" data-zh="研究论文" data-en="Read the paper">研究论文</a>
+        <span class="hero-links"><a href="#film" data-zh="演示视频" data-en="Watch the video">演示视频</a><a href="https://papers.ssrn.com/sol3/papers.cfm?abstract_id=5329027" target="_blank" rel="noopener" data-zh="研究论文" data-en="Read the paper">研究论文</a></span>
       </div>
     </section>
 
@@ -83,6 +84,34 @@
         <div class="card stat"><b class="num">101</b><span data-zh="大规模基准问题" data-en="large-scale instances">大规模基准问题</span></div>
         <div class="card stat"><b class="num">303</b><span data-zh="参数扰动变体" data-en="parameter perturbations">参数扰动变体</span></div>
         <div class="card stat"><b class="num">36</b><span data-zh="结构变体测试" data-en="structural variants">结构变体测试</span></div>
+      </div>
+    </section>
+
+    <section id="film" class="film" aria-labelledby="film-title">
+      <div class="film-panel">
+        <div class="film-stage" id="film-stage" aria-hidden="true">
+          <div class="film-fallback"><img src="assets/paper-figure/spatial.webp" alt="" width="1582" height="1632" loading="lazy" decoding="async"><img src="assets/paper-figure/spatial.webp" alt="" width="1582" height="1632" loading="lazy" decoding="async"></div>
+        </div>
+        <div class="film-inner">
+          <header class="film-head">
+            <div>
+              <p class="kicker mono" data-zh="演示视频" data-en="DEMO VIDEO">演示视频</p>
+              <h2 id="film-title" data-zh="从框架到在线运行，<br>五分钟演示。" data-en="From the framework to live runs,<br>in five minutes.">从框架到在线运行，<br>五分钟演示。</h2>
+            </div>
+            <div class="film-copy">
+              <p data-zh="视频依次介绍研究问题、三个智能体的分工、在线 Demo 中的真实运行（包括基准里的难题），以及大规模基准和参数扰动上的准确率。" data-en="The video covers the research problem, how the three agents divide the work, real runs in the online demo (including hard benchmark instances), and accuracy on the large-scale benchmark and the parameter perturbations.">视频依次介绍研究问题、三个智能体的分工、在线 Demo 中的真实运行（包括基准里的难题），以及大规模基准和参数扰动上的准确率。</p>
+              <p class="mono film-note" data-zh="中文配音与字幕 · 切换到 EN 观看英文版" data-en="English narration and captions · switch to 中 for Chinese">中文配音与字幕 · 切换到 EN 观看英文版</p>
+            </div>
+          </header>
+          <figure class="film-frame" id="film-frame">
+            <video id="film-video" preload="none" playsinline aria-label="LEAN-LLM-OPT demo video" data-zh-label="LEAN-LLM-OPT 演示视频" data-en-label="LEAN-LLM-OPT demo video"></video>
+            <button class="film-play" id="film-play" type="button" aria-label="播放演示视频" data-zh-label="播放演示视频" data-en-label="Play the demo video">
+              <i aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8 5.6v12.8a1 1 0 0 0 1.5.86l10.2-6.4a1 1 0 0 0 0-1.72L9.5 4.74A1 1 0 0 0 8 5.6Z"/></svg></i>
+              <span><b data-zh="播放" data-en="Play">播放</b><small class="mono" id="film-duration"></small></span>
+            </button>
+          </figure>
+          <ol class="film-chapters" id="film-chapters" aria-label="视频章节" data-zh-label="视频章节" data-en-label="Video chapters"></ol>
+        </div>
       </div>
     </section>
 
