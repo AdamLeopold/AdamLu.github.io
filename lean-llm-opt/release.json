@@ -2,11 +2,11 @@
   "format": "lean-llm-opt-static-v1",
   "deployment": "static",
   "demo": "in-browser-gpt-4.1-highs+visitor-local-gpt-oss",
-  "builtAt": "2026-11-20T12:40:03.503Z",
-  "runtimeFileCount": 108,
-  "fileCount": 114,
-  "payloadBytes": 73641073,
-  "totalBytes": 73659557,
+  "builtAt": "2026-11-20T13:45:45.331Z",
+  "runtimeFileCount": 109,
+  "fileCount": 115,
+  "payloadBytes": 73726694,
+  "totalBytes": 73745315,
   "hashAlgorithm": "sha256",
   "files": {
     ".nojekyll": {
@@ -62,12 +62,12 @@
       "sha256": "79d9b047ffe9975bc2dd3dff8d6737ebe48d226e4cd00136cf964e9ab8e97444"
     },
     "assets/site.css": {
-      "bytes": 55770,
-      "sha256": "95777e8bc428b6828a3cb7deb2bbc5a720811aacc0949fd6791adec7085b6213"
+      "bytes": 60746,
+      "sha256": "05161147af96f6723eb2796108947c6bac14783953ec009ceeb127a6e0d2b73c"
     },
     "assets/site.js": {
-      "bytes": 54492,
-      "sha256": "94af490e8ce2b6622e41f792a9736bf631ade7936cab58919c73b63378b9ab0d"
+      "bytes": 67570,
+      "sha256": "8066921fcd4046b2dcfc4d976a406743014996da30751935edcd496e70ec139d"
     },
     "assets/vendor/dompurify/LICENSE": {
       "bytes": 11358,
@@ -369,6 +369,10 @@
       "bytes": 54713,
       "sha256": "d584f9d6ee6327fe56b1fb767f76cfa0a39d346e77ab7e55303a441295c9cad6"
     },
+    "data/cases.json": {
+      "bytes": 66862,
+      "sha256": "7c1eaca47b29d4813f5a3d185ff571694d92e1cc3d541bc58423e0d8fe8e4012"
+    },
     "data/film.json": {
       "bytes": 701,
       "sha256": "ec52bceb23f382b367555d5eca2330af248ddc5c488d91591b684dbcc6fd1523"
@@ -442,8 +446,8 @@
       "sha256": "be45ceaa2b552573403b37d5c9e4766238acb2e6868f3dc4fdbbab07e0f53b83"
     },
     "index.html": {
-      "bytes": 28963,
-      "sha256": "ee19d184d56bbc3a547e8fbd114faae77e8d3f18e1cf6ecdc8d0a734cd9c27d7"
+      "bytes": 29668,
+      "sha256": "75f361ca823d79c5f313f9d59a3fed9338b9f34e6c448df73b1d5bf9991bb813"
     },
     "media/lean-llm-opt-demo-en.jpg": {
       "bytes": 58731,

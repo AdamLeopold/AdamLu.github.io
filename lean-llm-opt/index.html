@@ -24,8 +24,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap">
-  <link rel="stylesheet" href="assets/site.css?v=20261120-1">
-  <script type="module" src="assets/site.js?v=20261120-1"></script>
+  <link rel="stylesheet" href="assets/site.css?v=20261120-2">
+  <script type="module" src="assets/site.js?v=20261120-2"></script>
 </head>
 <body>
   <a class="skip" href="#main" data-zh="跳到正文" data-en="Skip to content">跳到正文</a>
@@ -187,25 +187,28 @@
     <section id="replay" class="replay">
       <div class="wrap">
         <header class="sec-head sec-split">
-          <div><p class="kicker mono">02 / TRANSPORTATION CASE STUDY</p><h2 data-zh="运输规划案例" data-en="Transportation planning case">运输规划案例</h2></div>
-          <p data-zh="18 个配送中心、18 个客户、324 个运输变量。案例展示原始数据、数学模型、生成代码和运输方案。" data-en="18 distribution centers, 18 customers, and 324 shipment variables. The case includes source data, the mathematical formulation, generated code, and the shipping plan.">18 个配送中心、18 个客户、324 个运输变量。案例展示原始数据、数学模型、生成代码和运输方案。</p>
+          <div><p class="kicker mono">02 / CASE STUDIES</p><h2 data-zh="案例回放" data-en="Case replays">案例回放</h2></div>
+          <p data-zh="视频里演示过的九个案例：收益管理、新加坡航空、基准中最难的三道题，以及运输、资源分配、设施选址与指派。在左侧选择案例，逐步查看从问题到最优解的全过程。" data-en="The nine cases from the video: revenue management, Singapore Airlines, the three hardest benchmark problems, plus transportation, resource allocation, facility location and assignment. Pick a case on the left and follow it step by step from question to optimal solution.">视频里演示过的九个案例：收益管理、新加坡航空、基准中最难的三道题，以及运输、资源分配、设施选址与指派。在左侧选择案例，逐步查看从问题到最优解的全过程。</p>
         </header>
         <div class="replay-deck">
           <i class="deck-sheet deck-b" aria-hidden="true"></i><i class="deck-sheet deck-a" aria-hidden="true"></i>
           <div class="card replay-card">
-            <div class="tabs" id="replay-tabs" role="tablist" aria-label="案例回放步骤" data-zh-label="案例回放步骤" data-en-label="Case replay steps"></div>
-            <div class="replay-content" id="replay-content" role="tabpanel"></div>
-            <div class="replay-bar">
-              <p class="mono"><span id="replay-count">01 / 06</span><span id="replay-stage-title"></span></p>
-              <div class="replay-buttons">
-                <button class="round" id="replay-prev" type="button" aria-label="上一步" data-zh-label="上一步" data-en-label="Previous step">←</button>
-                <button class="btn btn-line btn-small" id="replay-play" type="button"></button>
-                <button class="round" id="replay-next" type="button" aria-label="下一步" data-zh-label="下一步" data-en-label="Next step">→</button>
+            <nav class="case-list" id="case-list" aria-label="案例" data-zh-label="案例" data-en-label="Cases" hidden></nav>
+            <div class="case-main">
+              <div class="tabs" id="replay-tabs" role="tablist" aria-label="案例回放步骤" data-zh-label="案例回放步骤" data-en-label="Case replay steps"></div>
+              <div class="replay-content" id="replay-content" role="tabpanel"></div>
+              <div class="replay-bar">
+                <p class="mono"><span id="replay-count">01 / 06</span><span id="replay-stage-title"></span></p>
+                <div class="replay-buttons">
+                  <button class="round" id="replay-prev" type="button" aria-label="上一步" data-zh-label="上一步" data-en-label="Previous step">←</button>
+                  <button class="btn btn-line btn-small" id="replay-play" type="button"></button>
+                  <button class="round" id="replay-next" type="button" aria-label="下一步" data-zh-label="下一步" data-en-label="Next step">→</button>
+                </div>
               </div>
             </div>
           </div>
         </div>
-        <p class="footnote" data-zh="案例数据、生成程序与运输方案均可下载。" data-en="Case data, generated code, and the shipping plan are available for download.">案例数据、生成程序与运输方案均可下载。</p>
+        <p class="footnote" data-zh="运输案例的数据、程序与方案可以下载；Nike、资源分配、设施选址与指派四个案例可在 Demo 中直接运行。" data-en="The transportation case's data, code and plan can be downloaded; the Nike, resource allocation, facility location and assignment cases run directly in the Demo.">运输案例的数据、程序与方案可以下载；Nike、资源分配、设施选址与指派四个案例可在 Demo 中直接运行。</p>
       </div>
     </section>
 

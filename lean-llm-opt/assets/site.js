@@ -8,7 +8,7 @@ const reduced = root.dataset.motion === 'reduced';
 const AUTOPLAY_DELAY = 10000;
 const state = {
   lang: root.dataset.lang, theme: root.dataset.theme, research: null, caseData: null, scene: null,
-  replay: 0, intro: !reduced, dataTable: 'demand', playing: !reduced, study: 'large', view: 'overall', studyPlaying: !reduced, lifted: false,
+  replay: 0, intro: !reduced, cases: null, caseId: 'tp', caseTurn: 0, caseTable: 0, dataTable: 'demand', playing: !reduced, study: 'large', view: 'overall', studyPlaying: !reduced, lifted: false,
 };
 const t = (zh, en) => (state.lang === 'zh' ? zh : en);
 const pick = value => (value && typeof value === 'object' ? value[state.lang] ?? value.en : value);
@@ -61,6 +61,7 @@ $('#theme-toggle').addEventListener('click', () => {
 });
 function renderAll() {
   if (!state.research || !state.caseData) return;
+  renderCaseList();
   sizeReplay();
   renderReplay();
   renderExperiments();
@@ -120,7 +121,13 @@ function autoplay(section, isPlaying, advance) {
 
 /* Case replay */
 const STEPS = [['输入', 'Input'], ['分类', 'Classify'], ['数据', 'Data'], ['数学模型', 'Model'], ['生成代码', 'Code'], ['优化解', 'Solution']];
-const replayPlay = autoplay($('#replay'), () => state.playing && !state.intro, () => selectReplay(state.replay + 1, false));
+// Playing runs through a case's six steps, then moves on to the next case.
+const replayPlay = autoplay($('#replay'), () => state.playing && !state.intro, () => {
+  if (state.replay < STEPS.length - 1) { selectReplay(state.replay + 1, false); return; }
+  const list = state.cases?.cases || [];
+  if (list.length > 1) selectCase(list[(list.findIndex(c => c.id === state.caseId) + 1) % list.length].id, false);
+  else selectReplay(0, false);
+});
 const deck = $('.replay-deck');
 const FILES = () => [
   ['customer_demand.csv', t('18 个客户群体的每日需求', 'Daily demand for 18 customer groups')],
@@ -129,7 +136,7 @@ const FILES = () => [
 ];
 const QA = '<svg class="qa" viewBox="0 0 64 56" aria-hidden="true"><path class="qa-a" d="M26 20h28a8 8 0 0 1 8 8v12a8 8 0 0 1-8 8h-2l2 7-9-7H26a8 8 0 0 1-8-8V28a8 8 0 0 1 8-8Z"/><text x="40" y="42">A</text><path class="qa-q" d="M8 2h24a8 8 0 0 1 8 8v12a8 8 0 0 1-8 8H15l-9 7 2-7a8 8 0 0 1-8-8V10a8 8 0 0 1 8-8Z"/><text x="20" y="24">Q</text></svg>';
 const USERS = '<svg viewBox="0 0 40 28" aria-hidden="true"><circle cx="14" cy="8" r="5"/><path d="M4 26c0-6 4.5-10 10-10s10 4 10 10"/><circle cx="27" cy="9" r="4.2"/><path d="M24 16.6c1-.4 2-.6 3-.6 5 0 9 3.6 9 9.4"/></svg>';
-function stepHTML(step) {
+function transportStep(step) {
   const data = state.caseData;
   if (step === 0) return `<div class="case-grid"><div><span class="case-eyebrow mono">${t('问题描述', 'THE QUERY')}</span><h3 class="case-title">${t('满足客户需求，<br>最小化运输成本。', 'Meet every demand.<br>Minimize shipping cost.')}</h3><div class="case-stats"><div><b class="num">18</b><small>${t('配送中心', 'distribution centers')}</small></div><div><b class="num">18</b><small>${t('客户群体', 'customer groups')}</small></div><div><b class="num">3</b><small>${t('数据文件', 'data files')}</small></div></div></div>
     <div class="upload"><p class="upload-tag">${USERS}<span>${t('用户上传', 'User upload')}</span></p><div class="card case-pd" style="position:relative;padding:22px 22px 20px">${QA}<h3 class="u">${t('问题描述', 'Problem description')}</h3><p class="case-description" style="margin:0;font:400 13.5px/1.75 var(--mono)">${esc(pick(data.query))}</p></div>
@@ -165,20 +172,110 @@ function renderCaseTable() {
 function valuesTable(headers, rows) {
   return `<div class="table-scroll" tabindex="0" role="region" aria-label="${t('可滚动数据表', 'Scrollable data table')}"><table class="data-table"><thead><tr>${headers.map(v => `<th scope="col">${esc(v)}</th>`).join('')}</tr></thead><tbody>${rows.map(row => `<tr>${row.map((v, i) => (i === 0 ? `<th scope="row">${esc(v)}</th>` : `<td>${esc(v)}</td>`)).join('')}</tr>`).join('')}</tbody></table></div>`;
 }
+/* The cases from the demo video, each a recorded GPT-4.1 run, replayed in the same six steps */
+const TYPE_NAMES = {
+  NRM: ['网络收益管理', 'Network revenue management'], RA: ['资源分配', 'Resource allocation'], TP: ['运输问题', 'Transportation problem'],
+  FLP: ['设施选址', 'Facility location'], AP: ['指派问题', 'Assignment problem'], Mixture: ['混合结构', 'Mixed structure'], Others: ['其他问题', 'Other problem'],
+};
+const typeName = (label, en = state.lang === 'en') => TYPE_NAMES[label]?.[en ? 1 : 0] || label;
+const currentCase = () => state.cases?.cases.find(c => c.id === state.caseId) || { id: 'tp', builtin: 'transport' };
+const caseTurn = c => c.turns[Math.min(state.caseTurn, c.turns.length - 1)];
+const fmt = v => Number(v).toLocaleString(state.lang === 'zh' ? 'zh-CN' : 'en-US', { maximumFractionDigits: 2 });
+const turnSwitch = c => (c.turns.length > 1 ? `<div class="switch" role="group" aria-label="${t('对话轮次', 'Conversation turn')}">${c.turns.map((_, i) => `<button type="button" data-turn="${i}" aria-pressed="${i === state.caseTurn}">${i ? t('追问', 'Follow-up') : t('首次提问', 'First request')}</button>`).join('')}</div>` : '');
+function renderCaseList() {
+  const list = $('#case-list');
+  list.hidden = !state.cases;
+  $('.replay-card').classList.toggle('has-cases', Boolean(state.cases));
+  if (!state.cases) return;
+  list.innerHTML = state.cases.groups.map(group => `<p class="case-group">${esc(pick(group.title))}</p>${state.cases.cases.filter(c => c.group === group.id).map(c => `<button type="button" class="case-item" data-case="${c.id}" aria-current="${c.id === state.caseId}"><span class="case-tag mono">${c.type}</span><b>${esc(pick(c.title))}</b><small>${esc(pick(c.brief))}</small></button>`).join('')}`).join('');
+}
+function caseStep(c, step) {
+  const first = c.turns[0], run = caseTurn(c), tables = first.tables;
+  const rows = tables.reduce((sum, x) => sum + x.rows, 0), read = tables.reduce((sum, x) => sum + x.selected, 0);
+  if (step === 0) {
+    const demo = c.demo ? `<a class="link case-demo" href="demo/?lang=en&amp;example=${c.demo}" target="_blank" rel="noopener">${t('在 Demo 中运行这个例子', 'Run this example in the Demo')}</a>` : '';
+    return `<div class="case-grid"><div><span class="case-eyebrow mono">${t('问题描述', 'THE QUERY')}</span><h3 class="case-title">${pick(c.headline)}</h3><p class="case-description">${esc(pick(c.summary))}</p><div class="case-stats"><div><b class="num">${tables.length}</b><small>${t('数据文件', 'data files')}</small></div><div><b class="num">${number(rows)}</b><small>${t('源表数据行', 'source rows')}</small></div>${c.turns.length > 1 ? `<div><b class="num">${c.turns.length}</b><small>${t('轮对话', 'turns')}</small></div>` : ''}</div>${demo}</div>
+    <div class="upload"><p class="upload-tag">${USERS}<span>${t('用户上传', 'User upload')}</span></p><div class="card case-pd">${QA}<h3 class="u">${t('问题描述', 'Problem description')}</h3><div class="case-query" tabindex="0">${c.turns.map((x, i) => `<p>${i ? `<b>${t('追问', 'Follow-up')}</b>` : ''}${esc(i ? x.query.replace(/^Follow-up:\s*/i, '') : x.query)}</p>`).join('')}</div></div>
+    <ul class="files">${tables.map(x => `<li><div class="file"><span class="tag">CSV</span><span><b>${esc(x.name).replace(/_/g, '_<wbr>')}</b><small>${number(x.rows)} ${t('行', 'rows')} × ${x.width} ${t('列', 'columns')}</small></span></div></li>`).join('')}</ul></div></div>`;
+  }
+  if (step === 1) {
+    const label = first.classification.label, kinds = [...new Set(first.workflow.examples)].join(' / '), n = first.workflow.examples.length;
+    const why = first.workflow.mode === 'type-tailored'
+      ? t(`分类智能体对照参考库里最相似的问题，判定为 ${label}（${typeName(label)}），随即启用这一类型的定制工作流。`, `Set against the most similar problems in the reference library, it is labelled ${label} (${typeName(label, true).toLowerCase()}), which switches on the workflow tailored to that type.`)
+      : label === 'Mixture'
+        ? t('它同时带有多种结构，分类为 Mixture（混合结构）。框架改用类型无关工作流：先读出表结构，再写出抽象建模计划。', 'It combines several structures and is labelled Mixture. The framework switches to the type-agnostic workflow: read the table schema, then write an abstract model plan.')
+        : t('它不属于任何预设类型，分类为 Others。框架改用类型无关工作流：先读出表结构，再写出抽象建模计划。', 'It fits none of the predefined types and is labelled Others. The framework switches to the type-agnostic workflow: read the table schema, then write an abstract model plan.');
+    return `<div class="case-grid"><div><span class="case-eyebrow mono">RECOGNIZING THE STRUCTURE</span><h3 class="case-title">${t(`问题分类：${typeName(label)}。`, `Classification: ${typeName(label, true).toLowerCase()}.`)}</h3><p class="case-description">${why}</p><p class="case-mechanism">${t(`工作流参照了参考库中 ${n} 个 ${kinds} 示例。`, `The workflow draws on ${n} ${kinds} example${n > 1 ? 's' : ''} from the reference library.`)}</p></div>
+    <div class="type-board"><div class="type-result"><b>${label}</b><small>${typeName(label, true).toUpperCase()}</small></div><div class="tokens">${['NRM', 'RA', 'TP', 'FLP', 'AP', 'Mixture', 'Others'].map(v => `<span${v === label ? ' class="is-on"' : ''}>${v}</span>`).join('')}</div></div></div>`;
+  }
+  if (step === 2) {
+    const one = tables[Math.min(state.caseTable, tables.length - 1)];
+    const pickTable = tables.length > 1 ? `<select id="case-table-select" class="select" aria-label="${t('选择数据表', 'Choose a data table')}">${tables.map((x, i) => `<option value="${i}"${x === one ? ' selected' : ''}>${esc(x.name)}</option>`).join('')}</select>` : `<span class="mono case-file">${esc(one.name)}</span>`;
+    return `<div class="case-grid"><div><span class="case-eyebrow mono">DATA TABLES</span><h3 class="case-title">${t('只读取需要的数据。', 'Only the data it needs.')}</h3><p class="case-description">${t(`CSVQA 按建模步骤从 ${tables.length} 份表格中读取了 ${number(read)} 行，源表共 ${number(rows)} 行。`, `CSVQA read ${number(read)} of ${number(rows)} source rows across ${tables.length} table${tables.length > 1 ? 's' : ''}, step by step as the model needed them.`)}</p><div class="case-stats"><div><b class="num">${number(rows)}</b><small>${t('源表数据行', 'source rows')}</small></div><div><b class="num">${number(read)}</b><small>${t('读取的行', 'rows read')}</small></div></div></div>
+    <div class="case-data"><div class="data-toolbar"><span class="case-eyebrow mono" style="margin:0">${t('读取的数据', 'ROWS READ')}</span>${pickTable}</div><div id="case-table">${valuesTable(one.columns, one.records)}</div></div></div>`;
+  }
+  if (step === 3) return `<div class="code-step"><div class="code-toolbar"><span class="mono">${first.workflow.mode === 'type-tailored' ? t('数学模型 · 模型生成智能体', 'MATHEMATICAL MODEL · MODEL GENERATION AGENT') : t('抽象建模计划 · 模型生成智能体', 'ABSTRACT MODEL PLAN · MODEL GENERATION AGENT')}</span>${turnSwitch(c)}</div><div class="case-doc" id="case-doc" tabindex="0" role="region" aria-label="${t('数学模型', 'Mathematical model')}">${esc(run.model)}</div></div>`;
+  if (step === 4) return `<div class="code-step"><div class="code-toolbar"><span class="mono">PYTHON · GUROBIPY · ${t('生成程序', 'GENERATED PROGRAM')}</span>${turnSwitch(c)}</div><pre class="code"><code>${highlight(run.code)}</code></pre></div>`;
+  const multi = c.turns.length > 1;
+  const names = [...new Set(c.turns.flatMap(x => x.variables.map(v => v[0])))];
+  const valueOf = (x, name) => x.variables.find(v => v[0] === name)?.[1] ?? 0;
+  const max = Math.max(...c.turns.flatMap(x => x.variables.map(v => Math.abs(v[1])))) || 1;
+  const bars = names.map(name => `<div class="var-row"><span class="var-name" title="${esc(name)}">${esc(name)}</span><div class="var-bars">${c.turns.map((x, i) => `<div class="var-bar${i ? ' b' : ''}"><div class="track"><span class="fill" data-w="${(Math.abs(valueOf(x, name)) / max * 100).toFixed(1)}"></span></div><b>${fmt(valueOf(x, name))}</b></div>`).join('')}</div></div>`).join('');
+  const results = c.turns.map((x, i) => `<div class="solution-block"><p class="solution-label">${multi ? (i ? t('追问后', 'AFTER THE FOLLOW-UP') : t('首次求解', 'FIRST SOLVE')) : t('最优目标值 / OPTIMAL OBJECTIVE', 'OPTIMAL OBJECTIVE')}</p><p class="solution-value${i ? ' b' : ''}">${fmt(x.objective)}</p><p class="case-description">${t('参考目标值', 'Reference objective')}: ${fmt(x.reference)}</p></div>`).join('');
+  return `<div class="case-grid"><div><span class="case-eyebrow mono">THE RECORDED SOLUTION</span><h3 class="case-title">${multi ? t('两次求解，<br>并排保留。', 'Two solves,<br>side by side.') : t('最优方案，<br>与参考值一致。', 'Optimal, and it<br>matches the reference.')}</h3><div class="solution-blocks${multi ? ' is-pair' : ''}">${results}</div>
+    <div class="checks"><span>${t('求解状态：最优', 'Solver status: optimal')}</span><span>${t('目标值与参考最优值一致', 'Objective matches the reference optimum')}</span></div></div>
+    <div class="var-chart"><div class="var-head"><span class="mono">${t('取值非零的决策变量', 'NONZERO DECISION VARIABLES')}</span>${multi ? `<span class="legend"><span><i class="sw"></i>${t('首次', 'First')}</span><span><i class="sw sw-b"></i>${t('追问后', 'Follow-up')}</span></span>` : `<span class="mono">${t(`共 ${run.variableCount} 个变量`, `${run.variableCount} variables`)}</span>`}</div><div class="var-list">${bars}</div></div></div>`;
+}
+// The model text is Markdown with LaTeX; the Demo's renderer and KaTeX load the first time a model is shown.
+let richText = null;
+function loadRichText() {
+  if (!richText) {
+    const css = document.createElement('link');
+    css.rel = 'stylesheet';
+    css.href = 'assets/vendor/katex/katex.min.css';
+    document.head.append(css);
+    const katex = new Promise((resolve, reject) => {
+      const script = Object.assign(document.createElement('script'), { src: 'assets/vendor/katex/katex.min.js', onload: resolve, onerror: reject });
+      document.head.append(script);
+    });
+    richText = Promise.all([import('../demo/rich-text.js'), katex]).then(([module]) => module);
+  }
+  return richText;
+}
+function renderModelDoc(text) {
+  const host = $('#case-doc');
+  loadRichText().then(({ markdown, math }) => {
+    if (!host.isConnected) return;
+    const doc = markdown(text);
+    host.replaceChildren(doc);
+    math(doc);
+  }).catch(() => {});
+}
 function fillStep(step, live = true, enter = '') {
-  $('#replay-content').innerHTML = `<div class="step-in${enter}">${stepHTML(step)}</div>`;
-  if (step === 2) { $('#case-data-select').value = state.dataTable; renderCaseTable(); }
-  if (step === 5 && live) drawFlows();
+  const c = currentCase();
+  $('#replay-content').innerHTML = `<div class="step-in${enter}">${c.builtin ? transportStep(step) : caseStep(c, step)}</div>`;
+  if (c.builtin) {
+    if (step === 2) { $('#case-data-select').value = state.dataTable; renderCaseTable(); }
+    if (step === 5 && live) drawFlows();
+  } else if (live) {
+    if (step === 3) renderModelDoc(caseTurn(c).model);
+    if (step === 5) requestAnimationFrame(() => fillBars($('#replay-content')));
+  }
 }
 // Every step takes the height of the tallest one, so the card keeps one size from input to solution.
-let replayWidth = 0;
+let replayWidth = 0, resizeTimer = 0;
 function sizeReplay() {
-  const panel = $('#replay-content');
+  const panel = $('#replay-content'), current = state.caseId;
   replayWidth = panel.clientWidth;
   panel.style.height = '';
   panel.classList.add('is-measuring');
   let tallest = 0;
-  for (let i = 0; i < STEPS.length; i++) { fillStep(i, false); tallest = Math.max(tallest, panel.offsetHeight); }
+  // Measured over every case, so switching cases keeps the frame as well.
+  for (const c of state.cases?.cases || [currentCase()]) {
+    state.caseId = c.id;
+    for (let i = 0; i < STEPS.length; i++) { fillStep(i, false); tallest = Math.max(tallest, panel.offsetHeight); }
+  }
+  state.caseId = current;
   panel.classList.remove('is-measuring');
   panel.style.height = `${Math.ceil(tallest)}px`;
 }
@@ -191,7 +288,7 @@ function renderReplay(enter = '') {
   $('#replay-prev').disabled = state.replay === 0;
   $('#replay-next').disabled = state.replay === STEPS.length - 1;
   const play = $('#replay-play');
-  play.innerHTML = `<i>${state.playing && !reduced ? 'Ⅱ' : '▶'}</i><span>${reduced ? t('手动浏览', 'Manual view') : state.playing ? t('暂停', 'Pause') : state.replay === STEPS.length - 1 ? t('重新播放', 'Replay') : t('播放', 'Play')}</span>`;
+  play.innerHTML = `<i>${state.playing && !reduced ? 'Ⅱ' : '▶'}</i><span>${reduced ? t('手动浏览', 'Manual view') : state.playing ? t('暂停', 'Pause') : t('播放', 'Play')}</span>`;
   play.disabled = reduced;
   play.setAttribute('aria-pressed', String(state.playing && !reduced));
   replayPlay.restart();
@@ -208,9 +305,20 @@ function stopIntro() { state.intro = false; deck.dataset.left = '0'; }
 function selectReplay(index, manual = true) {
   if (manual) { state.playing = false; stopIntro(); }
   state.replay = clamp(index, 0, STEPS.length - 1);
-  if (state.replay === STEPS.length - 1) state.playing = false;
   renderReplay();
 }
+function selectCase(id, manual = true) {
+  if (!state.cases || id === state.caseId) return;
+  if (manual) { state.playing = false; stopIntro(); }
+  Object.assign(state, { caseId: id, caseTurn: 0, caseTable: 0, replay: 0 });
+  const list = $('#case-list');
+  for (const item of $$('[data-case]', list)) item.setAttribute('aria-current', String(item.dataset.case === id));
+  // On narrow screens the list scrolls sideways; bring the chosen case into it.
+  const chosen = $(`[data-case="${id}"]`, list);
+  if (list.scrollWidth > list.clientWidth + 1) list.scrollTo({ left: chosen.offsetLeft - 8, behavior: reduced ? 'auto' : 'smooth' });
+  renderReplay(' is-dealt');
+}
+$('#case-list').addEventListener('click', event => { const item = event.target.closest('[data-case]'); if (item) selectCase(item.dataset.case); });
 $('#replay-tabs').addEventListener('click', event => { const button = event.target.closest('[data-replay]'); if (button) selectReplay(Number(button.dataset.replay)); });
 tabKeys($('#replay-tabs'), button => selectReplay(Number(button.dataset.replay)));
 $('#replay-prev').addEventListener('click', () => selectReplay(state.replay - 1));
@@ -223,11 +331,23 @@ $('#replay-play').addEventListener('click', () => {
   renderReplay();
 });
 $('#replay-content').addEventListener('change', event => {
-  if (event.target.id !== 'case-data-select') return;
+  if (event.target.id === 'case-data-select') {
+    state.dataTable = event.target.value;
+    renderCaseTable();
+  } else if (event.target.id === 'case-table-select') {
+    state.caseTable = Number(event.target.value);
+    const one = currentCase().turns[0].tables[state.caseTable];
+    $('#case-table').innerHTML = valuesTable(one.columns, one.records);
+  } else return;
   state.playing = false;
-  state.dataTable = event.target.value;
-  renderCaseTable();
   replayPlay.stop();
+});
+$('#replay-content').addEventListener('click', event => {
+  const button = event.target.closest('[data-turn]');
+  if (!button) return;
+  state.caseTurn = Number(button.dataset.turn);
+  state.playing = false;
+  renderReplay();
 });
 $('#replay-content').addEventListener('focusin', () => { stopIntro(); if (state.playing) { state.playing = false; replayPlay.stop(); } });
 
@@ -757,7 +877,8 @@ addEventListener('resize', () => {
   measure(); onScroll();
   for (const tabs of $$('.tabs.has-ink')) placeInk(tabs, true);
   moveNavInk(navCurrent, true);
-  if (state.caseData && $('#replay-content').clientWidth !== replayWidth) { sizeReplay(); fillStep(state.replay); }
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(() => { if (state.caseData && $('#replay-content').clientWidth !== replayWidth) { sizeReplay(); fillStep(state.replay); measureLayers(); } }, 150);
 });
 
 /* Scene */
@@ -783,13 +904,16 @@ for (const el of $$('.strip .stat, .film-head > div, .film-chapters, .overview .
 syncDemoLinks();
 measure();
 onScroll();
-const [research, caseData, filmData] = await Promise.all([
+const [research, caseData, filmData, cases] = await Promise.all([
   fetch('data/research.json').then(r => r.json()),
   fetch('data/case.json').then(r => r.json()),
   fetch('data/film.json').then(r => r.json()).catch(() => null),
+  fetch('data/cases.json').then(r => r.json()).catch(() => null),
 ]);
 state.research = research;
 state.caseData = caseData;
+state.cases = cases;
+if (cases) state.caseId = cases.cases[0].id;
 state.film = filmData;
 if (state.intro && deck.getBoundingClientRect().top > innerHeight * .74) { state.replay = STEPS.length - 1; deck.dataset.left = '2'; } else stopIntro();
 applyLanguage();
