@@ -1,13 +1,13 @@
 {
-  "duration": {"en": 313.7, "zh": 352.5},
+  "duration": {"en": 330.2, "zh": 363.2},
   "src": {"en": "media/lean-llm-opt-demo-en.mp4", "zh": "media/lean-llm-opt-demo-zh.mp4"},
   "poster": {"en": "media/lean-llm-opt-demo-en.jpg", "zh": "media/lean-llm-opt-demo-zh.jpg"},
   "chapters": [
     {"en": "Introduction", "zh": "引言", "at": {"en": 0, "zh": 0}},
-    {"en": "Framework", "zh": "框架", "at": {"en": 56.9, "zh": 64.3}},
-    {"en": "Live demo", "zh": "在线 Demo", "at": {"en": 92.7, "zh": 105.2}},
-    {"en": "Hard cases", "zh": "难题", "at": {"en": 194.8, "zh": 223.1}},
-    {"en": "Results", "zh": "实验结果", "at": {"en": 238.6, "zh": 272.1}},
-    {"en": "Strengths", "zh": "优势", "at": {"en": 278.8, "zh": 312.8}}
+    {"en": "Framework", "zh": "框架", "at": {"en": 57.0, "zh": 64.5}},
+    {"en": "Live demo", "zh": "在线 Demo", "at": {"en": 92.8, "zh": 105.4}},
+    {"en": "Hard cases", "zh": "难题", "at": {"en": 196.3, "zh": 222.3}},
+    {"en": "Results", "zh": "实验结果", "at": {"en": 244.3, "zh": 274.8}},
+    {"en": "Strengths", "zh": "优势", "at": {"en": 285.6, "zh": 315.0}}
   ]
 }
