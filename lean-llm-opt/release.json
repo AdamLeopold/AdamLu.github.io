@@ -2,11 +2,11 @@
   "format": "lean-llm-opt-static-v1",
   "deployment": "static",
   "demo": "in-browser-gpt-4.1-highs+visitor-local-gpt-oss",
-  "builtAt": "2026-11-21T15:11:21.565Z",
-  "runtimeFileCount": 109,
-  "fileCount": 115,
-  "payloadBytes": 116862149,
-  "totalBytes": 116880772,
+  "builtAt": "2026-11-21T15:27:33.408Z",
+  "runtimeFileCount": 104,
+  "fileCount": 110,
+  "payloadBytes": 116724023,
+  "totalBytes": 116741898,
   "hashAlgorithm": "sha256",
   "files": {
     ".nojekyll": {
@@ -62,12 +62,12 @@
       "sha256": "79d9b047ffe9975bc2dd3dff8d6737ebe48d226e4cd00136cf964e9ab8e97444"
     },
     "assets/site.css": {
-      "bytes": 60807,
-      "sha256": "8078882ed14d0ec8f1fd92545de36db0d2629140a53c4cf6c192277cdcd43f3d"
+      "bytes": 58275,
+      "sha256": "18bccd4ba1fe46dde9f845c21f6cc8991d3a4da4242941154198f206b19e22b3"
     },
     "assets/site.js": {
-      "bytes": 67570,
-      "sha256": "8066921fcd4046b2dcfc4d976a406743014996da30751935edcd496e70ec139d"
+      "bytes": 55487,
+      "sha256": "28d8f9babfade89fcda12aee997beb539715ac4acfb25290c8bdcc8758a480ec"
     },
     "assets/vendor/dompurify/LICENSE": {
       "bytes": 11358,
@@ -365,13 +365,9 @@
       "bytes": 1272972,
       "sha256": "76dea8151bc9352aef3528b4262e249b2604f62543828328db978d060d61a495"
     },
-    "data/case.json": {
-      "bytes": 54713,
-      "sha256": "d584f9d6ee6327fe56b1fb767f76cfa0a39d346e77ab7e55303a441295c9cad6"
-    },
     "data/cases.json": {
-      "bytes": 66862,
-      "sha256": "7c1eaca47b29d4813f5a3d185ff571694d92e1cc3d541bc58423e0d8fe8e4012"
+      "bytes": 39882,
+      "sha256": "97e4fe6a5a48de738e9a8da5b6e7ecdc19de9af4691649578b3a47314b9e7529"
     },
     "data/film.json": {
       "bytes": 702,
@@ -382,24 +378,8 @@
       "sha256": "100a89ed758228eeefd4038a552fa37ac0622124d2a53799526c6e5aad726095"
     },
     "data/SOURCES.md": {
-      "bytes": 6536,
-      "sha256": "be39ca35c417d5ed75f7f2e6335ce60b1eab788c7d39826c68f87b4ec7b80659"
-    },
-    "data/transport-code.py": {
-      "bytes": 34738,
-      "sha256": "0815079d26294850f3efcdd8ee58067a90fab8d9c964f8f153d24e3799986454"
-    },
-    "data/transport/customer_demand.csv": {
-      "bytes": 159,
-      "sha256": "5499656a0e8e937cb80210810116f39b670b04c1e0883d781151e75e1c10defc"
-    },
-    "data/transport/supply_capacity.csv": {
-      "bytes": 165,
-      "sha256": "f8f169fca61e02f19bff5da273652ba016368ea526f6d0abead02007c23ee950"
-    },
-    "data/transport/transportation_costs.csv": {
-      "bytes": 6142,
-      "sha256": "d15d2c1db282122b170697a44c1a87961d3266f8d803948d470218c22c652275"
+      "bytes": 6749,
+      "sha256": "2cf78c19cbb6249b058580d70394ca7c523ce4480a9de32aa1e91fc20093347c"
     },
     "demo/browser-runtime.js": {
       "bytes": 54843,
@@ -446,8 +426,8 @@
       "sha256": "be45ceaa2b552573403b37d5c9e4766238acb2e6868f3dc4fdbbab07e0f53b83"
     },
     "index.html": {
-      "bytes": 29652,
-      "sha256": "8b30d0973227f774bb01748165a8f2024b2b81dad397c35e44aba545d059fce3"
+      "bytes": 28825,
+      "sha256": "2805e7e12acc6eca895f10372a86c03f501db303ca721f35a322ac8a54f80884"
     },
     "media/lean-llm-opt-demo-en.jpg": {
       "bytes": 86589,

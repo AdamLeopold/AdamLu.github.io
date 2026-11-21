@@ -34,13 +34,13 @@ MAMO Easy 包含 642 例，IndustryOR 包含 100 例。NL4OPT 图表沿用稿件
 
 MAMO Easy contains 642 cases, and IndustryOR contains 100. The NL4OPT chart retains manuscript-reported rates of 94.7% and 93.5%. Its public per-instance files contain 245 nonempty queries, while the summary rates correspond to a denominator of 246, so this chart reports the published percentages. Other datasets are available through the research resources.
 
-## 运输规划案例 / Transportation case
+## 案例回放 / Case replays
 
-TP1 包括 18 个配送中心、18 个客户和 324 个连续运输变量。回放提供该次记录的输入、数学模型、Python/Gurobi 程序和运输方案。三维导览介绍框架工作机制。
+案例回放中的四个案例都是 GPT-4.1 的记录运行：销售记录、两道工序生产和全天候排班取自 Large-Scale-OR 基准（L101-013、L101-073、L101-074），新加坡航空案例使用航空收益管理数据。每个案例展示问题、分类与工作流、读取的数据、数学模型、生成代码和最优解。
 
-TP1 contains 18 distribution centers, 18 customers, and 324 continuous shipment variables. The replay provides the recorded inputs, formulation, Python/Gurobi program, and shipping plan. The 3D tour describes the framework’s workflow.
+The four case replays are recorded GPT-4.1 runs: the sales records, two-stage production and 24-hour staffing cases come from the Large-Scale-OR benchmark (L101-013, L101-073, L101-074), and the Singapore Airlines case uses airline revenue management data. Each case shows the question, the classification and workflow, the rows read, the model, the generated code and the optimal solution.
 
-[TP1 原始数据 / Source tables](https://github.com/CoraLiang01/lean-llm-opt/tree/main/Test_Dataset/Large-scale-or/TP_testing/TP1) · [案例导出 / Case export](case.json) · [生成程序 / Generated program](transport-code.py)
+[Large-Scale-OR 数据 / Benchmark data](https://github.com/CoraLiang01/lean-llm-opt/tree/main/Test_Dataset/Large-scale-or) · [案例数据 / Case data](cases.json)
 
 交互式 Demo 的每次运行根据用户输入、上传数据和所选模型生成新产物；结果保存在相应的会话版本中。
 

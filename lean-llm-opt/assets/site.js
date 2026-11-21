@@ -7,8 +7,8 @@ const store = (key, value) => { try { localStorage.setItem(key, value); } catch 
 const reduced = root.dataset.motion === 'reduced';
 const AUTOPLAY_DELAY = 10000;
 const state = {
-  lang: root.dataset.lang, theme: root.dataset.theme, research: null, caseData: null, scene: null,
-  replay: 0, intro: !reduced, cases: null, caseId: 'tp', caseTurn: 0, caseTable: 0, dataTable: 'demand', playing: !reduced, study: 'large', view: 'overall', studyPlaying: !reduced, lifted: false,
+  lang: root.dataset.lang, theme: root.dataset.theme, research: null, scene: null,
+  replay: 0, intro: !reduced, cases: null, caseId: '', caseTurn: 0, caseTable: 0, playing: !reduced, study: 'large', view: 'overall', studyPlaying: !reduced, lifted: false,
 };
 const t = (zh, en) => (state.lang === 'zh' ? zh : en);
 const pick = value => (value && typeof value === 'object' ? value[state.lang] ?? value.en : value);
@@ -60,7 +60,7 @@ $('#theme-toggle').addEventListener('click', () => {
   crossfade(applyTheme);
 });
 function renderAll() {
-  if (!state.research || !state.caseData) return;
+  if (!state.research || !state.cases) return;
   renderCaseList();
   sizeReplay();
   renderReplay();
@@ -129,65 +129,29 @@ const replayPlay = autoplay($('#replay'), () => state.playing && !state.intro, (
   else selectReplay(0, false);
 });
 const deck = $('.replay-deck');
-const FILES = () => [
-  ['customer_demand.csv', t('18 个客户群体的每日需求', 'Daily demand for 18 customer groups')],
-  ['supply_capacity.csv', t('18 个配送中心的供应能力', 'Capacity of 18 distribution centers')],
-  ['transportation_costs.csv', t('18 × 18 单位运输成本矩阵', '18 × 18 unit transportation costs')],
-];
 const QA = '<svg class="qa" viewBox="0 0 64 56" aria-hidden="true"><path class="qa-a" d="M26 20h28a8 8 0 0 1 8 8v12a8 8 0 0 1-8 8h-2l2 7-9-7H26a8 8 0 0 1-8-8V28a8 8 0 0 1 8-8Z"/><text x="40" y="42">A</text><path class="qa-q" d="M8 2h24a8 8 0 0 1 8 8v12a8 8 0 0 1-8 8H15l-9 7 2-7a8 8 0 0 1-8-8V10a8 8 0 0 1 8-8Z"/><text x="20" y="24">Q</text></svg>';
 const USERS = '<svg viewBox="0 0 40 28" aria-hidden="true"><circle cx="14" cy="8" r="5"/><path d="M4 26c0-6 4.5-10 10-10s10 4 10 10"/><circle cx="27" cy="9" r="4.2"/><path d="M24 16.6c1-.4 2-.6 3-.6 5 0 9 3.6 9 9.4"/></svg>';
-function transportStep(step) {
-  const data = state.caseData;
-  if (step === 0) return `<div class="case-grid"><div><span class="case-eyebrow mono">${t('问题描述', 'THE QUERY')}</span><h3 class="case-title">${t('满足客户需求，<br>最小化运输成本。', 'Meet every demand.<br>Minimize shipping cost.')}</h3><div class="case-stats"><div><b class="num">18</b><small>${t('配送中心', 'distribution centers')}</small></div><div><b class="num">18</b><small>${t('客户群体', 'customer groups')}</small></div><div><b class="num">3</b><small>${t('数据文件', 'data files')}</small></div></div></div>
-    <div class="upload"><p class="upload-tag">${USERS}<span>${t('用户上传', 'User upload')}</span></p><div class="card case-pd" style="position:relative;padding:22px 22px 20px">${QA}<h3 class="u">${t('问题描述', 'Problem description')}</h3><p class="case-description" style="margin:0;font:400 13.5px/1.75 var(--mono)">${esc(pick(data.query))}</p></div>
-    <ul class="files">${FILES().map(([name, note]) => `<li><a href="data/transport/${name}" download><span class="tag">CSV</span><span><b>${name.replace(/_/g, '_<wbr>')}</b><small>${note}</small></span><i>↓</i></a></li>`).join('')}</ul></div></div>`;
-  if (step === 1) return `<div class="case-grid"><div><span class="case-eyebrow mono">RECOGNIZING THE STRUCTURE</span><h3 class="case-title">${t('问题分类：运输问题。', 'Classification: transportation problem.')}</h3><p class="case-description">${t('分类结果为 TP（运输问题）：配送中心受供应能力限制，客户有需求下界，每条运输线路有单位成本。', 'The task is classified as TP, a transportation problem: distribution centers have supply limits, customers have minimum demand, and each route has a unit cost.')}</p><p class="case-mechanism">${t('框架中，TP 分类用于选择运输问题的建模工作流。', 'Within the framework, the TP classification selects the transportation modeling workflow.')}</p></div>
-    <div class="type-board"><div class="type-result"><b>TP</b><small>TRANSPORTATION PROBLEM</small></div><div class="tokens">${['NRM', 'RA', 'TP', 'FLP', 'AP', 'Mixture', 'Others'].map(v => `<span${v === 'TP' ? ' class="is-on"' : ''}>${v}</span>`).join('')}</div></div></div>`;
-  if (step === 2) return `<div class="case-grid"><div><span class="case-eyebrow mono">DATA TABLES</span><h3 class="case-title">${t('数据：需求、容量与成本。', 'Data: demand, capacity, and cost.')}</h3><p class="case-description">${esc(pick(data.csvObservation))}</p><div class="case-stats"><div><b class="num">18 × 18</b><small>${t('运输成本矩阵', 'shipping cost matrix')}</small></div><div><b class="num">54</b><small>${t('源表数据行', 'source table rows')}</small></div></div></div>
-    <div class="case-data"><div class="data-toolbar"><span class="case-eyebrow mono" style="margin:0">SOURCE TABLES</span><select id="case-data-select" class="select" aria-label="${t('选择数据表', 'Choose a data table')}"><option value="demand">customer_demand.csv</option><option value="supply">supply_capacity.csv</option><option value="costs">transportation_costs.csv</option></select></div><div id="case-table"></div></div></div>`;
-  if (step === 3) return `<div class="case-grid"><div><span class="case-eyebrow mono">THE MATHEMATICAL FORMULATION</span><h3 class="case-title">${t('变量、目标与约束。', 'Variables, objective, and constraints.')}</h3><p class="case-description">${esc(pick(data.model.variables))}</p><ul class="constraints">${data.model.constraints.map(v => `<li>${esc(pick(v))}</li>`).join('')}</ul></div>
-    <div class="math"><div class="formula"><p><em>min</em> <span>Σ<sub>i</sub> Σ<sub>j</sub> c<sub>ij</sub> x<sub>ij</sub></span></p><p><em>s.t.</em> <span>Σ<sub>i</sub> x<sub>ij</sub> ≥ d<sub>j</sub></span><small>∀ j</small></p><p><em></em> <span>Σ<sub>j</sub> x<sub>ij</sub> ≤ s<sub>i</sub></span><small>∀ i</small></p><p><em></em> <span>x<sub>ij</sub> ≥ 0</span><small>∀ i, j</small></p></div><p class="math-key">${t('c：单位运输成本　d：客户需求　s：配送中心供应能力', 'c: unit shipping cost · d: customer demand · s: distribution-center capacity')}</p></div></div>`;
-  if (step === 4) {
-    const start = data.code.indexOf('import gurobipy');
-    return `<div class="code-step"><div class="code-toolbar"><span class="mono">PYTHON / GUROBI · ${t('生成程序', 'GENERATED PROGRAM')}</span><a class="link" href="data/transport-code.py" download>${t('下载完整代码 ↓', 'Download full code ↓')}</a></div><pre class="code"><code>${highlight(start >= 0 ? data.code.slice(start) : data.code)}</code></pre><p class="footnote">${t('运行程序时，将 transport 数据目录放在脚本同级目录。', 'Place the transport data directory beside the script to run the program.')}</p></div>`;
-  }
-  return `<div class="case-grid"><div><span class="case-eyebrow mono">THE RECORDED SOLUTION</span><h3 class="case-title">${t('最优方案：<br>28 条运输流。', 'Optimal plan:<br>28 active shipping routes.')}</h3><p class="solution-label">${t('最优目标值 / TOTAL TRANSPORT COST', 'OPTIMAL OBJECTIVE / TOTAL TRANSPORT COST')}</p><p class="solution-value">${number(data.objective, 4)}</p><p class="case-description" style="margin-top:6px">${t('参考目标值', 'Reference objective')}: ${number(data.reference_objective, 4)}</p>
-    <div class="checks"><span>${t('全部客户需求得到满足', 'Every customer demand is satisfied')}</span><span>${t('全部配送中心容量约束得到满足', 'All distribution-center capacities are respected')}</span><span>${t('最优目标值与参考值匹配', 'Optimal objective matches the reference')}</span></div><a class="link" href="data/case.json" download style="margin-top:18px">${t('下载案例数据 ↓', 'Download the case data ↓')}</a></div>
-    <div class="flow-wrap"><svg id="flow-svg" role="img" viewBox="0 0 760 470"></svg><p class="flow-note" id="flow-inspector" role="status">${t('带宽表示运量；悬停节点查看相关流向', 'Band width encodes shipment volume; hover a node to trace its flows')}</p></div></div>`;
-}
 function highlight(code) {
   return code.split('\n').map((line, i) => {
     const parts = line.split(/((?:'(?:[^'\\]|\\.)*'|"(?:[^"\\]|\\.)*")|#.*$|\b(?:import|from|as|for|in|if|else|print|return)\b)/g);
     return `<span class="ln">${i + 1}</span>` + parts.map(part => (/^['"]/.test(part) ? `<span class="str">${esc(part)}</span>` : /^#/.test(part) ? `<span class="com">${esc(part)}</span>` : /^(import|from|as|for|in|if|else|print|return)$/.test(part) ? `<span class="kw">${part}</span>` : esc(part))).join('');
   }).join('\n');
 }
-function renderCaseTable() {
-  const data = state.caseData;
-  let headers, rows;
-  if (state.dataTable === 'demand') { headers = [t('客户', 'Customer'), t('每日需求', 'Daily demand')]; rows = data.customers.map(v => [v.id, number(v.demand)]); }
-  else if (state.dataTable === 'supply') { headers = [t('配送中心', 'Source'), t('供应能力', 'Capacity')]; rows = data.suppliers.map(v => [v.id, number(v.capacity)]); }
-  else { headers = ['S / C', ...data.customers.map(v => v.id)]; rows = data.costs.map((v, i) => [data.suppliers[i].id, ...v.map(c => number(c, 2))]); }
-  $('#case-table').innerHTML = valuesTable(headers, rows);
-}
 function valuesTable(headers, rows) {
   return `<div class="table-scroll" tabindex="0" role="region" aria-label="${t('可滚动数据表', 'Scrollable data table')}"><table class="data-table"><thead><tr>${headers.map(v => `<th scope="col">${esc(v)}</th>`).join('')}</tr></thead><tbody>${rows.map(row => `<tr>${row.map((v, i) => (i === 0 ? `<th scope="row">${esc(v)}</th>` : `<td>${esc(v)}</td>`)).join('')}</tr>`).join('')}</tbody></table></div>`;
 }
-/* The cases from the demo video, each a recorded GPT-4.1 run, replayed in the same six steps */
+/* Case replays: each case is a recorded GPT-4.1 run, shown in the same six steps */
 const TYPE_NAMES = {
   NRM: ['网络收益管理', 'Network revenue management'], RA: ['资源分配', 'Resource allocation'], TP: ['运输问题', 'Transportation problem'],
   FLP: ['设施选址', 'Facility location'], AP: ['指派问题', 'Assignment problem'], Mixture: ['混合结构', 'Mixed structure'], Others: ['其他问题', 'Other problem'],
 };
 const typeName = (label, en = state.lang === 'en') => TYPE_NAMES[label]?.[en ? 1 : 0] || label;
-const currentCase = () => state.cases?.cases.find(c => c.id === state.caseId) || { id: 'tp', builtin: 'transport' };
+const currentCase = () => state.cases.cases.find(c => c.id === state.caseId) || state.cases.cases[0];
 const caseTurn = c => c.turns[Math.min(state.caseTurn, c.turns.length - 1)];
 const fmt = v => Number(v).toLocaleString(state.lang === 'zh' ? 'zh-CN' : 'en-US', { maximumFractionDigits: 2 });
 const turnSwitch = c => (c.turns.length > 1 ? `<div class="switch" role="group" aria-label="${t('对话轮次', 'Conversation turn')}">${c.turns.map((_, i) => `<button type="button" data-turn="${i}" aria-pressed="${i === state.caseTurn}">${i ? t('追问', 'Follow-up') : t('首次提问', 'First request')}</button>`).join('')}</div>` : '');
 function renderCaseList() {
-  const list = $('#case-list');
-  list.hidden = !state.cases;
-  $('.replay-card').classList.toggle('has-cases', Boolean(state.cases));
-  if (!state.cases) return;
-  list.innerHTML = state.cases.groups.map(group => `<p class="case-group">${esc(pick(group.title))}</p>${state.cases.cases.filter(c => c.group === group.id).map(c => `<button type="button" class="case-item" data-case="${c.id}" aria-current="${c.id === state.caseId}"><span class="case-tag mono">${c.type}</span><b>${esc(pick(c.title))}</b><small>${esc(pick(c.brief))}</small></button>`).join('')}`).join('');
+  $('#case-list').innerHTML = state.cases.cases.map(c => `<button type="button" class="case-item" data-case="${c.id}" aria-current="${c.id === state.caseId}"><span class="case-tag mono">${c.type}</span><b>${esc(pick(c.title))}</b></button>`).join('');
 }
 function caseStep(c, step) {
   const first = c.turns[0], run = caseTurn(c), tables = first.tables;
@@ -211,7 +175,7 @@ function caseStep(c, step) {
   if (step === 2) {
     const one = tables[Math.min(state.caseTable, tables.length - 1)];
     const pickTable = tables.length > 1 ? `<select id="case-table-select" class="select" aria-label="${t('选择数据表', 'Choose a data table')}">${tables.map((x, i) => `<option value="${i}"${x === one ? ' selected' : ''}>${esc(x.name)}</option>`).join('')}</select>` : `<span class="mono case-file">${esc(one.name)}</span>`;
-    return `<div class="case-grid"><div><span class="case-eyebrow mono">DATA TABLES</span><h3 class="case-title">${t('只读取需要的数据。', 'Only the data it needs.')}</h3><p class="case-description">${t(`CSVQA 按建模步骤从 ${tables.length} 份表格中读取了 ${number(read)} 行，源表共 ${number(rows)} 行。`, `CSVQA read ${number(read)} of ${number(rows)} source rows across ${tables.length} table${tables.length > 1 ? 's' : ''}, step by step as the model needed them.`)}</p><div class="case-stats"><div><b class="num">${number(rows)}</b><small>${t('源表数据行', 'source rows')}</small></div><div><b class="num">${number(read)}</b><small>${t('读取的行', 'rows read')}</small></div></div></div>
+    return `<div class="case-grid"><div><span class="case-eyebrow mono">DATA TABLES</span><h3 class="case-title">${t('读取的数据。', 'The data it read.')}</h3><p class="case-description">${t(`CSVQA 按建模步骤从 ${tables.length} 份表格中读取了 ${number(read)} 行，源表共 ${number(rows)} 行。`, `CSVQA read ${number(read)} of ${number(rows)} source rows across ${tables.length} table${tables.length > 1 ? 's' : ''}, step by step as the model needed them.`)}</p><div class="case-stats"><div><b class="num">${number(rows)}</b><small>${t('源表数据行', 'source rows')}</small></div><div><b class="num">${number(read)}</b><small>${t('读取的行', 'rows read')}</small></div></div></div>
     <div class="case-data"><div class="data-toolbar"><span class="case-eyebrow mono" style="margin:0">${t('读取的数据', 'ROWS READ')}</span>${pickTable}</div><div id="case-table">${valuesTable(one.columns, one.records)}</div></div></div>`;
   }
   if (step === 3) return `<div class="code-step"><div class="code-toolbar"><span class="mono">${first.workflow.mode === 'type-tailored' ? t('数学模型 · 模型生成智能体', 'MATHEMATICAL MODEL · MODEL GENERATION AGENT') : t('抽象建模计划 · 模型生成智能体', 'ABSTRACT MODEL PLAN · MODEL GENERATION AGENT')}</span>${turnSwitch(c)}</div><div class="case-doc" id="case-doc" tabindex="0" role="region" aria-label="${t('数学模型', 'Mathematical model')}">${esc(run.model)}</div></div>`;
@@ -253,14 +217,10 @@ function renderModelDoc(text) {
 }
 function fillStep(step, live = true, enter = '') {
   const c = currentCase();
-  $('#replay-content').innerHTML = `<div class="step-in${enter}">${c.builtin ? transportStep(step) : caseStep(c, step)}</div>`;
-  if (c.builtin) {
-    if (step === 2) { $('#case-data-select').value = state.dataTable; renderCaseTable(); }
-    if (step === 5 && live) drawFlows();
-  } else if (live) {
-    if (step === 3) renderModelDoc(caseTurn(c).model);
-    if (step === 5) requestAnimationFrame(() => fillBars($('#replay-content')));
-  }
+  $('#replay-content').innerHTML = `<div class="step-in${enter}">${caseStep(c, step)}</div>`;
+  if (!live) return;
+  if (step === 3) renderModelDoc(caseTurn(c).model);
+  if (step === 5) requestAnimationFrame(() => fillBars($('#replay-content')));
 }
 // Every step takes the height of the tallest one, so the card keeps one size from input to solution.
 let replayWidth = 0, resizeTimer = 0;
@@ -271,7 +231,7 @@ function sizeReplay() {
   panel.classList.add('is-measuring');
   let tallest = 0;
   // Measured over every case, so switching cases keeps the frame as well.
-  for (const c of state.cases?.cases || [currentCase()]) {
+  for (const c of state.cases.cases) {
     state.caseId = c.id;
     for (let i = 0; i < STEPS.length; i++) { fillStep(i, false); tallest = Math.max(tallest, panel.offsetHeight); }
   }
@@ -331,14 +291,10 @@ $('#replay-play').addEventListener('click', () => {
   renderReplay();
 });
 $('#replay-content').addEventListener('change', event => {
-  if (event.target.id === 'case-data-select') {
-    state.dataTable = event.target.value;
-    renderCaseTable();
-  } else if (event.target.id === 'case-table-select') {
-    state.caseTable = Number(event.target.value);
-    const one = currentCase().turns[0].tables[state.caseTable];
-    $('#case-table').innerHTML = valuesTable(one.columns, one.records);
-  } else return;
+  if (event.target.id !== 'case-table-select') return;
+  state.caseTable = Number(event.target.value);
+  const one = currentCase().turns[0].tables[state.caseTable];
+  $('#case-table').innerHTML = valuesTable(one.columns, one.records);
   state.playing = false;
   replayPlay.stop();
 });
@@ -350,67 +306,6 @@ $('#replay-content').addEventListener('click', event => {
   renderReplay();
 });
 $('#replay-content').addEventListener('focusin', () => { stopIntro(); if (state.playing) { state.playing = false; replayPlay.stop(); } });
-
-function drawFlows() {
-  const data = state.caseData;
-  const svg = $('#flow-svg');
-  const W = 760, H = 470, top = 30, gap = 6, x0 = 46, x1 = W - 46, nodeW = 3;
-  const order = list => list.map(item => item.id).sort((a, b) => Number(a.slice(1)) - Number(b.slice(1)));
-  const S = order(data.suppliers), C = order(data.customers);
-  const outflow = Object.fromEntries(S.map(id => [id, 0])), inflow = Object.fromEntries(C.map(id => [id, 0]));
-  for (const f of data.flows) { outflow[f.source] += f.value; inflow[f.target] += f.value; }
-  const total = data.flows.reduce((sum, f) => sum + f.value, 0);
-  const minH = 1.5;
-  const scale = (H - top - gap * (S.length - 1) - minH * S.length) / total;
-  const layout = (ids, amount) => {
-    let y = top; const pos = {};
-    for (const id of ids) { const h = amount[id] * scale + minH; pos[id] = { y, h, cursor: y + minH / 2 }; y += h + gap; }
-    return pos;
-  };
-  const sp = layout(S, outflow), cp = layout(C, inflow);
-  const flows = [...data.flows].sort((a, b) => (Number(a.target.slice(1)) - Number(b.target.slice(1))) || (Number(a.source.slice(1)) - Number(b.source.slice(1))));
-  const bySource = [...data.flows].sort((a, b) => Number(a.target.slice(1)) - Number(b.target.slice(1)));
-  const sy = new Map();
-  for (const f of bySource) { const n = sp[f.source]; sy.set(f, n.cursor); n.cursor += f.value * scale; }
-  const mid = (x0 + x1) / 2;
-  const bands = flows.map(f => {
-    const h = f.value * scale, ya = sy.get(f), yb = cp[f.target].cursor; cp[f.target].cursor += h;
-    const d = `M${x0 + nodeW},${ya}C${mid},${ya} ${mid},${yb} ${x1},${yb}L${x1},${yb + h}C${mid},${yb + h} ${mid},${ya + h} ${x0 + nodeW},${ya + h}Z`;
-    return `<path class="flow" data-s="${f.source}" data-c="${f.target}" d="${d}"><title>${f.source} → ${f.target}: ${number(f.value, 0)}</title></path>`;
-  }).join('');
-  const nodes = (ids, pos, x, anchor, dx) => {
-    let lastY = -Infinity;
-    return ids.map(id => {
-      const cy = pos[id].y + pos[id].h / 2, show = cy - lastY >= 12;
-      if (show) lastY = cy;
-      return `<g class="node" data-id="${id}"><rect x="${x}" y="${pos[id].y}" width="${nodeW}" height="${pos[id].h}" rx="1"/><rect class="hit" x="${anchor === 'end' ? x - 34 : x}" y="${pos[id].y - 3}" width="38" height="${pos[id].h + 6}"/>${show ? `<text x="${x + dx}" y="${cy + 3.5}" text-anchor="${anchor}">${id}</text>` : ''}</g>`;
-    }).join('');
-  };
-  svg.setAttribute('viewBox', `0 0 ${W} ${H}`);
-  svg.setAttribute('aria-label', t('18 个配送中心到 18 个客户的 28 条运输流', '28 shipment flows from 18 distribution centers to 18 customer groups'));
-  svg.innerHTML = `<defs><clipPath id="flow-clip"><rect id="flow-wipe" x="0" y="0" width="${reduced ? W : 0}" height="${H}"/></clipPath></defs>
-    <text class="axis" x="${x0}" y="12">${t('配送中心', 'CENTERS')}</text><text class="axis" x="${x1 + nodeW}" y="12" text-anchor="end">${t('客户', 'CUSTOMERS')}</text>
-    <g clip-path="url(#flow-clip)">${bands}</g>${nodes(S, sp, x0, 'end', -8)}${nodes(C, cp, x1, 'start', nodeW + 8)}`;
-  const flowEls = $$('.flow', svg);
-  for (const node of $$('.node', svg)) {
-    const id = node.dataset.id, key = id.startsWith('S') ? 's' : 'c';
-    node.addEventListener('pointerenter', () => {
-      svg.classList.add('is-hover'); node.classList.add('is-hot');
-      const hot = flowEls.filter(el => el.dataset[key] === id);
-      hot.forEach(el => el.classList.add('is-hot'));
-      $('#flow-inspector').textContent = `${id}: ${hot.length} ${t('条运输流', 'routes')}`;
-    });
-    node.addEventListener('pointerleave', () => {
-      svg.classList.remove('is-hover'); node.classList.remove('is-hot');
-      flowEls.forEach(el => el.classList.remove('is-hot'));
-    });
-  }
-  if (!reduced) {
-    const wipe = $('#flow-wipe', svg), start = performance.now();
-    const step = now => { const p = clamp((now - start) / 1800); wipe.setAttribute('width', W * (1 - Math.pow(1 - p, 3))); if (p < 1 && wipe.isConnected) requestAnimationFrame(step); };
-    requestAnimationFrame(step);
-  }
-}
 
 /* Experiments */
 const STUDIES = { large: ['大规模基准', 'Large-scale'], small: ['小规模基准', 'Small-scale'], components: ['组件设置', 'Components'], perturbation: ['参数扰动', 'Perturbations'], repair: ['结构修复', 'Audit & repair'] };
@@ -828,7 +723,7 @@ function onScroll() {
     const lifted = !reduced && (state.lifted ? y > line - 24 : y > line + 24);
     if (lifted !== state.lifted) { state.lifted = lifted; root.classList.toggle('is-lifted', lifted); heroFigure?.setLifted(lifted); }
     state.scene?.setProgress(progress);
-    if (state.intro && state.caseData) stepIntro(vh);
+    if (state.intro && state.cases) stepIntro(vh);
     const heroBox = hero.getBoundingClientRect(), journeyBox = journey.getBoundingClientRect();
     // The tour scene shows only through the tour; it wakes a little early so parts left from an earlier visit are gone by then.
     state.scene?.setActive(journeyBox.top < vh * 2 && journeyBox.bottom > 0);
@@ -878,7 +773,7 @@ addEventListener('resize', () => {
   for (const tabs of $$('.tabs.has-ink')) placeInk(tabs, true);
   moveNavInk(navCurrent, true);
   clearTimeout(resizeTimer);
-  resizeTimer = setTimeout(() => { if (state.caseData && $('#replay-content').clientWidth !== replayWidth) { sizeReplay(); fillStep(state.replay); measureLayers(); } }, 150);
+  resizeTimer = setTimeout(() => { if (state.cases && $('#replay-content').clientWidth !== replayWidth) { sizeReplay(); fillStep(state.replay); measureLayers(); } }, 150);
 });
 
 /* Scene */
@@ -904,16 +799,14 @@ for (const el of $$('.strip .stat, .film-head > div, .film-chapters, .overview .
 syncDemoLinks();
 measure();
 onScroll();
-const [research, caseData, filmData, cases] = await Promise.all([
+const [research, cases, filmData] = await Promise.all([
   fetch('data/research.json').then(r => r.json()),
-  fetch('data/case.json').then(r => r.json()),
+  fetch('data/cases.json').then(r => r.json()),
   fetch('data/film.json').then(r => r.json()).catch(() => null),
-  fetch('data/cases.json').then(r => r.json()).catch(() => null),
 ]);
 state.research = research;
-state.caseData = caseData;
 state.cases = cases;
-if (cases) state.caseId = cases.cases[0].id;
+state.caseId = cases.cases[0].id;
 state.film = filmData;
 if (state.intro && deck.getBoundingClientRect().top > innerHeight * .74) { state.replay = STEPS.length - 1; deck.dataset.left = '2'; } else stopIntro();
 applyLanguage();
