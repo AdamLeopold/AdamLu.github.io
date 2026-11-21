@@ -674,15 +674,15 @@ details summary::-webkit-details-marker { display: none; }
 .film-note { margin-top: 14px; color: var(--mute); }
 .film-frame { position: relative; max-width: 1040px; aspect-ratio: 16 / 9; margin: 0 auto; overflow: hidden; border-radius: 24px; background: #050a14; border: 1.5px solid rgba(166 200 239 / .3); box-shadow: 0 0 0 10px rgba(106 165 238 / .06), 0 50px 100px -50px rgba(0 0 0 / .9); transform-origin: 50% 20%; }
 .film-frame video { position: absolute; inset: 0; width: 100%; height: 100%; display: block; object-fit: contain; }
-/* The poster is the light title card, so the play control sits in its lower left, clear of the title. */
-.film-play { position: absolute; inset: 0; display: flex; align-items: flex-end; justify-content: flex-start; gap: 18px; padding: clamp(16px, 3.6%, 40px); background: linear-gradient(200deg, rgba(8 17 32 / 0) 60%, rgba(8 17 32 / .16)); transition: opacity .45s var(--ease), visibility .45s; }
-.film-play i { position: relative; display: grid; place-items: center; width: 78px; height: 78px; border-radius: 50%; background: #1e3f78; color: #fff; box-shadow: 0 0 0 8px rgba(30 63 120 / .14), 0 18px 36px -14px rgba(8 17 32 / .7); transition: transform .45s var(--spring), box-shadow .3s; }
-.film-play i::after { content: ""; position: absolute; inset: -8px; border-radius: 50%; border: 2px solid rgba(30 63 120 / .4); animation: film-ring 2.6s var(--ease) infinite; }
+/* The poster is the dark title card, so the play control is light and sits in its lower left, clear of the title. */
+.film-play { position: absolute; inset: 0; display: flex; align-items: flex-end; justify-content: flex-start; gap: 18px; padding: clamp(16px, 3.6%, 40px); background: linear-gradient(200deg, rgba(8 17 32 / 0) 55%, rgba(8 17 32 / .5)); transition: opacity .45s var(--ease), visibility .45s; }
+.film-play i { position: relative; display: grid; place-items: center; width: 78px; height: 78px; border-radius: 50%; background: #eef4ff; color: #1e3f78; box-shadow: 0 0 0 8px rgba(166 200 239 / .16), 0 18px 36px -14px rgba(0 0 0 / .7); transition: transform .45s var(--spring), box-shadow .3s; }
+.film-play i::after { content: ""; position: absolute; inset: -8px; border-radius: 50%; border: 2px solid rgba(166 200 239 / .55); animation: film-ring 2.6s var(--ease) infinite; }
 @keyframes film-ring { from { transform: scale(1); opacity: .9; } to { transform: scale(1.45); opacity: 0; } }
 .film-play svg { width: 30px; height: 30px; margin-left: 4px; fill: currentColor; }
-.film-play:hover i { transform: scale(1.07); box-shadow: 0 0 0 13px rgba(30 63 120 / .12), 0 22px 42px -14px rgba(8 17 32 / .75); }
-.film-play > span { display: grid; gap: 2px; padding-bottom: 6px; text-align: left; color: #1e3f78; font-size: 20px; font-weight: 900; line-height: 1.2; }
-.film-play small { color: #3d495d; }
+.film-play:hover i { transform: scale(1.07); box-shadow: 0 0 0 13px rgba(166 200 239 / .14), 0 22px 42px -14px rgba(0 0 0 / .75); }
+.film-play > span { display: grid; gap: 2px; padding-bottom: 6px; text-align: left; color: #eef4ff; font-size: 20px; font-weight: 900; line-height: 1.2; text-shadow: 0 1px 10px rgba(8 17 32 / .8); }
+.film-play small { color: #b8c5d8; }
 .film.is-started .film-play { opacity: 0; visibility: hidden; }
 .film-chapters { list-style: none; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; max-width: 1040px; margin: clamp(18px, 3vh, 28px) auto 0; padding: 0; }
 .film-chapters button { position: relative; overflow: hidden; display: grid; gap: 3px; width: 100%; padding: 12px 14px 13px; border-radius: 14px; text-align: left; color: #d6e1ef; font-size: 14.5px; font-weight: 800; line-height: 1.3; background: rgba(21 34 58 / .72); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); border: 1.5px solid rgba(166 200 239 / .26); transition: border-color .3s, background .3s, color .3s, transform .4s var(--spring); }
@@ -703,7 +703,7 @@ details summary::-webkit-details-marker { display: none; }
   .film-copy > p:first-child { font-size: 15px; }
   .film-frame { border-radius: 16px; box-shadow: 0 0 0 6px rgba(106 165 238 / .06), 0 30px 60px -30px rgba(0 0 0 / .9); }
   .film-play { padding: 10px; }
-  .film-play i { width: 42px; height: 42px; box-shadow: 0 0 0 5px rgba(30 63 120 / .14), 0 12px 24px -10px rgba(8 17 32 / .7); }
+  .film-play i { width: 42px; height: 42px; box-shadow: 0 0 0 5px rgba(166 200 239 / .16), 0 12px 24px -10px rgba(0 0 0 / .7); }
   .film-play i::after { inset: -5px; }
   .film-play svg { width: 18px; height: 18px; margin-left: 3px; }
   /* The poster is small here; the button alone keeps its subtitle clear, and the chapters below give the length. */

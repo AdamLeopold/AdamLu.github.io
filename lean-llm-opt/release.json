@@ -2,11 +2,11 @@
   "format": "lean-llm-opt-static-v1",
   "deployment": "static",
   "demo": "in-browser-gpt-4.1-highs+visitor-local-gpt-oss",
-  "builtAt": "2026-11-20T13:45:45.331Z",
+  "builtAt": "2026-11-21T13:11:49.838Z",
   "runtimeFileCount": 109,
   "fileCount": 115,
-  "payloadBytes": 73726694,
-  "totalBytes": 73745315,
+  "payloadBytes": 114345274,
+  "totalBytes": 114363897,
   "hashAlgorithm": "sha256",
   "files": {
     ".nojekyll": {
@@ -62,8 +62,8 @@
       "sha256": "79d9b047ffe9975bc2dd3dff8d6737ebe48d226e4cd00136cf964e9ab8e97444"
     },
     "assets/site.css": {
-      "bytes": 60746,
-      "sha256": "05161147af96f6723eb2796108947c6bac14783953ec009ceeb127a6e0d2b73c"
+      "bytes": 60807,
+      "sha256": "8078882ed14d0ec8f1fd92545de36db0d2629140a53c4cf6c192277cdcd43f3d"
     },
     "assets/site.js": {
       "bytes": 67570,
@@ -374,8 +374,8 @@
       "sha256": "7c1eaca47b29d4813f5a3d185ff571694d92e1cc3d541bc58423e0d8fe8e4012"
     },
     "data/film.json": {
-      "bytes": 701,
-      "sha256": "ec52bceb23f382b367555d5eca2330af248ddc5c488d91591b684dbcc6fd1523"
+      "bytes": 702,
+      "sha256": "9ed1a0294b5a03ca8a6a8388bd5a6fa7a62a47819d2e1c9c7a969a7911dddca4"
     },
     "data/research.json": {
       "bytes": 14001,
@@ -446,24 +446,24 @@
       "sha256": "be45ceaa2b552573403b37d5c9e4766238acb2e6868f3dc4fdbbab07e0f53b83"
     },
     "index.html": {
-      "bytes": 29668,
-      "sha256": "75f361ca823d79c5f313f9d59a3fed9338b9f34e6c448df73b1d5bf9991bb813"
+      "bytes": 29647,
+      "sha256": "c87ff9e219f7374bad053d9119277ed03e2350b09c62940ac108f71595be1fbf"
     },
     "media/lean-llm-opt-demo-en.jpg": {
-      "bytes": 58731,
-      "sha256": "c7b24359b60f2b09fee6e785b6ab0838c8b21ca20f557a766268342b49285069"
+      "bytes": 86345,
+      "sha256": "27f537c6090551376a9e2b915c112323540ddded7067c02628b19483d2affbc4"
     },
     "media/lean-llm-opt-demo-en.mp4": {
-      "bytes": 33181313,
-      "sha256": "f7673c217cb925e9ace0e2f2e98cba2336111f58183f74db1cfc61d7ce376df8"
+      "bytes": 52146174,
+      "sha256": "12ab02c4fd49e18f8b0cd6053ab8c32ed5a15c4d5c0c38aea88580697004a0cf"
     },
     "media/lean-llm-opt-demo-zh.jpg": {
-      "bytes": 57405,
-      "sha256": "432f2d115428bcd335b4c9fe57c857f71c6f55bc9cee24c38aed37fe389e836e"
+      "bytes": 88854,
+      "sha256": "d05d9a01f922feb994230228c7ec7ba2733f70f6b2305b14b6ee178a17bd5bc0"
     },
     "media/lean-llm-opt-demo-zh.mp4": {
-      "bytes": 33251305,
-      "sha256": "63285489048a926745b01769140672255f904759b07da5e2ad0a8ae4e756bb7b"
+      "bytes": 54845920,
+      "sha256": "4fe6a8009cfab52a1ee09482f21f5336fc446bdf9f2f529e5a1b2c0b936819ba"
     }
   }
 }
